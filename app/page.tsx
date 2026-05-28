@@ -1,65 +1,128 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { Button } from '@/components/Button';
+import { Container } from '@/components/Container';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="flex flex-col">
+      {/* Hero Section */}
+      <section className="py-20 md:py-32">
+        <Container size="lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="flex flex-col gap-6">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900">
+                Turn Any Photo Into <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Custom Art</span>
+              </h1>
+              <p className="text-xl text-gray-600">
+                Transform your favorite memories into stunning wall art, custom gifts, and personalized merchandise with AI-powered style presets.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/auth/signup" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full">
+                    Create Yours Now
+                  </Button>
+                </Link>
+                <Link href="#examples" className="w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="w-full">
+                    See Examples
+                  </Button>
+                </Link>
+              </div>
+              <div className="flex items-center gap-6 pt-4 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Fast & Easy
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Premium Quality
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Shipped Fast
+                </div>
+              </div>
+            </div>
+
+            {/* Mock Hero Image */}
+            <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl p-8 aspect-square flex items-center justify-center">
+              <div className="text-center text-gray-600">
+                <div className="text-6xl mb-4">🎨</div>
+                <p className="font-semibold">AI Design Preview</p>
+                <p className="text-sm text-gray-500">Upload your photo to get started</p>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Style Presets Preview */}
+      <section className="py-20 bg-white">
+        <Container size="lg">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">12 AI Style Presets</h2>
+            <p className="text-xl text-gray-600">Choose from our curated collection of artistic styles</p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['Oil Painting', 'Watercolor', 'Pop Art', 'Vintage', 'B&W Editorial', 'Cartoon', 'Pet Royal', 'Sketch', 'Line Art', 'Cinematic', 'Toy Style', 'Clean Cutout'].map(
+              (style) => (
+                <div
+                  key={style}
+                  className="bg-gray-100 rounded-lg p-6 aspect-square flex items-center justify-center hover:shadow-md transition-shadow"
+                >
+                  <p className="text-center font-semibold text-gray-700">{style}</p>
+                </div>
+              )
+            )}
+          </div>
+        </Container>
+      </section>
+
+      {/* Products Section */}
+      <section className="py-20">
+        <Container size="lg">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Print on Any Product</h2>
+            <p className="text-xl text-gray-600">From canvas to mugs, t-shirts to tote bags</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {['Canvas', 'Poster', 'Mug', 'T-Shirt', 'Hoodie', 'Phone Case', 'Tote Bag', 'Sticker', 'Frame', 'Digital'].map(
+              (product) => (
+                <div
+                  key={product}
+                  className="bg-white border border-gray-200 rounded-lg p-6 text-center hover:shadow-md transition-shadow"
+                >
+                  <div className="text-4xl mb-3">📦</div>
+                  <p className="font-semibold text-gray-900">{product}</p>
+                </div>
+              )
+            )}
+          </div>
+        </Container>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <Container size="md">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-6">Ready to Create Something Amazing?</h2>
+            <p className="text-xl mb-8 opacity-90">Start with your photo. Finish with your masterpiece.</p>
+            <Link href="/auth/signup">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+                Get Started Free
+              </Button>
+            </Link>
+          </div>
+        </Container>
+      </section>
     </div>
   );
 }
