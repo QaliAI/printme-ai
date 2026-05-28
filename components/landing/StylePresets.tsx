@@ -4,45 +4,41 @@ import { motion } from 'framer-motion';
 import { Container } from '@/components/Container';
 
 const styles = [
-  { name: 'Oil Painting', emoji: '🎨', color: 'from-amber-400 to-orange-500' },
-  { name: 'Watercolor', emoji: '💧', color: 'from-cyan-400 to-blue-500' },
-  { name: 'Pop Art', emoji: '💥', color: 'from-pink-400 to-red-500' },
-  { name: 'Vintage', emoji: '📷', color: 'from-amber-700 to-yellow-600' },
-  { name: 'B&W Editorial', emoji: '⚫', color: 'from-gray-700 to-gray-900' },
-  { name: 'Cartoon', emoji: '🎭', color: 'from-yellow-400 to-pink-500' },
-  { name: 'Pet Royal', emoji: '👑', color: 'from-purple-500 to-yellow-500' },
-  { name: 'Sketch', emoji: '✏️', color: 'from-gray-400 to-gray-600' },
-  { name: 'Line Art', emoji: '📐', color: 'from-slate-500 to-slate-700' },
-  { name: 'Cinematic', emoji: '🎬', color: 'from-indigo-600 to-purple-800' },
-  { name: 'Toy Style', emoji: '🧸', color: 'from-pink-300 to-rose-400' },
-  { name: 'Clean Cutout', emoji: '✂️', color: 'from-emerald-400 to-teal-500' },
+  { name: 'Oil Painting', tagline: 'Rich, classical', gradient: 'from-amber-600 to-orange-700' },
+  { name: 'Watercolor', tagline: 'Soft, dreamy', gradient: 'from-cyan-500 to-blue-600' },
+  { name: 'Pop Art', tagline: 'Bold, vibrant', gradient: 'from-rose-500 to-red-600' },
+  { name: 'Vintage', tagline: 'Warm, nostalgic', gradient: 'from-amber-700 to-yellow-700' },
+  { name: 'B&W Editorial', tagline: 'Cinematic mono', gradient: 'from-slate-700 to-slate-900' },
+  { name: 'Cartoon', tagline: 'Playful lines', gradient: 'from-yellow-500 to-pink-500' },
+  { name: 'Royal Portrait', tagline: 'Regal, elegant', gradient: 'from-purple-600 to-amber-500' },
+  { name: 'Sketch', tagline: 'Hand-drawn', gradient: 'from-slate-400 to-slate-600' },
+  { name: 'Line Art', tagline: 'Minimal, clean', gradient: 'from-slate-500 to-slate-700' },
+  { name: 'Cinematic', tagline: 'Dramatic mood', gradient: 'from-indigo-700 to-purple-800' },
+  { name: 'Toy Style', tagline: 'Soft 3D', gradient: 'from-pink-400 to-rose-500' },
+  { name: 'Clean Cutout', tagline: 'Crisp subject', gradient: 'from-emerald-500 to-teal-600' },
 ];
 
 export function StylePresets() {
   return (
-    <section className="py-24 bg-gradient-to-br from-gray-50 to-purple-50 relative overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <svg width="100%" height="100%">
-          <pattern id="dotgrid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="currentColor" />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#dotgrid)" />
-        </svg>
-      </div>
-
-      <Container size="lg" className="relative">
+    <section className="py-24 bg-white relative">
+      <Container size="lg">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <div className="inline-block text-xs font-semibold tracking-widest text-indigo-600 uppercase mb-3">
             12 AI Style Presets
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+            One photo,{' '}
+            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              twelve looks
+            </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            One photo, twelve incredible transformations
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Don&apos;t love the first one? Switch styles instantly.
           </p>
         </motion.div>
 
@@ -50,39 +46,44 @@ export function StylePresets() {
           {styles.map((style, i) => (
             <motion.div
               key={style.name}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ y: -8, scale: 1.03 }}
-              className="group relative cursor-pointer"
+              viewport={{ once: true, margin: '-30px' }}
+              transition={{ delay: i * 0.04 }}
+              whileHover={{ y: -4 }}
+              className="group cursor-pointer"
             >
               <div
-                className={`relative aspect-square rounded-2xl bg-gradient-to-br ${style.color} overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300`}
+                className={`relative aspect-[5/6] rounded-xl bg-gradient-to-br ${style.gradient} overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300`}
               >
-                {/* Animated background pattern */}
-                <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,white,transparent)]" />
-                </div>
+                {/* Subtle texture overlay */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.25),transparent_60%)]" />
 
-                {/* Shimmer effect on hover */}
+                {/* Shimmer on hover */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
                 />
 
                 {/* Content */}
-                <div className="relative h-full flex flex-col items-center justify-center p-4 text-white">
-                  <motion.div
-                    className="text-5xl mb-2"
-                    whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    {style.emoji}
-                  </motion.div>
-                  <p className="text-center font-bold text-sm md:text-base drop-shadow-md">
-                    {style.name}
-                  </p>
+                <div className="relative h-full flex flex-col justify-end p-5">
+                  <div className="text-white">
+                    <p className="text-[10px] tracking-widest uppercase opacity-80 mb-1">
+                      {style.tagline}
+                    </p>
+                    <h3 className="font-bold text-lg leading-tight">{style.name}</h3>
+                  </div>
                 </div>
+
+                {/* Hover arrow */}
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  whileHover={{ opacity: 1, y: 0 }}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </motion.div>
               </div>
             </motion.div>
           ))}

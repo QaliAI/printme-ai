@@ -3,58 +3,120 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Container } from '@/components/Container';
+import { PRODUCT_PHOTOS } from '@/lib/assets';
 
-// Module-level deterministic star positions (computed once at load, never re-runs)
-const STARS = Array.from({ length: 50 }, (_, i) => {
-  // Use trig to create natural-looking pseudo-random distribution
-  const seedA = Math.sin(i * 12.9898) * 43758.5453;
-  const seedB = Math.sin(i * 78.233) * 43758.5453;
-  const seedC = Math.sin(i * 39.346) * 43758.5453;
-  return {
-    left: `${Math.abs(seedA - Math.floor(seedA)) * 100}%`,
-    top: `${Math.abs(seedB - Math.floor(seedB)) * 100}%`,
-    duration: 2 + Math.abs(seedC - Math.floor(seedC)) * 3,
-    delay: Math.abs(seedA - Math.floor(seedA)) * 2,
-  };
-});
+const PRODUCTS = [
+  PRODUCT_PHOTOS.tshirt,
+  PRODUCT_PHOTOS.mug,
+  PRODUCT_PHOTOS.canvas,
+  PRODUCT_PHOTOS.poster,
+  PRODUCT_PHOTOS.hoodie,
+  PRODUCT_PHOTOS.phoneCase,
+  PRODUCT_PHOTOS.toteBag,
+  PRODUCT_PHOTOS.sticker,
+] as const;
 
-const products = [
-  { name: 'T-Shirt', emoji: '👕', from: '$24', color: 'from-blue-400 to-blue-600' },
-  { name: 'Mug', emoji: '☕', from: '$14', color: 'from-amber-400 to-amber-600' },
-  { name: 'Canvas', emoji: '🖼️', from: '$39', color: 'from-purple-400 to-purple-600' },
-  { name: 'Poster', emoji: '📄', from: '$12', color: 'from-pink-400 to-pink-600' },
-  { name: 'Hoodie', emoji: '🧥', from: '$44', color: 'from-gray-500 to-gray-700' },
-  { name: 'Phone Case', emoji: '📱', from: '$19', color: 'from-emerald-400 to-emerald-600' },
-  { name: 'Tote Bag', emoji: '👜', from: '$18', color: 'from-orange-400 to-orange-600' },
-  { name: 'Sticker', emoji: '⭐', from: '$4', color: 'from-yellow-400 to-yellow-600' },
-];
+interface ProductCardProps {
+  product: (typeof PRODUCTS)[number];
+  index: number;
+  isHovered: boolean;
+  onHover: (name: string | null) => void;
+}
+
+function ProductCard({ product, index, isHovered, onHover }: ProductCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-50px' }}
+      transition={{ delay: index * 0.06 }}
+      onMouseEnter={() => onHover(product.name)}
+      onMouseLeave={() => onHover(null)}
+      className="group cursor-pointer"
+    >
+      <motion.div
+        whileHover={{ y: -6 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="relative bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-500"
+      >
+        {/* Real product photograph */}
+        <div className="relative aspect-square overflow-hidden bg-slate-50">
+          <motion.img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover"
+            animate={isHovered ? { scale: 1.05 } : { scale: 1 }}
+            transition={{ duration: 0.4 }}
+            loading="lazy"
+          />
+
+          {/* "Your Design Here" placeholder overlay positioned on the product */}
+          <motion.div
+            className="absolute pointer-events-none"
+            style={{
+              top: product.designArea.top,
+              left: product.designArea.left,
+              width: product.designArea.width,
+              height: product.designArea.height,
+            }}
+            initial={{ opacity: 0.7 }}
+            animate={{ opacity: isHovered ? 0.95 : 0.7 }}
+          >
+            <div className="w-full h-full rounded-md border-2 border-dashed border-white/90 bg-gradient-to-br from-indigo-500/40 via-purple-500/40 to-rose-500/40 backdrop-blur-[2px] flex items-center justify-center shadow-lg">
+              <div className="text-center px-2">
+                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
+                  YOUR
+                </div>
+                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
+                  DESIGN
+                </div>
+                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
+                  HERE
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Hover gradient overlay */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovered ? 1 : 0 }}
+          />
+        </div>
+
+        {/* Product info */}
+        <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
+          <div>
+            <h3 className="text-slate-900 font-semibold text-base">{product.name}</h3>
+            <p className="text-slate-500 text-sm mt-0.5">
+              from <span className="font-bold text-slate-900">{product.from}</span>
+            </p>
+          </div>
+          <motion.div
+            className="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-gradient-to-br group-hover:from-indigo-600 group-hover:to-purple-600 flex items-center justify-center transition-colors"
+            animate={isHovered ? { x: 2 } : { x: 0 }}
+          >
+            <svg
+              className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+            </svg>
+          </motion.div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export function ProductShowcase() {
   const [hovered, setHovered] = useState<string | null>(null);
-  const stars = STARS;
 
   return (
-    <section className="py-24 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated stars */}
-      <div className="absolute inset-0">
-        {stars.map((star, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{ left: star.left, top: star.top }}
-            animate={{
-              opacity: [0.2, 1, 0.2],
-              scale: [0.5, 1.2, 0.5],
-            }}
-            transition={{
-              duration: star.duration,
-              repeat: Infinity,
-              delay: star.delay,
-            }}
-          />
-        ))}
-      </div>
-
+    <section className="py-24 bg-gradient-to-b from-slate-50 to-white relative">
       <Container size="lg" className="relative">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -62,97 +124,40 @@ export function ProductShowcase() {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Print On <span className="animate-text-shimmer">Anything</span>
+          <div className="inline-block text-xs font-semibold tracking-widest text-indigo-600 uppercase mb-3">
+            Print On Anything
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
+            Built for <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">every moment</span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            From shirts to mugs to canvases—pick your favorite
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Premium products. Professional printing. Worldwide shipping.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {products.map((product, i) => (
-            <motion.div
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {PRODUCTS.map((product, i) => (
+            <ProductCard
               key={product.name}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              onMouseEnter={() => setHovered(product.name)}
-              onMouseLeave={() => setHovered(null)}
-              className="group cursor-pointer perspective-1000"
-            >
-              <motion.div
-                whileHover={{
-                  rotateY: 15,
-                  rotateX: -10,
-                  scale: 1.05,
-                }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className="relative preserve-3d"
-              >
-                <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 hover:bg-white/20 transition-all duration-300 shadow-xl">
-                  {/* Glow effect on hover */}
-                  <div
-                    className={`absolute -inset-0.5 bg-gradient-to-r ${product.color} rounded-3xl opacity-0 group-hover:opacity-50 blur transition-opacity duration-500 -z-10`}
-                  />
-
-                  {/* Product emoji */}
-                  <motion.div
-                    animate={{
-                      y: hovered === product.name ? [-2, 2, -2] : 0,
-                      rotate: hovered === product.name ? [-5, 5, -5] : 0,
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="text-7xl mb-4 text-center"
-                  >
-                    {product.emoji}
-                  </motion.div>
-
-                  <h3 className="text-white font-bold text-xl text-center mb-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-300 text-center text-sm">
-                    from <span className="font-bold text-white">{product.from}</span>
-                  </p>
-
-                  {/* Particle on hover */}
-                  {hovered === product.name && (
-                    <>
-                      {[...Array(6)].map((_, j) => (
-                        <motion.div
-                          key={j}
-                          className="absolute w-2 h-2 bg-yellow-300 rounded-full"
-                          initial={{
-                            x: '50%',
-                            y: '50%',
-                            opacity: 0,
-                          }}
-                          animate={{
-                            x: `${50 + (Math.cos((j / 6) * Math.PI * 2) * 100)}%`,
-                            y: `${50 + (Math.sin((j / 6) * Math.PI * 2) * 100)}%`,
-                            opacity: [0, 1, 0],
-                          }}
-                          transition={{ duration: 1.5, repeat: Infinity, delay: j * 0.1 }}
-                        />
-                      ))}
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            </motion.div>
+              product={product}
+              index={i}
+              isHovered={hovered === product.name}
+              onHover={setHovered}
+            />
           ))}
         </div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.5 }}
-          className="text-center text-gray-400 mt-12"
+          className="text-center mt-12"
         >
-          + Hoodies, frames, blankets, pillows & 50+ more products
-        </motion.p>
+          <p className="text-sm text-slate-500">
+            + Frames, blankets, pillows & 50+ more products
+          </p>
+        </motion.div>
       </Container>
     </section>
   );
