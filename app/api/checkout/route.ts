@@ -3,13 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { getCurrentUser } from '@/lib/auth';
 import { z } from 'zod';
 import Stripe from 'stripe';
+import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
 
 const checkoutSchema = z.object({
   cartId: z.string().uuid(),
 });
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+  apiVersion: '2026-04-22.dahlia',
 });
 
 export async function POST(req: NextRequest) {
@@ -80,21 +81,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Map cart items to Stripe line items
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = cart.cart_items.map(
-      (item: any) => ({
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: item.product_variant.product.name,
-            images: item.design?.design_url ? [item.design.design_url] : undefined,
+    const lineItems = (cart.cart_items as CartItemWithRelations[]).map(
+      (item) => {
+        const productVariant = getFirstOrValue(item.product_variant);
+        const design = getFirstOrValue(item.design);
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: productVariant?.product?.name || 'Product',
+              images: design?.design_url ? [design.design_url] : undefined,
+            },
+            unit_amount:
+              ((productVariant?.product?.base_price || 0) +
+                (productVariant?.price_modifier || 0)) *
+              item.quantity,
           },
-          unit_amount:
-            (item.product_variant.product.base_price +
-              (item.product_variant.price_modifier || 0)) *
-            item.quantity,
-        },
-        quantity: 1,
-      })
+          quantity: 1,
+        };
+      }
     );
 
     // Create Stripe checkout session

@@ -16,7 +16,7 @@ export class PrintifyClient {
     this.apiToken = config.apiToken;
     this.shopId = config.shopId;
 
-    if (!apiToken || !shopId) {
+    if (!this.apiToken || !this.shopId) {
       console.warn('Printify API token or shop ID not configured. Printify integration will be unavailable.');
     }
   }
@@ -63,16 +63,27 @@ export class PrintifyClient {
     return this.request('GET', `/catalog/blueprints/${blueprintId}/variants`);
   }
 
+  // Create and submit a complete order
+  async submitOrder(order: any) {
+    // Create draft order first
+    const draftOrder = await this.request('POST', `/shops/${this.shopId}/orders`, order);
+
+    // Then confirm/submit it for production
+    if (draftOrder?.id) {
+      await this.request('POST', `/shops/${this.shopId}/orders/${draftOrder.id}/confirm`);
+    }
+
+    return draftOrder;
+  }
+
   // Create a draft order (unpublished)
   async createDraftOrder(order: any) {
-    // TODO: Implement order creation
     // This creates an order in draft state before payment confirmation
     return this.request('POST', `/shops/${this.shopId}/orders`, order);
   }
 
-  // Submit order for production
-  async submitOrder(orderId: string) {
-    // TODO: Implement order submission
+  // Confirm order for production
+  async confirmOrder(orderId: string) {
     return this.request('POST', `/shops/${this.shopId}/orders/${orderId}/confirm`);
   }
 
@@ -93,9 +104,20 @@ export class PrintifyClient {
   }
 }
 
+// Shop ID supports both naming conventions for backward compatibility
+const getShopId = () =>
+  process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID ||
+  process.env.PRINTIFY_SHOP_ID ||
+  '';
+
 export function getPrintifyClient(): PrintifyClient {
   return new PrintifyClient({
     apiToken: process.env.PRINTIFY_API_TOKEN || '',
-    shopId: process.env.PRINTIFY_SHOP_ID || '',
+    shopId: getShopId(),
   });
 }
+
+export const printifyClient = new PrintifyClient({
+  apiToken: process.env.PRINTIFY_API_TOKEN || '',
+  shopId: getShopId(),
+});

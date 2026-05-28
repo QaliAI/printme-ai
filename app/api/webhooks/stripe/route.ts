@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { printifyClient } from '@/lib/printify/client';
+import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
+// Use placeholder during build if env vars missing - real values needed at request time
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+  apiVersion: '2026-04-22.dahlia',
 });
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
 );
 
 export async function POST(req: NextRequest) {
@@ -94,10 +96,11 @@ export async function POST(req: NextRequest) {
 
         // Calculate order total
         let total = 0;
-        cart.cart_items.forEach((item: any) => {
+        (cart.cart_items as CartItemWithRelations[]).forEach((item) => {
+          const productVariant = getFirstOrValue(item.product_variant);
           const itemPrice =
-            item.product_variant.product.base_price +
-            (item.product_variant.price_modifier || 0);
+            (productVariant?.product?.base_price || 0) +
+            (productVariant?.price_modifier || 0);
           total += itemPrice * item.quantity;
         });
 
@@ -202,17 +205,21 @@ async function submitToPrintify(
   const userName = stripeSession.customer_details?.name || 'Customer';
 
   // Build Printify order from cart items
-  const lineItems = cart.cart_items.map((item: any) => ({
-    product_id: item.product_variant.product.id,
-    variant_ids: [item.product_variant.id],
-    quantity: item.quantity,
-    files: [
-      {
-        type: 'front' as const,
-        url: item.design?.design_url,
-      },
-    ],
-  }));
+  const lineItems = (cart.cart_items as CartItemWithRelations[]).map((item) => {
+    const productVariant = getFirstOrValue(item.product_variant);
+    const design = getFirstOrValue(item.design);
+    return {
+      product_id: productVariant?.product?.id || '',
+      variant_ids: [productVariant?.id || ''],
+      quantity: item.quantity,
+      files: [
+        {
+          type: 'front' as const,
+          url: design?.design_url,
+        },
+      ],
+    };
+  });
 
   // Create Printify order with minimal required fields
   const printifyOrder = await printifyClient.submitOrder({
