@@ -182,7 +182,11 @@ export async function POST(req: NextRequest) {
       blueprintIds.map((id) => createDraftProductWithDesign(shopId, id, imageId))
     );
 
-    // Step 3: Extract mockup URLs from successful responses
+    // Step 3: Extract mockup URLs from successful responses.
+    // Printify CDN URLs persist after the product is deleted, so we can
+    // immediately schedule cleanup to keep the shop tidy.
+    const productIdsToCleanup: string[] = [];
+
     const mockups = blueprintIds.map((blueprintId, i) => {
       const result = settledResults[i];
       if (result.status === 'rejected') {
@@ -193,6 +197,7 @@ export async function POST(req: NextRequest) {
         };
       }
       const product = result.value;
+      if (product.id) productIdsToCleanup.push(product.id);
       return {
         blueprintId,
         productId: product.id,
@@ -206,9 +211,26 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    // Fire-and-forget cleanup of draft products so the shop doesn't fill up.
+    // Opt-in via PRINTIFY_AUTO_CLEANUP=true. Disabled by default until we
+    // confirm that mockup CDN URLs persist after product deletion.
+    if (process.env.PRINTIFY_AUTO_CLEANUP === 'true' && productIdsToCleanup.length > 0) {
+      void Promise.allSettled(
+        productIdsToCleanup.map((productId) =>
+          printifyRequest(`/shops/${shopId}/products/${productId}.json`, {
+            method: 'DELETE',
+          }).catch((err) => {
+            console.warn(`Cleanup failed for product ${productId}:`, err);
+          })
+        )
+      );
+    }
+
     return NextResponse.json({
       imageId,
       mockups,
+      // Send the product IDs back so callers can persist and clean up later
+      productIds: productIdsToCleanup,
     });
   } catch (err) {
     console.error('Printify mockup error:', err);

@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { Card, CardBody } from '@/components/Card';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
+import { LiveProductMockups } from '@/components/LiveProductMockups';
 import { supabase } from '@/lib/supabase';
 import { UserUpload, GeneratedDesign } from '@/lib/types';
 
@@ -410,6 +411,27 @@ export default function PreviewPage() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Live Printify Mockups - the user's design rendered on every product */}
+        {design?.design_url && !regenerating && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12"
+          >
+            <Card className="backdrop-blur-xl bg-white/70 border-white/40 shadow-xl">
+              <CardBody className="p-6 md:p-8">
+                <LiveProductMockups
+                  designUrl={design.design_url}
+                  onSelectProduct={() =>
+                    router.push(`/app/create/products?design=${design.id}`)
+                  }
+                />
+              </CardBody>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Action Buttons */}
         <motion.div
