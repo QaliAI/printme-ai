@@ -43,12 +43,9 @@ export function FloatingExamples() {
                 {/* Interactive drag-to-compare slider */}
                 <BeforeAfterSlider
                   beforeImage={example.photo}
-                  afterImage={example.afterPhoto || example.photo}
+                  afterImage={example.afterPhoto}
                   beforeLabel="Original"
                   afterLabel={example.style}
-                  afterFilter={
-                    example.afterPhoto ? undefined : example.afterFilter
-                  }
                   initialPosition={48}
                   autoHint={i === 0}
                   className="!rounded-none !shadow-none"
@@ -96,8 +93,7 @@ export function FloatingExamples() {
           transition={{ delay: 0.4 }}
           className="text-center text-sm text-slate-500 mt-10"
         >
-          These previews approximate each AI style. Your actual generation will be
-          unique to your photo.
+          Real AI-generated examples. Your photo will produce something equally unique.
         </motion.p>
       </Container>
     </section>

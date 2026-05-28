@@ -17,67 +17,37 @@ const PRODUCTS = [
 ] as const;
 
 /**
- * Print-area placeholder that mimics what Printful/Printify show:
- * a clean dashed boundary marking the actual printable surface,
- * with a subtle upload prompt inside.
+ * Print-area placeholder modeled after professional POD mockup tools.
+ * Subtle diagonal stripe pattern + clean "Design Placeholder" text,
+ * sized proportionally to each product's actual print area.
  */
 function PrintAreaPlaceholder({ isHovered }: { isHovered: boolean }) {
   return (
-    <div className="relative w-full h-full">
-      {/* Outer dashed border — the "print boundary" */}
-      <motion.div
-        className="absolute inset-0 rounded-sm border-[1.5px] border-dashed border-white shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
-        animate={{
-          borderColor: isHovered ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.85)',
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Diagonal stripe pattern fill - looks like fabric weave */}
+      <div
+        className="absolute inset-0 bg-white/85"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(135deg, rgba(0,0,0,0.06) 0 1px, transparent 1px 8px)',
         }}
       />
 
-      {/* Inner translucent fill */}
-      <div className="absolute inset-[3px] rounded-[2px] bg-gradient-to-br from-white/30 via-white/15 to-white/30 backdrop-blur-[2px] flex flex-col items-center justify-center overflow-hidden">
-        {/* Subtle inner glow on hover */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20"
-          animate={{ opacity: isHovered ? 1 : 0 }}
-          transition={{ duration: 0.3 }}
-        />
+      {/* Hover tint */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-br from-indigo-500/15 to-purple-500/15"
+        animate={{ opacity: isHovered ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+      />
 
-        {/* Center icon + label */}
-        <div className="relative flex flex-col items-center justify-center text-center px-1">
-          {/* Camera/upload icon */}
-          <motion.svg
-            className="w-4 h-4 md:w-5 md:h-5 text-white mb-1 drop-shadow-md"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-            animate={{ y: isHovered ? -1 : 0 }}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-            />
-          </motion.svg>
-          <div className="text-white text-[9px] md:text-[10px] font-semibold tracking-[0.15em] uppercase drop-shadow-md leading-tight">
-            Your
-          </div>
-          <div className="text-white text-[9px] md:text-[10px] font-semibold tracking-[0.15em] uppercase drop-shadow-md leading-tight">
-            Design
-          </div>
+      {/* Centered "Design Placeholder" label */}
+      <div className="absolute inset-0 flex items-center justify-center text-center px-2">
+        <div className="text-slate-700 text-[9px] md:text-[10px] font-semibold leading-tight tracking-tight">
+          Design
+          <br />
+          Placeholder
         </div>
       </div>
-
-      {/* Corner markers — like crop marks */}
-      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => (
-        <div
-          key={corner}
-          className={`absolute w-2 h-2 ${
-            corner.startsWith('top') ? '-top-px' : '-bottom-px'
-          } ${corner.endsWith('left') ? '-left-px' : '-right-px'}`}
-        >
-          <div className="absolute inset-0 bg-white rounded-full shadow-md ring-1 ring-slate-900/20" />
-        </div>
-      ))}
     </div>
   );
 }
