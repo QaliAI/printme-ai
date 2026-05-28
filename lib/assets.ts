@@ -38,6 +38,27 @@ export const HERO_IMAGES = {
 // PRODUCT MOCKUPS (from Printify Catalog API)
 // ============================================================
 
+/**
+ * Map a product name (from Supabase or anywhere) to a Printify blueprint ID
+ * so we can find the matching mockup for it. Case- and whitespace-insensitive.
+ * Returns undefined if no match.
+ */
+export function blueprintIdForProductName(name: string | undefined): number | undefined {
+  if (!name) return undefined;
+  const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  if (normalized.includes('tshirt') || normalized === 'tee' || normalized.endsWith('tee')) return 12;
+  if (normalized.includes('hoodie') || normalized.includes('sweatshirt')) return 77;
+  if (normalized.includes('mug')) return 68;
+  if (normalized.includes('canvas') && !normalized.includes('tote')) return 937;
+  if (normalized.includes('poster')) return 282;
+  if (normalized.includes('phonecase') || normalized.includes('case')) return 268;
+  if (normalized.includes('tote') || normalized.includes('bag')) return 553;
+  if (normalized.includes('sticker')) return 400;
+
+  return undefined;
+}
+
 export const PRODUCT_PHOTOS = {
   tshirt: {
     blueprintId: 12,

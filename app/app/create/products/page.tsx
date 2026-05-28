@@ -8,6 +8,7 @@ import { Container } from '@/components/Container';
 import { Card, CardBody } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
 import { Product, ProductVariant, GeneratedDesign } from '@/lib/types';
+import { blueprintIdForProductName, PRODUCT_PHOTOS } from '@/lib/assets';
 
 interface SelectedProduct {
   productId: string;
@@ -18,6 +19,21 @@ interface SelectedProduct {
 interface RecommendedProduct extends Product {
   recommendation_reason?: string;
   recommendation_score?: number;
+}
+
+interface PrintifyMockupCacheEntry {
+  blueprintId: number;
+  mockups: Array<{ src: string; position: string; isDefault: boolean }>;
+}
+
+/**
+ * Pick the best mockup image (front-facing default) from a Printify mockup
+ * cache entry, falling back to the first available.
+ */
+function pickBestMockup(entry?: PrintifyMockupCacheEntry): string | undefined {
+  if (!entry) return undefined;
+  const defaultMockup = entry.mockups.find((m) => m.isDefault);
+  return defaultMockup?.src || entry.mockups[0]?.src;
 }
 
 export default function ProductsPage() {
@@ -34,6 +50,37 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Personalized mockup state — keyed by Printify blueprint ID
+  const [personalizedMockups, setPersonalizedMockups] = useState<Record<number, PrintifyMockupCacheEntry>>({});
+  const [mockupsLoading, setMockupsLoading] = useState(false);
+
+  const fetchPersonalizedMockups = async (designForMockups: GeneratedDesign) => {
+    if (!designForMockups.design_url) return;
+    setMockupsLoading(true);
+    try {
+      const response = await fetch('/api/printify/mockups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: designForMockups.design_url,
+          designId: designForMockups.id,
+        }),
+      });
+
+      if (!response.ok) return;
+      const data = await response.json();
+      const indexed: Record<number, PrintifyMockupCacheEntry> = {};
+      for (const m of data.mockups || []) {
+        if (m.mockups?.length) indexed[m.blueprintId] = m;
+      }
+      setPersonalizedMockups(indexed);
+    } catch (err) {
+      console.warn('Personalized mockup fetch failed:', err);
+    } finally {
+      setMockupsLoading(false);
+    }
+  };
+
   const fetchData = async () => {
     try {
       // Fetch design
@@ -45,6 +92,12 @@ export default function ProductsPage() {
 
       if (designError) throw designError;
       setDesign(designData);
+
+      // Kick off personalized mockup fetch in parallel — don't await it,
+      // so the rest of the page loads while Printify renders mockups
+      if (designData?.design_url) {
+        void fetchPersonalizedMockups(designData);
+      }
 
       // Try recommendation API first
       try {
@@ -235,6 +288,32 @@ export default function ProductsPage() {
               ? 'Choose from our full catalog'
               : `${recommended.length} products curated for your design`}
           </p>
+
+          {/* Mockup status indicator */}
+          {mockupsLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 inline-flex items-center gap-2 text-xs text-slate-600 bg-white/70 backdrop-blur-md border border-slate-200 rounded-full px-3 py-1.5"
+            >
+              <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="w-3 h-3 rounded-full border-2 border-indigo-500 border-t-transparent"
+              />
+              <span>Rendering your design on each product…</span>
+            </motion.div>
+          )}
+          {!mockupsLoading && Object.keys(personalizedMockups).length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-3 inline-flex items-center gap-2 text-xs text-slate-600 bg-white/70 backdrop-blur-md border border-slate-200 rounded-full px-3 py-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Showing your design on {Object.keys(personalizedMockups).length} products</span>
+            </motion.div>
+          )}
         </motion.div>
 
         {error && (
@@ -254,6 +333,24 @@ export default function ProductsPage() {
               const isSelected = selectedProducts.some((p) => p.productId === product.id);
               const selected = selectedProducts.find((p) => p.productId === product.id);
               const productVariants = variants[product.id] || [];
+
+              // Try to find a personalized Printify mockup for this product
+              const blueprintId = blueprintIdForProductName(product.name);
+              const personalizedMockup = blueprintId
+                ? pickBestMockup(personalizedMockups[blueprintId])
+                : undefined;
+              const isPersonalized = !!personalizedMockup;
+
+              // Fallback chain: Printify-rendered → existing product mockup
+              // → matching photo from landing-page assets → emoji
+              let fallbackImage = product.mockup_url;
+              if (!fallbackImage && blueprintId) {
+                const assetMatch = Object.values(PRODUCT_PHOTOS).find(
+                  (p) => p.blueprintId === blueprintId
+                );
+                fallbackImage = assetMatch?.image;
+              }
+              const displayImage = personalizedMockup || fallbackImage;
 
               return (
                 <motion.div
@@ -290,21 +387,47 @@ export default function ProductsPage() {
                     )}
 
                     <CardBody className="space-y-4 pt-12">
-                      {/* Mockup with design overlay preview */}
-                      <div className="relative aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl overflow-hidden">
-                        {product.mockup_url ? (
-                          <img
-                            src={product.mockup_url}
-                            alt={product.name}
+                      {/* Product mockup — uses personalized Printify render when available */}
+                      <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl overflow-hidden">
+                        {displayImage ? (
+                          <motion.img
+                            key={displayImage}
+                            src={displayImage}
+                            alt={`${product.name} with your design`}
                             className="w-full h-full object-cover"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.4 }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-7xl">
                             {product.emoji}
                           </div>
                         )}
-                        {/* Design overlay (small preview) */}
-                        {design.design_url && (
+
+                        {/* "Live" badge when showing personalized Printify mockup */}
+                        {isPersonalized && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="absolute top-3 right-3 flex items-center gap-1.5 bg-emerald-500/95 text-white text-[10px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full shadow-md"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            Your Design
+                          </motion.div>
+                        )}
+
+                        {/* Loading shimmer when waiting for personalized mockup */}
+                        {!isPersonalized && mockupsLoading && blueprintId && (
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                          />
+                        )}
+
+                        {/* Small design thumbnail (only when NOT showing personalized mockup) */}
+                        {!isPersonalized && design.design_url && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
