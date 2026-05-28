@@ -42,3 +42,5 @@ next-env.d.ts
 
 .vercel
 build-output*.txt
+build-output*.txt
+*.legacy.sql.bak
