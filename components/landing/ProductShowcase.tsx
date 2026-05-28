@@ -140,9 +140,12 @@ function ProductCard({ product, index, isHovered, onHover }: ProductCardProps) {
 
         {/* Product info */}
         <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
-          <div>
-            <h3 className="text-slate-900 font-semibold text-base tracking-tight">{product.name}</h3>
-            <p className="text-slate-500 text-sm mt-0.5">
+          <div className="min-w-0">
+            <h3 className="text-slate-900 font-semibold text-base tracking-tight truncate">{product.name}</h3>
+            <p className="text-[10px] text-slate-400 tracking-widest uppercase mt-0.5 truncate">
+              {product.subtitle}
+            </p>
+            <p className="text-slate-500 text-sm mt-1.5">
               from <span className="font-bold text-slate-900">{product.from}</span>
             </p>
           </div>
@@ -184,7 +187,7 @@ export function ProductShowcase() {
             Built for <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">every moment</span>
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Premium products. Professional printing. Print area sized to industry standards.
+            Real Printify products. Same photos you&apos;ll see at checkout.
           </p>
         </motion.div>
 
