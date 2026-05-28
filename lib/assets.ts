@@ -135,32 +135,55 @@ export const PRODUCT_PHOTOS = {
 } as const;
 
 // ============================================================
-// TRANSFORMATION EXAMPLES (Before/After)
+// TRANSFORMATION EXAMPLES (Before/After with style filter)
 // ============================================================
 
-// These use Unsplash because we need lifestyle "before" photos and
-// stylized "after" art. In production, replace with real customer
-// uploads + AI-generated outputs.
-const U = (id: string, w = 700, q = 80) =>
+// Each example uses the SAME source photo for before and after, with a
+// CSS filter applied to the "after" side to demonstrate what each AI
+// style would do to that specific photo. This is honest preview
+// behavior — same subject, transformed.
+//
+// Filters are tuned to approximate each named style's character:
+//  - Royal Renaissance: warm sepia, increased contrast, vignette feel
+//  - Oil Painting: rich saturation, slight darkening, contrast bump
+//  - Watercolor: softened saturation, lifted brightness, gentle blur
+//
+// When real AI-generated samples become available, swap the `after`
+// field with the actual generated URL and drop the `afterFilter`.
+const U = (id: string, w = 800, q = 85) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=${q}&auto=format&fit=crop`;
 
-export const TRANSFORMATION_EXAMPLES = [
+export interface TransformationExample {
+  label: string;
+  style: string;
+  /** Source photo URL — used for BOTH before and after sides */
+  photo: string;
+  /** Optional override if you have an actual AI-generated "after" image */
+  afterPhoto?: string;
+  /** CSS filter applied to the "after" side when afterPhoto is not provided */
+  afterFilter: string;
+}
+
+export const TRANSFORMATION_EXAMPLES: readonly TransformationExample[] = [
   {
     label: 'Pet Portrait',
     style: 'Royal Renaissance',
-    before: U('1543466835-00a7907e9de1'),
-    after: U('1583511655857-d19b40a7a54e'),
+    photo: U('1543466835-00a7907e9de1'), // golden retriever close-up
+    afterFilter:
+      'sepia(0.55) saturate(1.45) contrast(1.22) brightness(0.9) hue-rotate(-5deg)',
   },
   {
     label: 'Family Memory',
     style: 'Oil Painting',
-    before: U('1511895426328-dc8714191300'),
-    after: U('1578321272176-b7bbc0679853'),
+    photo: U('1511895426328-dc8714191300'), // family silhouette at sunset
+    afterFilter:
+      'saturate(1.55) contrast(1.28) brightness(0.92) sepia(0.15) hue-rotate(-3deg)',
   },
   {
     label: 'Travel Moment',
     style: 'Watercolor',
-    before: U('1506905925346-21bda4d32df4'),
-    after: U('1493246507139-91e8fad9978e'),
+    photo: U('1506905925346-21bda4d32df4'), // mountain landscape
+    afterFilter:
+      'saturate(0.75) contrast(0.92) brightness(1.1) blur(0.4px) hue-rotate(5deg)',
   },
 ] as const;
