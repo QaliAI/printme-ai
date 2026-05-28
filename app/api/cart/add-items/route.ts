@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         )
       `
       )
-      .eq('id', cart.id)
+      .eq('id', cart!.id)
       .single();
 
     return NextResponse.json(updatedCart);

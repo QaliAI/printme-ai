@@ -71,11 +71,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Get AI provider and generate design
-    const provider = getImageProvider();
-    const designUrl = await provider.generateDesign(
+    const provider = await getImageProvider();
+    const result = await provider.generateDesign({
       imageUrl,
-      `${style.name} style: ${style.description}`
-    );
+      promptTemplate: `${style.name} style: ${style.description}`,
+    });
+    const designUrl = result.imageUrl;
 
     // Update design record with generated image
     const { data: finalDesign, error: updateError } = await supabase

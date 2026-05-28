@@ -41,6 +41,8 @@ export interface UserUpload {
   file_size?: number;
   image_width?: number;
   image_height?: number;
+  width?: number; // Alias for image_width
+  height?: number; // Alias for image_height
   has_face?: boolean;
   quality_score?: number;
   created_at: string;
@@ -57,6 +59,7 @@ export interface GeneratedDesign {
   style_preset_id: string;
   original_image_url: string;
   generated_image_url?: string;
+  design_url?: string; // Alias for generated_image_url when queried as design_url
   thumbnail_url?: string;
   status: DesignStatus;
   error_message?: string;
@@ -77,6 +80,8 @@ export interface Product {
   category: string;
   base_price: number;
   retail_price: number;
+  emoji?: string;
+  mockup_url?: string; // Alias for mockup_template_url
   mockup_template_url?: string;
   print_area_config?: any;
   printify_blueprint_id?: string;
@@ -119,6 +124,24 @@ export interface CartItem {
   unit_price: number;
   created_at: string;
   updated_at: string;
+}
+
+// Extended types for Supabase queries with relations
+export interface CartItemWithRelations extends CartItem {
+  product_variant?: ProductVariantWithProduct | ProductVariantWithProduct[];
+  design?: GeneratedDesign | GeneratedDesign[];
+}
+
+export interface ProductVariantWithProduct extends ProductVariant {
+  product?: Product;
+}
+
+// Helper function to safely access first element if array, or return object
+export function getFirstOrValue<T>(value: T | T[] | undefined): T | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
 }
 
 // Orders

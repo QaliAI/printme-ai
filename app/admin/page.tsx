@@ -48,8 +48,10 @@ export default function AdminDashboard() {
 
       const { data: activeUserData } = await supabase
         .from('user_uploads')
-        .select('user_id', { distinct: true })
+        .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString());
+
+      const uniqueActiveUsers = new Set(activeUserData?.map(item => item.user_id) || []);
 
       // Fetch recent orders
       const { data: recentOrders } = await supabase
@@ -69,7 +71,7 @@ export default function AdminDashboard() {
         totalOrders: orderCount || 0,
         totalRevenue: totalRevenue / 100, // Convert from cents
         totalDesigns: designCount || 0,
-        activeUsers: activeUserData?.length || 0,
+        activeUsers: uniqueActiveUsers.size,
         recentOrders: recentOrders || [],
       });
     } catch (err) {

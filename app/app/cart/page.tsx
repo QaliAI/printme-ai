@@ -3,26 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
-
-interface CartItem {
-  id: string;
-  quantity: number;
-  product_variant_id: string;
-  design_id: string;
-  product?: any;
-  variant?: any;
-  design?: any;
-}
+import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
 
 interface CartData {
   id: string;
   user_id: string;
   created_at: string;
-  cart_items: CartItem[];
+  cart_items: CartItemWithRelations[];
 }
 
 export default function CartPage() {
@@ -31,10 +23,6 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchCart();
-  }, []);
 
   const fetchCart = async () => {
     try {
@@ -47,9 +35,14 @@ export default function CartPage() {
           created_at,
           cart_items (
             id,
+            cart_id,
             quantity,
+            product_id,
             product_variant_id,
             design_id,
+            unit_price,
+            created_at,
+            updated_at,
             product_variant:product_variants(
               id,
               product_id,
@@ -66,7 +59,16 @@ export default function CartPage() {
             ),
             design:generated_designs(
               id,
-              design_url
+              user_id,
+              upload_id,
+              design_url,
+              style_preset_id,
+              original_image_url,
+              status,
+              ai_provider,
+              is_approved,
+              created_at,
+              updated_at
             )
           )
         `
@@ -86,6 +88,12 @@ export default function CartPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
     if (quantity < 1) return;
@@ -173,11 +181,15 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <Container size="lg" className="py-12">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full border-4 border-gray-300 border-t-blue-600 w-12 h-12"></div>
-        </div>
-      </Container>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+          transition={{ rotate: { duration: 2, repeat: Infinity, ease: 'linear' }, scale: { duration: 1, repeat: Infinity } }}
+          className="text-6xl"
+        >
+          🛒
+        </motion.div>
+      </div>
     );
   }
 
@@ -185,60 +197,120 @@ export default function CartPage() {
 
   if (isEmpty) {
     return (
-      <Container size="lg" className="py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
-          <p className="text-lg text-gray-600">Your cart is empty</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+        <Container size="lg" className="py-12 relative">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+              Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Cart</span>
+            </h1>
+            <p className="text-lg text-gray-600">Time to fill it with magic ✨</p>
+          </motion.div>
 
-        <Card className="mb-8">
-          <CardBody className="text-center py-12">
-            <p className="text-gray-600 mb-6">Ready to create something amazing?</p>
-            <Link href="/app">
-              <Button>Start Creating</Button>
-            </Link>
-          </CardBody>
-        </Card>
-      </Container>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="mb-8 backdrop-blur-xl bg-white/70 border-white/40 shadow-xl">
+              <CardBody className="text-center py-16">
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-8xl mb-6"
+                >
+                  🛒
+                </motion.div>
+                <p className="text-xl text-gray-700 mb-2 font-semibold">Your cart is empty</p>
+                <p className="text-gray-600 mb-6">Ready to create something amazing?</p>
+                <Link href="/app">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8">
+                      ✨ Start Creating
+                    </Button>
+                  </motion.div>
+                </Link>
+              </CardBody>
+            </Card>
+          </motion.div>
+        </Container>
+      </div>
     );
   }
 
   // Calculate totals
   const cartTotal = cart.cart_items.reduce((sum, item) => {
-    const product = (item.product_variant as any)?.product;
-    const variant = item.product_variant as any;
+    const productVariant = getFirstOrValue(item.product_variant);
+    const product = productVariant?.product;
     const basePrice = product?.base_price || 0;
-    const modifier = variant?.price_modifier || 0;
+    const modifier = productVariant?.price_modifier || 0;
     const itemPrice = basePrice + modifier;
     return sum + itemPrice * item.quantity;
   }, 0);
 
   return (
-    <Container size="lg" className="py-12">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
-        <p className="text-lg text-gray-600">{cart.cart_items.length} item(s)</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+      {/* Background blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-0 -left-20 w-96 h-96 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+          animate={{ x: [0, 100, 0], y: [0, 50, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-0 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"
+          animate={{ x: [0, -100, 0], y: [0, -100, 0] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
+        />
       </div>
 
+      <Container size="lg" className="py-12 relative">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12 text-center"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+            Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Cart</span>
+          </h1>
+          <p className="text-lg text-gray-600">{cart.cart_items.length} item{cart.cart_items.length !== 1 ? 's' : ''} ready to ship</p>
+        </motion.div>
+
       {error && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg"
+        >
           <p className="text-sm text-red-700">{error}</p>
-        </div>
+        </motion.div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          {cart.cart_items.map((item) => {
-            const product = (item.product_variant as any)?.product;
-            const variant = item.product_variant as any;
-            const design = item.design as any;
+          <AnimatePresence>
+          {cart.cart_items.map((item, i) => {
+            const productVariant = getFirstOrValue(item.product_variant);
+            const design = getFirstOrValue(item.design);
+            const product = productVariant?.product;
             const basePrice = product?.base_price || 0;
-            const modifier = variant?.price_modifier || 0;
+            const modifier = productVariant?.price_modifier || 0;
             const itemPrice = basePrice + modifier;
 
             return (
-              <Card key={item.id}>
+              <motion.div
+                key={item.id}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20, height: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+              <Card className="backdrop-blur-xl bg-white/80 border-white/40 shadow-lg hover:shadow-xl transition-shadow">
                 <CardBody className="p-4">
                   <div className="flex gap-4">
                     {/* Item Preview */}
@@ -260,9 +332,9 @@ export default function CartPage() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">{product?.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">
-                        {variant?.size && variant?.color
-                          ? `${variant.size}, ${variant.color}`
-                          : variant?.size || variant?.color}
+                        {productVariant?.size && productVariant?.color
+                          ? `${productVariant.size}, ${productVariant.color}`
+                          : productVariant?.size || productVariant?.color}
                       </p>
                       <p className="font-semibold text-gray-900 text-lg">
                         ${(itemPrice * item.quantity).toFixed(2)}
@@ -299,40 +371,59 @@ export default function CartPage() {
                   </div>
                 </CardBody>
               </Card>
+              </motion.div>
             );
           })}
+          </AnimatePresence>
         </div>
 
         {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+          className="lg:col-span-1"
+        >
+          <Card className="sticky top-4 backdrop-blur-xl bg-white/80 border-white/40 shadow-xl">
             <CardHeader>
-              <h3 className="font-semibold text-gray-900">Order Summary</h3>
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <span className="text-xl">📋</span> Order Summary
+              </h3>
             </CardHeader>
             <CardBody className="space-y-4">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span className="font-semibold">${cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping</span>
-                <span className="text-gray-500">Calculated at checkout</span>
+                <span className="text-gray-500 text-sm">Calculated at checkout</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Tax</span>
-                <span className="text-gray-500">Calculated at checkout</span>
+                <span className="text-gray-500 text-sm">Calculated at checkout</span>
               </div>
 
-              <div className="border-t pt-4 flex justify-between">
+              <div className="border-t pt-4 flex justify-between items-center">
                 <span className="font-semibold text-gray-900">Total</span>
-                <span className="font-semibold text-gray-900 text-lg">
+                <motion.span
+                  key={cartTotal}
+                  initial={{ scale: 1.2 }}
+                  animate={{ scale: 1 }}
+                  className="font-bold text-gray-900 text-2xl"
+                >
                   ${cartTotal.toFixed(2)}
-                </span>
+                </motion.span>
               </div>
 
-              <Button onClick={handleCheckout} className="w-full">
-                Proceed to Checkout
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  onClick={handleCheckout}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  Checkout →
+                </Button>
+              </motion.div>
 
               <Link href="/app">
                 <Button variant="outline" className="w-full">
@@ -341,8 +432,9 @@ export default function CartPage() {
               </Link>
             </CardBody>
           </Card>
-        </div>
+        </motion.div>
       </div>
-    </Container>
+      </Container>
+    </div>
   );
 }

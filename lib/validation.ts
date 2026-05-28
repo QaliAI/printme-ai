@@ -70,11 +70,11 @@ export async function validateAndParse<T>(schema: z.ZodSchema<T>, data: unknown)
   try {
     const result = await schema.parseAsync(data);
     return { success: true, data: result };
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return {
         success: false,
-        error: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; '),
+        error: error.issues.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
       };
     }
     return {
