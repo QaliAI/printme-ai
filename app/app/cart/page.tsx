@@ -8,7 +8,35 @@ import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
-import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
+import {
+  CartItemWithRelations,
+  GeneratedDesign,
+  PrintifyCachedMockup,
+  getFirstOrValue,
+} from '@/lib/types';
+import { blueprintIdForProductName } from '@/lib/assets';
+
+/**
+ * Pick the best Printify mockup image for a cart item by matching the
+ * cart item's product (by name) to a Printify blueprint and finding the
+ * default/first mockup in the design's cache.
+ */
+function getCartItemMockupUrl(item: CartItemWithRelations): string | undefined {
+  const productVariant = getFirstOrValue(item.product_variant);
+  const product = productVariant?.product;
+  const design = getFirstOrValue(item.design) as GeneratedDesign | undefined;
+
+  const blueprintId = blueprintIdForProductName(product?.name);
+  if (!blueprintId || !design?.printify_mockups) return undefined;
+
+  const blueprintEntry = (design.printify_mockups as PrintifyCachedMockup[]).find(
+    (m) => m.blueprintId === blueprintId
+  );
+  if (!blueprintEntry?.mockups?.length) return undefined;
+
+  const defaultMockup = blueprintEntry.mockups.find((m) => m.isDefault);
+  return defaultMockup?.src || blueprintEntry.mockups[0]?.src;
+}
 
 interface CartData {
   id: string;
@@ -23,6 +51,39 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  /**
+   * Fetch cached Printify mockup data for the given design IDs.
+   * Gracefully no-ops if the migration hasn't been applied yet.
+   */
+  const fetchMockupCache = async (
+    designIds: string[]
+  ): Promise<Record<string, PrintifyCachedMockup[]>> => {
+    if (designIds.length === 0) return {};
+    try {
+      const { data, error: mockupErr } = await supabase
+        .from('generated_designs')
+        .select('id, printify_mockups')
+        .in('id', designIds);
+
+      if (mockupErr) {
+        // Column doesn't exist yet (migration not applied) — silently skip
+        console.warn('Mockup cache query failed (likely missing migration):', mockupErr.message);
+        return {};
+      }
+
+      const byDesignId: Record<string, PrintifyCachedMockup[]> = {};
+      for (const row of data || []) {
+        if (row.printify_mockups) {
+          byDesignId[row.id] = row.printify_mockups as PrintifyCachedMockup[];
+        }
+      }
+      return byDesignId;
+    } catch (err) {
+      console.warn('Mockup cache fetch failed:', err);
+      return {};
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -78,6 +139,37 @@ export default function CartPage() {
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
+      }
+
+      // Hydrate cached Printify mockups onto each cart item's design.
+      // Non-blocking: if it fails, the cart still renders with design URLs.
+      if (data?.cart_items?.length) {
+        const designIds = Array.from(
+          new Set(
+            data.cart_items
+              .map((item: CartItemWithRelations) => {
+                const design = getFirstOrValue(item.design);
+                return design?.id;
+              })
+              .filter((id: string | undefined): id is string => !!id)
+          )
+        );
+        const mockupsByDesignId = await fetchMockupCache(designIds);
+
+        // Merge mockup data onto each cart item's design.
+        // Cast through unknown because Supabase's inferred type doesn't include
+        // the dynamically-added printify_mockups field.
+        for (const item of data.cart_items) {
+          const design = getFirstOrValue(item.design);
+          if (design && mockupsByDesignId[design.id]) {
+            const mockups = mockupsByDesignId[design.id];
+            if (Array.isArray(item.design)) {
+              (item.design[0] as unknown as GeneratedDesign).printify_mockups = mockups;
+            } else if (item.design) {
+              (item.design as unknown as GeneratedDesign).printify_mockups = mockups;
+            }
+          }
+        }
       }
 
       setCart(data || null);
@@ -313,20 +405,35 @@ export default function CartPage() {
               <Card className="backdrop-blur-xl bg-white/80 border-white/40 shadow-lg hover:shadow-xl transition-shadow">
                 <CardBody className="p-4">
                   <div className="flex gap-4">
-                    {/* Item Preview */}
-                    <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                      {design?.design_url ? (
-                        <img
-                          src={design.design_url}
-                          alt={product?.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-2xl">
-                          {product?.emoji}
+                    {/* Personalized Printify mockup → design URL → emoji */}
+                    {(() => {
+                      const mockupUrl = getCartItemMockupUrl(item);
+                      const fallbackImage = design?.design_url;
+                      const itemImage = mockupUrl || fallbackImage;
+                      const isMockup = !!mockupUrl;
+
+                      return (
+                        <div className="relative w-24 h-24 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden ring-1 ring-slate-200">
+                          {itemImage ? (
+                            <img
+                              src={itemImage}
+                              alt={product?.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-2xl">
+                              {product?.emoji}
+                            </div>
+                          )}
+                          {isMockup && (
+                            <div className="absolute top-1 right-1 bg-emerald-500/95 text-white text-[8px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                              <span className="w-1 h-1 rounded-full bg-white" />
+                              Live
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
 
                     {/* Item Details */}
                     <div className="flex-1">

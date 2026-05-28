@@ -52,6 +52,14 @@ export interface UserUpload {
 // Generated Designs
 export type DesignStatus = 'pending' | 'generating' | 'completed' | 'failed';
 
+export interface PrintifyCachedMockup {
+  blueprintId: number;
+  productId?: string;
+  title?: string;
+  mockups: Array<{ src: string; position: string; isDefault: boolean }>;
+  error?: string;
+}
+
 export interface GeneratedDesign {
   id: string;
   user_id: string;
@@ -67,6 +75,10 @@ export interface GeneratedDesign {
   ai_request_id?: string;
   prompt_used?: string;
   is_approved: boolean;
+  // Cached Printify mockup URLs — populated after first preview generation
+  printify_mockups?: PrintifyCachedMockup[];
+  printify_image_id?: string;
+  printify_mockups_generated_at?: string;
   created_at: string;
   updated_at: string;
 }
