@@ -21,10 +21,12 @@ interface BlueprintMockupResult {
 interface MockupsResponse {
   imageId: string;
   mockups: BlueprintMockupResult[];
+  fromCache?: boolean;
 }
 
 interface LiveProductMockupsProps {
   designUrl: string;
+  designId?: string;
   onSelectProduct?: (blueprintId: number) => void;
 }
 
@@ -44,19 +46,24 @@ const PRODUCT_LIST = [
  * Mockup Generator API. Falls back to blank product photos with the
  * design URL overlaid if Printify generation fails.
  */
-export function LiveProductMockups({ designUrl, onSelectProduct }: LiveProductMockupsProps) {
+export function LiveProductMockups({
+  designUrl,
+  designId,
+  onSelectProduct,
+}: LiveProductMockupsProps) {
   const [mockupsByBlueprint, setMockupsByBlueprint] = useState<Record<number, BlueprintMockupResult>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fromCache, setFromCache] = useState(false);
 
-  const fetchMockups = async () => {
+  const fetchMockups = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/printify/mockups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: designUrl }),
+        body: JSON.stringify({ imageUrl: designUrl, designId, forceRefresh }),
       });
 
       if (!response.ok) {
@@ -72,6 +79,7 @@ export function LiveProductMockups({ designUrl, onSelectProduct }: LiveProductMo
         indexed[m.blueprintId] = m;
       }
       setMockupsByBlueprint(indexed);
+      setFromCache(!!data.fromCache);
     } catch (err) {
       console.error('Mockup generation failed:', err);
       setError(err instanceof Error ? err.message : 'Failed to generate previews');
@@ -117,9 +125,22 @@ export function LiveProductMockups({ designUrl, onSelectProduct }: LiveProductMo
           </div>
         )}
 
+        {!loading && !error && fromCache && (
+          <div className="flex items-center gap-2 text-xs text-slate-600 bg-white/70 backdrop-blur-md border border-slate-200 rounded-full px-3 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="tracking-wide">Cached preview</span>
+            <button
+              onClick={() => fetchMockups(true)}
+              className="text-indigo-600 hover:text-indigo-700 font-medium ml-1"
+            >
+              ↻ Refresh
+            </button>
+          </div>
+        )}
+
         {error && !loading && (
           <button
-            onClick={fetchMockups}
+            onClick={() => fetchMockups()}
             className="text-sm text-slate-700 bg-white border border-slate-200 rounded-full px-4 py-2 hover:bg-slate-50"
           >
             🔄 Retry

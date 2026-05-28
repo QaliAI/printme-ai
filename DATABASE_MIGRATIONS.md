@@ -134,6 +134,26 @@ CREATE INDEX idx_orders_tracking_number ON orders(tracking_number);
 --    - 'designs' can be public for viewing generated designs
 ```
 
+## 4. Add Printify mockup cache columns (`migrations/001_add_mockup_cache.sql`)
+
+Caches Printify mockup URLs on `generated_designs` so we don't regenerate them
+on every page view. First load triggers Printify mockup generation (10-30s);
+subsequent loads are instant.
+
+```sql
+ALTER TABLE generated_designs
+  ADD COLUMN IF NOT EXISTS printify_mockups JSONB,
+  ADD COLUMN IF NOT EXISTS printify_image_id TEXT,
+  ADD COLUMN IF NOT EXISTS printify_mockups_generated_at TIMESTAMP;
+
+CREATE INDEX IF NOT EXISTS idx_generated_designs_has_mockups
+  ON generated_designs ((printify_mockups IS NOT NULL))
+  WHERE printify_mockups IS NOT NULL;
+```
+
+The cache fails open: if these columns don't exist yet, the mockup endpoint
+still works — it just regenerates on every request.
+
 ## Steps to Apply Migrations
 
 1. Go to the Supabase Dashboard

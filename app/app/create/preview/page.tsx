@@ -424,6 +424,7 @@ export default function PreviewPage() {
               <CardBody className="p-6 md:p-8">
                 <LiveProductMockups
                   designUrl={design.design_url}
+                  designId={design.id}
                   onSelectProduct={() =>
                     router.push(`/app/create/products?design=${design.id}`)
                   }

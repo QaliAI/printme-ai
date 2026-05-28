@@ -1,45 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 /**
- * Printify Mockup Generator API
+ * Printify Mockup Generator API with Supabase caching.
  *
  * POST /api/printify/mockups
  *
  * Body:
- *  {
- *    imageUrl: string,           // public URL of the user's design
- *    blueprintIds?: number[],    // which products to generate for
- *  }
+ *   {
+ *     imageUrl: string,           // public URL of the user's design
+ *     designId?: string,          // optional - enables cache lookup/persist
+ *     blueprintIds?: number[],    // which products to generate for
+ *     forceRefresh?: boolean,     // bypass cache
+ *   }
  *
- * Flow:
- *  1. Upload the user's design image to Printify
- *  2. For each requested blueprint, create a draft product with that design
- *  3. Return the mockup URLs for each product
- *
- * The mockups returned are REAL renders of the user's design on actual
- * Printify products — same imagery they'll see at checkout.
+ * Flow with caching:
+ *   1. If designId provided + cache exists + !forceRefresh: return cached
+ *   2. Otherwise upload design to Printify
+ *   3. Create draft products on selected blueprints (in parallel)
+ *   4. Persist results to generated_designs.printify_mockups if designId given
+ *   5. Return mockup URLs
  */
 
 const mockupsRequestSchema = z.object({
   imageUrl: z.string().url(),
+  designId: z.string().uuid().optional(),
   blueprintIds: z.array(z.number()).optional(),
+  forceRefresh: z.boolean().optional().default(false),
 });
 
-// Default blueprints (matches what's shown on the landing page)
 const DEFAULT_BLUEPRINTS = [12, 68, 937, 282, 77, 268, 553, 400];
 
 interface PrintifyMockup {
   src: string;
   position: string;
   is_default: boolean;
-  variant_ids: number[];
+  variant_ids?: number[];
 }
 
 interface PrintifyDraftProductResponse {
   id: string;
   title: string;
   images?: PrintifyMockup[];
+}
+
+interface CachedMockup {
+  blueprintId: number;
+  productId?: string;
+  title?: string;
+  mockups: Array<{ src: string; position: string; isDefault: boolean }>;
+  error?: string;
 }
 
 async function printifyRequest<T>(
@@ -66,10 +77,6 @@ async function printifyRequest<T>(
   return res.json() as Promise<T>;
 }
 
-/**
- * Step 1: Upload the user's design image to Printify.
- * Returns the upload's image_id which we use when creating products.
- */
 async function uploadImageToPrintify(imageUrl: string): Promise<string> {
   const result = await printifyRequest<{ id: string }>('/uploads/images.json', {
     method: 'POST',
@@ -81,10 +88,6 @@ async function uploadImageToPrintify(imageUrl: string): Promise<string> {
   return result.id;
 }
 
-/**
- * Step 2: Get the first print provider for a blueprint and a sample variant.
- * We need this to construct a valid draft product request.
- */
 async function getFirstPrintProvider(blueprintId: number): Promise<{
   providerId: number;
   variantId: number;
@@ -109,11 +112,6 @@ async function getFirstPrintProvider(blueprintId: number): Promise<{
   };
 }
 
-/**
- * Step 3: Create a draft product on a blueprint with the uploaded design.
- * This triggers Printify's mockup generator to render the design on the
- * product. The response includes mockup image URLs.
- */
 async function createDraftProductWithDesign(
   shopId: string,
   blueprintId: number,
@@ -161,10 +159,91 @@ async function createDraftProductWithDesign(
   );
 }
 
+/**
+ * Returns a Supabase admin client, or null if env vars not configured.
+ * Cache operations gracefully no-op when null.
+ */
+function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  if (url.includes('placeholder')) return null;
+  return createClient(url, key);
+}
+
+interface CachedDesignRow {
+  printify_mockups: CachedMockup[] | null;
+  printify_image_id: string | null;
+  printify_mockups_generated_at: string | null;
+}
+
+async function loadCachedMockups(
+  designId: string,
+  expectedBlueprintIds: number[]
+): Promise<{
+  mockups: CachedMockup[] | null;
+  imageId: string | null;
+} | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('generated_designs')
+      .select('printify_mockups, printify_image_id, printify_mockups_generated_at')
+      .eq('id', designId)
+      .single();
+
+    if (error || !data) return null;
+
+    const row = data as CachedDesignRow;
+    if (!row.printify_mockups || row.printify_mockups.length === 0) return null;
+
+    // Confirm cache covers all requested blueprints
+    const cachedIds = new Set(row.printify_mockups.map((m) => m.blueprintId));
+    const missing = expectedBlueprintIds.filter((id) => !cachedIds.has(id));
+    if (missing.length > 0) return null;
+
+    return {
+      mockups: row.printify_mockups,
+      imageId: row.printify_image_id,
+    };
+  } catch (err) {
+    // If column doesn't exist (migration not applied yet) or any other issue,
+    // silently fall through to generation.
+    console.warn('Mockup cache lookup failed:', err);
+    return null;
+  }
+}
+
+async function saveCachedMockups(
+  designId: string,
+  imageId: string,
+  mockups: CachedMockup[]
+): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
+
+  try {
+    await supabase
+      .from('generated_designs')
+      .update({
+        printify_mockups: mockups,
+        printify_image_id: imageId,
+        printify_mockups_generated_at: new Date().toISOString(),
+      })
+      .eq('id', designId);
+  } catch (err) {
+    // Migration may not be applied yet — fail open so request still succeeds
+    console.warn('Mockup cache persist failed:', err);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageUrl, blueprintIds = DEFAULT_BLUEPRINTS } = mockupsRequestSchema.parse(body);
+    const { imageUrl, designId, blueprintIds = DEFAULT_BLUEPRINTS, forceRefresh } =
+      mockupsRequestSchema.parse(body);
 
     const shopId = process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID || process.env.PRINTIFY_SHOP_ID;
     if (!shopId) {
@@ -174,20 +253,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 1: Upload the user's image once
+    // ── Cache check ───────────────────────────────────────────────
+    if (designId && !forceRefresh) {
+      const cached = await loadCachedMockups(designId, blueprintIds);
+      if (cached?.mockups) {
+        return NextResponse.json({
+          imageId: cached.imageId,
+          mockups: cached.mockups,
+          fromCache: true,
+        });
+      }
+    }
+
+    // ── Step 1: Upload the user's image to Printify ───────────────
     const imageId = await uploadImageToPrintify(imageUrl);
 
-    // Step 2: Create a draft product per blueprint in parallel
+    // ── Step 2: Create a draft product per blueprint in parallel ──
     const settledResults = await Promise.allSettled(
       blueprintIds.map((id) => createDraftProductWithDesign(shopId, id, imageId))
     );
 
-    // Step 3: Extract mockup URLs from successful responses.
-    // Printify CDN URLs persist after the product is deleted, so we can
-    // immediately schedule cleanup to keep the shop tidy.
+    // ── Step 3: Shape the response ────────────────────────────────
     const productIdsToCleanup: string[] = [];
 
-    const mockups = blueprintIds.map((blueprintId, i) => {
+    const mockups: CachedMockup[] = blueprintIds.map((blueprintId, i) => {
       const result = settledResults[i];
       if (result.status === 'rejected') {
         return {
@@ -211,9 +300,12 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Fire-and-forget cleanup of draft products so the shop doesn't fill up.
-    // Opt-in via PRINTIFY_AUTO_CLEANUP=true. Disabled by default until we
-    // confirm that mockup CDN URLs persist after product deletion.
+    // ── Step 4: Persist to cache (fire-and-forget; non-blocking) ──
+    if (designId) {
+      void saveCachedMockups(designId, imageId, mockups);
+    }
+
+    // ── Step 5: Optional draft-product cleanup ────────────────────
     if (process.env.PRINTIFY_AUTO_CLEANUP === 'true' && productIdsToCleanup.length > 0) {
       void Promise.allSettled(
         productIdsToCleanup.map((productId) =>
@@ -229,8 +321,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       imageId,
       mockups,
-      // Send the product IDs back so callers can persist and clean up later
       productIds: productIdsToCleanup,
+      fromCache: false,
     });
   } catch (err) {
     console.error('Printify mockup error:', err);
