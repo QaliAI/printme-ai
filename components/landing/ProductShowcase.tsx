@@ -16,6 +16,72 @@ const PRODUCTS = [
   PRODUCT_PHOTOS.sticker,
 ] as const;
 
+/**
+ * Print-area placeholder that mimics what Printful/Printify show:
+ * a clean dashed boundary marking the actual printable surface,
+ * with a subtle upload prompt inside.
+ */
+function PrintAreaPlaceholder({ isHovered }: { isHovered: boolean }) {
+  return (
+    <div className="relative w-full h-full">
+      {/* Outer dashed border — the "print boundary" */}
+      <motion.div
+        className="absolute inset-0 rounded-sm border-[1.5px] border-dashed border-white shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
+        animate={{
+          borderColor: isHovered ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.85)',
+        }}
+      />
+
+      {/* Inner translucent fill */}
+      <div className="absolute inset-[3px] rounded-[2px] bg-gradient-to-br from-white/30 via-white/15 to-white/30 backdrop-blur-[2px] flex flex-col items-center justify-center overflow-hidden">
+        {/* Subtle inner glow on hover */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20"
+          animate={{ opacity: isHovered ? 1 : 0 }}
+          transition={{ duration: 0.3 }}
+        />
+
+        {/* Center icon + label */}
+        <div className="relative flex flex-col items-center justify-center text-center px-1">
+          {/* Camera/upload icon */}
+          <motion.svg
+            className="w-4 h-4 md:w-5 md:h-5 text-white mb-1 drop-shadow-md"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+            animate={{ y: isHovered ? -1 : 0 }}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+            />
+          </motion.svg>
+          <div className="text-white text-[9px] md:text-[10px] font-semibold tracking-[0.15em] uppercase drop-shadow-md leading-tight">
+            Your
+          </div>
+          <div className="text-white text-[9px] md:text-[10px] font-semibold tracking-[0.15em] uppercase drop-shadow-md leading-tight">
+            Design
+          </div>
+        </div>
+      </div>
+
+      {/* Corner markers — like crop marks */}
+      {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((corner) => (
+        <div
+          key={corner}
+          className={`absolute w-2 h-2 ${
+            corner.startsWith('top') ? '-top-px' : '-bottom-px'
+          } ${corner.endsWith('left') ? '-left-px' : '-right-px'}`}
+        >
+          <div className="absolute inset-0 bg-white rounded-full shadow-md ring-1 ring-slate-900/20" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface ProductCardProps {
   product: (typeof PRODUCTS)[number];
   index: number;
@@ -44,42 +110,29 @@ function ProductCard({ product, index, isHovered, onHover }: ProductCardProps) {
           <motion.img
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover"
-            animate={isHovered ? { scale: 1.05 } : { scale: 1 }}
-            transition={{ duration: 0.4 }}
+            className="absolute inset-0 w-full h-full object-cover"
+            animate={isHovered ? { scale: 1.04 } : { scale: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
             loading="lazy"
           />
 
-          {/* "Your Design Here" placeholder overlay positioned on the product */}
-          <motion.div
+          {/* Print area placeholder — positioned precisely on the product's printable surface */}
+          <div
             className="absolute pointer-events-none"
             style={{
               top: product.designArea.top,
               left: product.designArea.left,
               width: product.designArea.width,
               height: product.designArea.height,
+              aspectRatio: product.aspectRatio,
             }}
-            initial={{ opacity: 0.7 }}
-            animate={{ opacity: isHovered ? 0.95 : 0.7 }}
           >
-            <div className="w-full h-full rounded-md border-2 border-dashed border-white/90 bg-gradient-to-br from-indigo-500/40 via-purple-500/40 to-rose-500/40 backdrop-blur-[2px] flex items-center justify-center shadow-lg">
-              <div className="text-center px-2">
-                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
-                  YOUR
-                </div>
-                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
-                  DESIGN
-                </div>
-                <div className="text-white text-[10px] md:text-xs font-semibold tracking-wide drop-shadow-md">
-                  HERE
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            <PrintAreaPlaceholder isHovered={isHovered} />
+          </div>
 
-          {/* Hover gradient overlay */}
+          {/* Subtle hover gradient overlay */}
           <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-t from-slate-900/30 via-transparent to-transparent pointer-events-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: isHovered ? 1 : 0 }}
           />
@@ -88,7 +141,7 @@ function ProductCard({ product, index, isHovered, onHover }: ProductCardProps) {
         {/* Product info */}
         <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
           <div>
-            <h3 className="text-slate-900 font-semibold text-base">{product.name}</h3>
+            <h3 className="text-slate-900 font-semibold text-base tracking-tight">{product.name}</h3>
             <p className="text-slate-500 text-sm mt-0.5">
               from <span className="font-bold text-slate-900">{product.from}</span>
             </p>
@@ -131,7 +184,7 @@ export function ProductShowcase() {
             Built for <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">every moment</span>
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Premium products. Professional printing. Worldwide shipping.
+            Premium products. Professional printing. Print area sized to industry standards.
           </p>
         </motion.div>
 
