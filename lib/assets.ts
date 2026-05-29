@@ -60,7 +60,7 @@ export const PRODUCT_PHOTOS = {
   tshirt: {
     blueprintId: 12,
     image: P('66d81b70295ea4f038065152'),
-    designArea: { top: '30%', left: '42%', width: '16%', height: '18%' },
+    designArea: { top: '30%', left: '40%', width: '20%', height: '22%' },
     aspectRatio: '12/14',
     name: 'T-Shirt',
     subtitle: 'Bella+Canvas 3001',
@@ -69,7 +69,7 @@ export const PRODUCT_PHOTOS = {
   mug: {
     blueprintId: 68,
     image: P('66c42e5361b2691da8085442'),
-    designArea: { top: '38%', left: '35%', width: '24%', height: '22%' },
+    designArea: { top: '35%', left: '37%', width: '23%', height: '25%' },
     aspectRatio: '3/2',
     name: 'Mug',
     subtitle: '11oz Ceramic',
@@ -78,7 +78,7 @@ export const PRODUCT_PHOTOS = {
   canvas: {
     blueprintId: 937,
     image: P('66d954ce622599d9330fe942'),
-    designArea: { top: '18%', left: '20%', width: '52%', height: '60%' },
+    designArea: { top: '17%', left: '23%', width: '49%', height: '58%' },
     aspectRatio: '1/1',
     name: 'Canvas',
     subtitle: 'Matte Stretched',
@@ -87,7 +87,7 @@ export const PRODUCT_PHOTOS = {
   poster: {
     blueprintId: 282,
     image: P('66d868f50709c7f0450662d6'),
-    designArea: { top: '12%', left: '22%', width: '56%', height: '76%' },
+    designArea: { top: '11%', left: '28%', width: '44%', height: '76%' },
     aspectRatio: '2/3',
     name: 'Poster',
     subtitle: 'Matte Vertical',
@@ -96,7 +96,7 @@ export const PRODUCT_PHOTOS = {
   hoodie: {
     blueprintId: 77,
     image: P('66dedd239da894140e0af9e2'),
-    designArea: { top: '34%', left: '42%', width: '16%', height: '17%' },
+    designArea: { top: '34%', left: '40%', width: '20%', height: '20%' },
     aspectRatio: '1/1',
     name: 'Hoodie',
     subtitle: 'Gildan 18500',
@@ -105,7 +105,7 @@ export const PRODUCT_PHOTOS = {
   phoneCase: {
     blueprintId: 268,
     image: P('66fcfda76bf448ffd703a472'),
-    designArea: { top: '20%', left: '36%', width: '28%', height: '60%' },
+    designArea: { top: '20%', left: '55%', width: '20%', height: '58%' },
     aspectRatio: '9/19',
     name: 'Phone Case',
     subtitle: 'Slim Series',
@@ -114,7 +114,7 @@ export const PRODUCT_PHOTOS = {
   toteBag: {
     blueprintId: 553,
     image: P('66dade985b5ac06ef50ad143'),
-    designArea: { top: '34%', left: '36%', width: '28%', height: '30%' },
+    designArea: { top: '33%', left: '36%', width: '28%', height: '32%' },
     aspectRatio: '1/1',
     name: 'Tote Bag',
     subtitle: 'AS Colour 1001',
@@ -123,7 +123,7 @@ export const PRODUCT_PHOTOS = {
   sticker: {
     blueprintId: 400,
     image: P('66c5e3b718c4f0cee80b1e52'),
-    designArea: { top: '24%', left: '26%', width: '48%', height: '52%' },
+    designArea: { top: '15%', left: '18%', width: '64%', height: '64%' },
     aspectRatio: '1/1',
     name: 'Sticker',
     subtitle: 'Kiss-Cut Vinyl',
