@@ -17,8 +17,7 @@ const PRODUCTS = [
 ] as const;
 
 /**
- * Print-area placeholder modeled after professional POD mockup tools.
- * Subtle diagonal stripe pattern + clean "Design Placeholder" text,
+ * Print-area placeholder modeled after professional POD mockup tools,
  * sized proportionally to each product's actual print area.
  */
 function PrintAreaPlaceholder({ isHovered }: { isHovered: boolean }) {
@@ -40,12 +39,12 @@ function PrintAreaPlaceholder({ isHovered }: { isHovered: boolean }) {
         transition={{ duration: 0.3 }}
       />
 
-      {/* Centered "Design Placeholder" label */}
+      {/* Centered customer image placeholder label */}
       <div className="absolute inset-0 flex items-center justify-center text-center px-2">
         <div className="text-slate-700 text-[9px] md:text-[10px] font-semibold leading-tight tracking-tight">
-          Design
+          Your
           <br />
-          Placeholder
+          Image
         </div>
       </div>
     </div>

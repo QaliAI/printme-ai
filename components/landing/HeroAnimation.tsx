@@ -265,9 +265,9 @@ export function HeroAnimation() {
                   className="w-full h-auto drop-shadow-2xl"
                 />
 
-                {/* Design overlay - the photo "transferred" onto the shirt */}
+                {/* Design overlay - transparent dog cutout printed onto the shirt */}
                 <motion.div
-                  className="absolute top-[34%] left-[34%] w-[32%] aspect-square overflow-hidden rounded-md shadow-xl ring-1 ring-black/5"
+                  className="absolute top-[29%] left-[27%] w-[46%] h-[36%] pointer-events-none"
                   animate={{
                     opacity: stage >= 2 ? 1 : 0,
                     scale: stage >= 2 ? 1 : 0.5,
@@ -275,9 +275,18 @@ export function HeroAnimation() {
                   transition={{ duration: 0.6, delay: 0.2 }}
                 >
                   <img
-                    src={HERO_IMAGES.phoneScreen}
-                    alt="Your design on shirt"
-                    className="w-full h-full object-cover"
+                    src={HERO_IMAGES.dogCutout}
+                    alt="Dog cutout printed on shirt"
+                    className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 saturate-90 contrast-95 brightness-105"
+                  />
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-[9%] opacity-60 mix-blend-soft-light"
+                    style={{
+                      backgroundImage:
+                        'radial-gradient(circle at 30% 40%, rgba(15,23,42,0.08) 0 1px, transparent 1px), repeating-linear-gradient(12deg, rgba(255,255,255,0.16) 0 1px, transparent 1px 5px)',
+                      backgroundSize: '7px 7px, 9px 9px',
+                    }}
                   />
                 </motion.div>
               </div>

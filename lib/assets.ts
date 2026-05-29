@@ -28,6 +28,7 @@ export const HERO_PHOTO = heroPhotoUrl;
 export const HERO_IMAGES = {
   phoneScreen: heroPhotoUrl,
   shirtBlank: P('66d81b70295ea4f038065152'),
+  dogCutout: '/landing/hero-dog-cutout.png',
 };
 
 // ============================================================
