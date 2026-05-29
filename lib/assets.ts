@@ -60,6 +60,7 @@ export const PRODUCT_PHOTOS = {
   tshirt: {
     blueprintId: 12,
     image: P('66d81b70295ea4f038065152'),
+    sampleImage: '/landing/mockups/product-tshirt.webp',
     designArea: { top: '30%', left: '40%', width: '20%', height: '22%' },
     aspectRatio: '12/14',
     name: 'T-Shirt',
@@ -69,6 +70,7 @@ export const PRODUCT_PHOTOS = {
   mug: {
     blueprintId: 68,
     image: P('66c42e5361b2691da8085442'),
+    sampleImage: '/landing/mockups/product-mug.webp',
     designArea: { top: '35%', left: '37%', width: '23%', height: '25%' },
     aspectRatio: '3/2',
     name: 'Mug',
@@ -78,6 +80,7 @@ export const PRODUCT_PHOTOS = {
   canvas: {
     blueprintId: 937,
     image: P('66d954ce622599d9330fe942'),
+    sampleImage: '/landing/mockups/product-canvas.webp',
     designArea: { top: '17%', left: '23%', width: '49%', height: '58%' },
     aspectRatio: '1/1',
     name: 'Canvas',
@@ -87,6 +90,7 @@ export const PRODUCT_PHOTOS = {
   poster: {
     blueprintId: 282,
     image: P('66d868f50709c7f0450662d6'),
+    sampleImage: '/landing/mockups/product-poster.webp',
     designArea: { top: '11%', left: '28%', width: '44%', height: '76%' },
     aspectRatio: '2/3',
     name: 'Poster',
@@ -96,6 +100,7 @@ export const PRODUCT_PHOTOS = {
   hoodie: {
     blueprintId: 77,
     image: P('66dedd239da894140e0af9e2'),
+    sampleImage: '/landing/mockups/product-hoodie.webp',
     designArea: { top: '34%', left: '40%', width: '20%', height: '20%' },
     aspectRatio: '1/1',
     name: 'Hoodie',
@@ -105,6 +110,7 @@ export const PRODUCT_PHOTOS = {
   phoneCase: {
     blueprintId: 268,
     image: P('66fcfda76bf448ffd703a472'),
+    sampleImage: '/landing/mockups/product-phone-case.webp',
     designArea: { top: '20%', left: '55%', width: '20%', height: '58%' },
     aspectRatio: '9/19',
     name: 'Phone Case',
@@ -114,6 +120,7 @@ export const PRODUCT_PHOTOS = {
   toteBag: {
     blueprintId: 553,
     image: P('66dade985b5ac06ef50ad143'),
+    sampleImage: '/landing/mockups/product-tote-bag.webp',
     designArea: { top: '33%', left: '36%', width: '28%', height: '32%' },
     aspectRatio: '1/1',
     name: 'Tote Bag',
@@ -123,6 +130,7 @@ export const PRODUCT_PHOTOS = {
   sticker: {
     blueprintId: 400,
     image: P('66c5e3b718c4f0cee80b1e52'),
+    sampleImage: '/landing/mockups/product-sticker.webp',
     designArea: { top: '15%', left: '18%', width: '64%', height: '64%' },
     aspectRatio: '1/1',
     name: 'Sticker',
