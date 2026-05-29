@@ -79,7 +79,6 @@ export function BeforeAfterSlider({
       await new Promise((r) => setTimeout(r, 800));
       if (cancelled || hasInteracted) return;
       // Sweep right
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition(72);
       await new Promise((r) => setTimeout(r, 700));
       if (cancelled || hasInteracted) return;
@@ -165,10 +164,10 @@ export function BeforeAfterSlider({
         {beforeLabel}
       </div>
       <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[10px] font-semibold tracking-widest uppercase px-2.5 py-1 rounded-full shadow-lg">
-        ✨ {afterLabel}
+        AI {afterLabel}
       </div>
 
-      {/* Hint text on first load — fades out once interacted */}
+      {/* Hint text on first load - fades out once interacted */}
       {!hasInteracted && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -177,7 +176,7 @@ export function BeforeAfterSlider({
           transition={{ delay: 0.6 }}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900/80 backdrop-blur text-white text-[11px] px-3 py-1.5 rounded-full pointer-events-none flex items-center gap-2"
         >
-          <span>← drag to compare →</span>
+          <span>drag to compare</span>
         </motion.div>
       )}
     </div>

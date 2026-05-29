@@ -25,7 +25,7 @@ export function FloatingExamples() {
             </span>
           </h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Drag the slider on each example to reveal the AI transformation.
+            Drag each slider to compare the exact same photo before and after the selected style.
           </p>
         </motion.div>
 
@@ -93,7 +93,7 @@ export function FloatingExamples() {
           transition={{ delay: 0.4 }}
           className="text-center text-sm text-slate-500 mt-10"
         >
-          Real AI-generated examples. Your photo will produce something equally unique.
+          Same composition. Same subject. Only the selected style changes.
         </motion.p>
       </Container>
     </section>

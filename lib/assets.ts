@@ -309,34 +309,19 @@ export const TRANSFORMATION_EXAMPLES: readonly TransformationExample[] = [
   {
     label: 'Pet Portrait',
     style: 'Cartoon',
-    photo: U('1543466835-00a7907e9de1'), // happy golden retriever close-up
-    afterPhoto: AI(
-      'cute cartoon golden retriever portrait, smiling, bright vibrant colors, ' +
-        'pixar disney animation style, soft lighting, friendly expression, ' +
-        'studio portrait, clean background',
-      4242
-    ),
+    photo: '/landing/transformations/pet-original.webp',
+    afterPhoto: '/landing/transformations/pet-cartoon.webp',
   },
   {
     label: 'Family Memory',
     style: 'Oil Painting',
-    photo: U('1511895426328-dc8714191300'), // family silhouette at sunset on beach
-    afterPhoto: AI(
-      'oil painting masterpiece, family silhouettes standing on beach at sunset, ' +
-        'golden hour sky, classical impressionist brushstrokes, rich warm colors, ' +
-        'museum quality, romantic composition',
-      8888
-    ),
+    photo: '/landing/transformations/family-original.webp',
+    afterPhoto: '/landing/transformations/family-oil-painting.webp',
   },
   {
     label: 'Travel Moment',
     style: 'Watercolor',
-    photo: U('1506905925346-21bda4d32df4'), // snowy mountain landscape
-    afterPhoto: AI(
-      'watercolor painting of snowy mountain peak above clouds, ' +
-        'soft wet-on-wet technique, pastel pinks and blues, ' +
-        'visible paper texture, delicate brushstrokes, artistic landscape',
-      1234
-    ),
+    photo: '/landing/transformations/travel-original.webp',
+    afterPhoto: '/landing/transformations/travel-watercolor.webp',
   },
 ] as const;
