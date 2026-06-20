@@ -14,12 +14,19 @@ Apply migrations in the following order:
    - *Purpose*: Creates a unique partial index on `orders.stripe_session_id` to enforce database-backed webhook idempotency.
 4. **`migrations/004_adjust_orders_status_and_columns.sql`**
    - *Purpose*: Alters the CHECK constraint on `orders.status` to support the required e-commerce order statuses and ensures `error_message` is defined.
+5. **`migrations/005_create_analytics_events.sql`**
+   - *Purpose*: Creates the `analytics_events` table for server-side funnel tracking, enables RLS, and sets up a policy allowing users to view only their own events.
 
 ---
 
 ## Rollback Considerations
 
 If a rollback is required, execute the following SQL statement corresponding to each migration:
+
+### Rollback `005_create_analytics_events.sql`
+```sql
+DROP TABLE IF EXISTS analytics_events CASCADE;
+```
 
 ### Rollback `004_adjust_orders_status_and_columns.sql`
 ```sql
@@ -85,3 +92,11 @@ FROM pg_constraint
 WHERE conrelid = 'orders'::regclass AND contype = 'c';
 ```
 *Expected Result*: The returned CHECK constraint string should list: `'pending_fulfillment', 'submitted_to_printify', 'needs_review', 'fulfillment_blocked', 'processing', 'shipped', 'delivered', 'cancelled', 'fulfilled', 'failed'`.
+
+### 4. Verify `analytics_events` table and RLS policies
+```sql
+SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+FROM pg_policies
+WHERE tablename = 'analytics_events';
+```
+*Expected Result*: You should see only one row: "Users can view own analytics events" with SELECT command access restricted to `(auth.uid() = user_id)`. The insecure public write policy should not be present.

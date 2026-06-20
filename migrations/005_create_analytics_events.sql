@@ -17,10 +17,11 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 
 -- Allow service role (server-side operations) to insert and manage events
+-- Note: Supabase service_role automatically bypasses RLS, so no policy is needed for it.
+-- We explicitly drop the old permissive policy in case it was previously applied.
 DROP POLICY IF EXISTS "Service role can manage analytics_events" ON analytics_events;
-CREATE POLICY "Service role can manage analytics_events" ON analytics_events 
-  USING (true)
-  WITH CHECK (true);
+
+
 
 -- Allow users to read their own events (useful for verification/debugging)
 DROP POLICY IF EXISTS "Users can view own analytics events" ON analytics_events;
