@@ -24,8 +24,8 @@ function SignInContent() {
       setLoading(true);
       await signIn(formData.email, formData.password);
       router.push(redirect);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ function SignInContent() {
 
       <CardFooter className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 text-center">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link
             href={`/auth/signup${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
             className="font-medium text-blue-600 hover:text-blue-700"

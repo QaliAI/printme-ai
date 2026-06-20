@@ -114,6 +114,7 @@ function PreviewContent() {
       router.push('/app/create/style');
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     fetchData();
   }, [uploadId, styleId, router]);
 
@@ -362,11 +363,11 @@ function PreviewContent() {
             <Card className="backdrop-blur-xl bg-indigo-50/50 border-indigo-100 shadow-md">
               <CardBody className="p-5">
                 <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2 text-sm">
-                  <span>🚀</span> What's Next?
+                  <span>🚀</span> What&apos;s Next?
                 </h3>
                 <ol className="space-y-3.5 text-xs text-indigo-950/80 list-decimal pl-4 leading-relaxed font-medium">
                   <li>Review the product mockups below</li>
-                  <li>Click "Choose Products" to select sizes, colors, and quantities</li>
+                  <li>Click &ldquo;Choose Products&rdquo; to select sizes, colors, and quantities</li>
                   <li>Add them to your cart and complete your order securely</li>
                 </ol>
               </CardBody>

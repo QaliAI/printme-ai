@@ -155,6 +155,7 @@ function ProductsContent() {
       router.push('/app/create/style');
       return;
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     fetchData();
   }, [designId, router]);
 

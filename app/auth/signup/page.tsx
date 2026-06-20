@@ -29,8 +29,8 @@ function SignUpContent() {
       setLoading(true);
       await signUp(formData.email, formData.password, formData.fullName);
       router.push(`/auth/verify-email${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
       setLoading(false);
     }
