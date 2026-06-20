@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { printifyClient } from '@/lib/printify/client';
 import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
+import { trackEvent } from '@/lib/analytics';
 
 // Use placeholder during build if env vars missing - real values needed at request time
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
@@ -48,6 +49,17 @@ export async function POST(req: NextRequest) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       console.log(`[Stripe Webhook] Processing checkout.session.completed for session: ${session.id}`);
+
+      // Track payment_completed event
+      await trackEvent({
+        userId: session.metadata?.userId || null,
+        eventName: 'payment_completed',
+        properties: {
+          sessionId: session.id,
+          amountTotal: session.amount_total,
+          customerEmail: session.customer_details?.email,
+        },
+      });
 
       try {
         // Get checkout session from database
@@ -226,6 +238,32 @@ export async function POST(req: NextRequest) {
           throw new Error('Failed to create order');
         }
 
+        // Track order_created event
+        await trackEvent({
+          userId: order.user_id,
+          eventName: 'order_created',
+          properties: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            totalAmount: order.total_amount,
+            status: order.status,
+            stripeSessionId: session.id,
+          },
+        });
+
+        // Track order_needs_review event if order was flagged
+        if (order.status === 'needs_review') {
+          await trackEvent({
+            userId: order.user_id,
+            eventName: 'order_needs_review',
+            properties: {
+              orderId: order.id,
+              orderNumber: order.order_number,
+              errorMessage: order.error_message,
+            },
+          });
+        }
+
         // Create order items
         const orderItems = cart.cart_items.map((item: any) => ({
           order_id: order.id,
@@ -272,6 +310,19 @@ export async function POST(req: NextRequest) {
                   status: nextStatus
                 })
                 .eq('id', order.id);
+
+              // Track order_submitted_to_printify event
+              await trackEvent({
+                userId: order.user_id,
+                eventName: 'order_submitted_to_printify',
+                properties: {
+                  orderId: order.id,
+                  orderNumber: order.order_number,
+                  printifyOrderId: printifyOrder.id,
+                  isLive: isLiveMode,
+                  autoSubmitted: autoSubmitLive,
+                },
+              });
             }
           } catch (printifyError) {
             console.error('[Stripe Webhook] Error submitting to Printify:', printifyError);
@@ -283,6 +334,17 @@ export async function POST(req: NextRequest) {
                 error_message: `Printify submission failed: ${errMsg}`,
               })
               .eq('id', order.id);
+
+            // Track printify_submission_failed event
+            await trackEvent({
+              userId: order.user_id,
+              eventName: 'printify_submission_failed',
+              properties: {
+                orderId: order.id,
+                orderNumber: order.order_number,
+                errorMessage: errMsg,
+              },
+            });
           }
         } else {
           console.log('[Stripe Webhook] Skipping Printify submission. Reason:', orderErrorMessage || 'Fulfillment bypassed.');

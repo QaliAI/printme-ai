@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
+import { trackEvent } from '@/lib/analytics';
 
 const checkoutSchema = z.object({
   cartId: z.string().uuid(),
@@ -155,6 +156,17 @@ export async function POST(req: NextRequest) {
     if (checkoutError) {
       console.error('Failed to store checkout session:', checkoutError);
     }
+
+    // Track checkout_started event
+    await trackEvent({
+      userId: user.id,
+      eventName: 'checkout_started',
+      properties: {
+        cartId,
+        sessionId: session.id,
+        itemsCount: lineItems.length,
+      },
+    });
 
     return NextResponse.json({
       sessionId: session.id,

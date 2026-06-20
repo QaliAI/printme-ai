@@ -256,6 +256,39 @@ ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN (
 ));
 ```
 
+## 10. Create analytics_events table
+
+Create the `analytics_events` table to track marketing/analytics funnel events:
+
+```sql
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  anonymous_id TEXT,
+  event_name TEXT NOT NULL,
+  properties JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Enable RLS
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+
+-- Service role policy
+DROP POLICY IF EXISTS "Service role can manage analytics_events" ON analytics_events;
+CREATE POLICY "Service role can manage analytics_events" ON analytics_events
+  USING (true)
+  WITH CHECK (true);
+
+-- User select policy
+DROP POLICY IF EXISTS "Users can view own analytics events" ON analytics_events;
+CREATE POLICY "Users can view own analytics events" ON analytics_events
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_name ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+```
+
 ## Steps to Apply Migrations
 
 1. Go to the Supabase Dashboard
