@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                   {stats.recentOrders.map((order) => (
                     <tr key={order.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 font-semibold text-gray-900">
-                        #{order.order_number}
+                        #{order.order_number || order.id.slice(0, 8)}
                       </td>
                       <td className="py-3 px-4 text-gray-600">
                         {(order.user as any)?.full_name || 'Unknown'}

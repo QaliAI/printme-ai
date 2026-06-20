@@ -45,9 +45,11 @@ CREATE INDEX idx_checkout_sessions_cart_id ON checkout_sessions(cart_id);
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  order_number TEXT DEFAULT 'PM-' || floor(random() * 899999 + 100000)::text UNIQUE,
   total_amount INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending_fulfillment' CHECK (status IN ('pending_fulfillment', 'processing', 'shipped', 'delivered', 'cancelled', 'needs_review', 'fulfillment_blocked')),
   stripe_session_id TEXT REFERENCES checkout_sessions(stripe_session_id),
+  error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -207,6 +209,51 @@ To prevent duplicate order processing from Stripe webhook retries, add a unique 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_stripe_session_id_unique
 ON orders(stripe_session_id)
 WHERE stripe_session_id IS NOT NULL;
+```
+
+## 9. Adjust Orders Status Constraints and Add Columns
+
+This ensures that the status field in the `orders` table supports all required e-commerce statuses and the `error_message` and `order_number` columns exist:
+
+```sql
+-- 1. Ensure error_message and order_number columns exist
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number TEXT DEFAULT 'PM-' || floor(random() * 899999 + 100000)::text UNIQUE;
+
+-- 2. Drop existing status check constraint if it exists and add the updated one
+DO $$
+DECLARE
+    constraint_name_val text;
+BEGIN
+    SELECT con.conname INTO constraint_name_val
+    FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+    WHERE nsp.nspname = 'public'
+      AND rel.relname = 'orders'
+      AND con.contype = 'c'
+      AND pg_get_constraintdef(con.oid) LIKE '%status%';
+
+    IF constraint_name_val IS NOT NULL THEN
+        EXECUTE 'ALTER TABLE orders DROP CONSTRAINT ' || quote_ident(constraint_name_val);
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END $$;
+
+ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN (
+  'pending_fulfillment',
+  'submitted_to_printify',
+  'needs_review',
+  'fulfillment_blocked',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'fulfilled',
+  'failed'
+));
 ```
 
 ## Steps to Apply Migrations

@@ -6,8 +6,9 @@
 -- 3. Adds the updated status check constraint supporting all required e-commerce order states.
 --
 
--- 1. Ensure error_message column exists
+-- 1. Ensure error_message and order_number columns exist
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number TEXT DEFAULT 'PM-' || floor(random() * 899999 + 100000)::text UNIQUE;
 
 -- 2. Drop existing status check constraint if it exists
 DO $$

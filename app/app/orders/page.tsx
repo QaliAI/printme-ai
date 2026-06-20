@@ -143,7 +143,7 @@ export default function OrdersPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Order {order.order_number}</h3>
+                    <h3 className="font-semibold text-gray-900">Order {order.order_number || order.id.slice(0, 8)}</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       {new Date(order.created_at).toLocaleDateString()}
                     </p>
