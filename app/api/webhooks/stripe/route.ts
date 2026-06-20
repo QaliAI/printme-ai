@@ -59,6 +59,18 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Session not found' }, { status: 404 });
         }
 
+        // Idempotency check: Query orders where stripe_session_id = session.id
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('stripe_session_id', session.id)
+          .maybeSingle();
+
+        if (existingOrder) {
+          console.log('Stripe checkout session already processed (order exists):', session.id);
+          return NextResponse.json({ received: true });
+        }
+
         // Get cart with items and designs
         const { data: cart } = await supabase
           .from('carts')
@@ -94,6 +106,28 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
         }
 
+        // Validate shipping fields before calling Printify / creating order
+        const shipping = (session as any).shipping_details;
+        const userEmail = session.customer_details?.email;
+        const userName = session.customer_details?.name;
+
+        const shippingName = shipping?.name || userName;
+        const shippingEmail = userEmail;
+        const shippingAddress1 = shipping?.address?.line1;
+        const shippingCity = shipping?.address?.city;
+        const shippingZip = shipping?.address?.postal_code;
+        const shippingCountry = shipping?.address?.country;
+
+        const missingFields: string[] = [];
+        if (!shippingName?.trim()) missingFields.push('name');
+        if (!shippingEmail?.trim()) missingFields.push('email');
+        if (!shippingAddress1?.trim()) missingFields.push('address1');
+        if (!shippingCity?.trim()) missingFields.push('city');
+        if (!shippingZip?.trim()) missingFields.push('zip');
+        if (!shippingCountry?.trim()) missingFields.push('country_code');
+
+        const isShippingValid = missingFields.length === 0;
+
         // Calculate order total
         let total = 0;
         (cart.cart_items as CartItemWithRelations[]).forEach((item) => {
@@ -104,17 +138,42 @@ export async function POST(req: NextRequest) {
           total += itemPrice * item.quantity;
         });
 
+        // Determine status and error message
+        const orderStatus = isShippingValid ? 'pending_fulfillment' : 'needs_review';
+        const orderErrorMessage = isShippingValid
+          ? null
+          : `Fulfillment blocked: Missing required shipping fields: ${missingFields.join(', ')}`;
+
         // Create order
-        const { data: order, error: orderError } = await supabase
+        let orderInsertResult = await supabase
           .from('orders')
           .insert({
             user_id: cart.user_id,
-            total_amount: total,
-            status: 'pending_fulfillment',
+            total_amount: Math.round(total * 100),
+            status: orderStatus,
             stripe_session_id: session.id,
+            error_message: orderErrorMessage,
           })
           .select()
           .single();
+
+        // Fallback in case 'needs_review' is not allowed in the database constraint
+        if (orderInsertResult.error && !isShippingValid) {
+          console.warn('Failed to insert order with status needs_review, trying pending_fulfillment fallback:', orderInsertResult.error);
+          orderInsertResult = await supabase
+            .from('orders')
+            .insert({
+              user_id: cart.user_id,
+              total_amount: Math.round(total * 100),
+              status: 'pending_fulfillment',
+              stripe_session_id: session.id,
+              error_message: orderErrorMessage,
+            })
+            .select()
+            .single();
+        }
+
+        const { data: order, error: orderError } = orderInsertResult;
 
         if (orderError || !order) {
           console.error('Failed to create order:', orderError);
@@ -148,24 +207,35 @@ export async function POST(req: NextRequest) {
           .update({ status: 'completed', order_id: order.id })
           .eq('stripe_session_id', session.id);
 
-        // Submit to Printify
-        try {
-          const printifyOrder = await submitToPrintify(
-            cart,
-            order,
-            session
-          );
+        // Submit to Printify only if shipping is valid
+        if (isShippingValid) {
+          try {
+            const printifyOrder = await submitToPrintify(
+              cart,
+              order,
+              session
+            );
 
-          // Update order with Printify order ID
-          if (printifyOrder) {
+            // Update order with Printify order ID
+            if (printifyOrder) {
+              await supabase
+                .from('orders')
+                .update({ printify_order_id: printifyOrder.id })
+                .eq('id', order.id);
+            }
+          } catch (printifyError) {
+            console.error('Error submitting to Printify:', printifyError);
+            // Record the error message in the order database for manual admin review
+            const errMsg = printifyError instanceof Error ? printifyError.message : String(printifyError);
             await supabase
               .from('orders')
-              .update({ printify_order_id: printifyOrder.id })
+              .update({
+                error_message: `Printify submission failed: ${errMsg}`,
+              })
               .eq('id', order.id);
           }
-        } catch (printifyError) {
-          console.error('Error submitting to Printify:', printifyError);
-          // Don't fail the entire webhook - the order is created, manual submission can be done
+        } else {
+          console.log('Skipping Printify submission because shipping validation failed:', orderErrorMessage);
         }
 
         // Clear cart items
@@ -203,6 +273,7 @@ async function submitToPrintify(
   // Get user's Stripe customer email as fallback contact info
   const userEmail = stripeSession.customer_details?.email || 'customer@example.com';
   const userName = stripeSession.customer_details?.name || 'Customer';
+  const shipping = (stripeSession as any).shipping_details;
 
   // Build Printify order from cart items
   const lineItems = (cart.cart_items as CartItemWithRelations[]).map((item) => {
@@ -221,18 +292,30 @@ async function submitToPrintify(
     };
   });
 
-  // Create Printify order with minimal required fields
+  const recipient = {
+    name: shipping?.name || userName,
+    email: userEmail,
+    phone: stripeSession.customer_details?.phone || '',
+    address1: shipping?.address?.line1 || '',
+    address2: shipping?.address?.line2 || '',
+    city: shipping?.address?.city || '',
+    state: shipping?.address?.state || '',
+    zip: shipping?.address?.postal_code || '',
+    country_code: shipping?.address?.country || 'US',
+  };
+
+  // Safe mode: Submit as DRAFT order if in Stripe test mode to avoid auto-submitting live production orders
+  if (!stripeSession.livemode) {
+    console.log('Stripe Checkout Session is in test mode. Creating DRAFT order on Printify.');
+    return printifyClient.createDraftOrder({
+      recipient,
+      line_items: lineItems,
+    });
+  }
+
+  // Create Printify order and auto-confirm for production (live mode only)
   const printifyOrder = await printifyClient.submitOrder({
-    recipient: {
-      name: userName,
-      email: userEmail,
-      phone: '',
-      address1: '',
-      city: '',
-      state: '',
-      zip: '',
-      country_code: 'US',
-    },
+    recipient,
     line_items: lineItems,
   });
 

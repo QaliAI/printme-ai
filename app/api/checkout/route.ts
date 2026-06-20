@@ -80,34 +80,56 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Map cart items to Stripe line items
-    const lineItems = (cart.cart_items as CartItemWithRelations[]).map(
-      (item) => {
-        const productVariant = getFirstOrValue(item.product_variant);
-        const design = getFirstOrValue(item.design);
-        return {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: productVariant?.product?.name || 'Product',
-              images: design?.design_url ? [design.design_url] : undefined,
-            },
-            unit_amount:
-              ((productVariant?.product?.base_price || 0) +
-                (productVariant?.price_modifier || 0)) *
-              item.quantity,
-          },
-          quantity: 1,
-        };
+    // Map cart items to Stripe line items and validate
+    const lineItems = [];
+    for (const item of cart.cart_items as CartItemWithRelations[]) {
+      const productVariant = getFirstOrValue(item.product_variant);
+      const design = getFirstOrValue(item.design);
+      const basePrice = Number(productVariant?.product?.base_price || 0);
+      const modifier = Number(productVariant?.price_modifier || 0);
+      const unitAmountCents = Math.round((basePrice + modifier) * 100);
+
+      // Validation: unitAmountCents must be finite, integer, and greater than 0
+      if (!Number.isFinite(unitAmountCents) || !Number.isInteger(unitAmountCents) || unitAmountCents <= 0) {
+        return NextResponse.json(
+          { error: `Invalid price calculated for variant ${item.product_variant_id || 'unknown'}` },
+          { status: 400 }
+        );
       }
-    );
+
+      // Validation: quantity must be finite, integer, and greater than 0
+      if (!Number.isFinite(item.quantity) || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+        return NextResponse.json(
+          { error: `Invalid quantity for variant ${item.product_variant_id || 'unknown'}` },
+          { status: 400 }
+        );
+      }
+
+      lineItems.push({
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: productVariant?.product?.name || 'Product',
+            images: design?.design_url ? [design.design_url] : undefined,
+          },
+          unit_amount: unitAmountCents,
+        },
+        quantity: item.quantity,
+      });
+    }
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      phone_number_collection: {
+        enabled: true,
+      },
+      shipping_address_collection: {
+        allowed_countries: ['US', 'CA', 'GB', 'AU'],
+      },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/{CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/app/cart`,
       customer_email: user.email,
       metadata: {

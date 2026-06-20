@@ -46,7 +46,7 @@ CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   total_amount INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending_fulfillment' CHECK (status IN ('pending_fulfillment', 'processing', 'shipped', 'delivered', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'pending_fulfillment' CHECK (status IN ('pending_fulfillment', 'processing', 'shipped', 'delivered', 'cancelled', 'needs_review', 'fulfillment_blocked')),
   stripe_session_id TEXT REFERENCES checkout_sessions(stripe_session_id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -153,6 +153,61 @@ CREATE INDEX IF NOT EXISTS idx_generated_designs_has_mockups
 
 The cache fails open: if these columns don't exist yet, the mockup endpoint
 still works — it just regenerates on every request.
+
+## 7. Enable RLS Policies for cart_items
+
+Run the following SQL to enable users to view, add, update, and delete items from their own cart:
+
+```sql
+-- Enable RLS
+ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
+
+-- SELECT Policy
+DROP POLICY IF EXISTS "Users can view own cart items" ON cart_items;
+CREATE POLICY "Users can view own cart items" ON cart_items
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- INSERT Policy
+DROP POLICY IF EXISTS "Users can insert own cart items" ON cart_items;
+CREATE POLICY "Users can insert own cart items" ON cart_items
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- UPDATE Policy
+DROP POLICY IF EXISTS "Users can update own cart items" ON cart_items;
+CREATE POLICY "Users can update own cart items" ON cart_items
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- DELETE Policy
+DROP POLICY IF EXISTS "Users can delete own cart items" ON cart_items;
+CREATE POLICY "Users can delete own cart items" ON cart_items
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+```
+
+## 8. Add Unique Index on orders.stripe_session_id
+
+To prevent duplicate order processing from Stripe webhook retries, add a unique index constraint:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_stripe_session_id_unique
+ON orders(stripe_session_id)
+WHERE stripe_session_id IS NOT NULL;
+```
 
 ## Steps to Apply Migrations
 
