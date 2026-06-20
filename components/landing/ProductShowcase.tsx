@@ -18,6 +18,8 @@ const PRODUCTS = [
 
 type Product = (typeof PRODUCTS)[number];
 
+import Link from 'next/link';
+
 interface ProductCardProps {
   product: Product;
   index: number;
@@ -27,63 +29,64 @@ interface ProductCardProps {
 
 function ProductCard({ product, index, isHovered, onHover }: ProductCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
-      transition={{ delay: index * 0.05 }}
-      onMouseEnter={() => onHover(product.name)}
-      onMouseLeave={() => onHover(null)}
-      className="group cursor-pointer"
-    >
+    <Link href="/app/create/style" className="block group">
       <motion.div
-        whileHover={{ y: -6 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="relative overflow-hidden rounded-2xl bg-white shadow-md transition-shadow duration-500 hover:shadow-2xl"
+        initial={{ opacity: 0, y: 28 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-50px' }}
+        transition={{ delay: index * 0.05 }}
+        onMouseEnter={() => onHover(product.name)}
+        onMouseLeave={() => onHover(null)}
       >
-        <div className="relative aspect-square overflow-hidden bg-[#eeeef0]">
-          <motion.img
-            src={product.sampleImage}
-            alt={`${product.name} printed sample mockup`}
-            className="absolute inset-0 h-full w-full object-cover"
-            animate={isHovered ? { scale: 1.035 } : { scale: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            loading={index < 4 ? 'eager' : 'lazy'}
-          />
+        <motion.div
+          whileHover={{ y: -6 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          className="relative overflow-hidden rounded-2xl bg-white shadow-md transition-shadow duration-500 hover:shadow-2xl"
+        >
+          <div className="relative aspect-square overflow-hidden bg-[#eeeef0]">
+            <motion.img
+              src={product.sampleImage}
+              alt={`${product.name} printed sample mockup`}
+              className="absolute inset-0 h-full w-full object-cover"
+              animate={isHovered ? { scale: 1.035 } : { scale: 1 }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              loading={index < 4 ? 'eager' : 'lazy'}
+            />
 
-          <motion.div
-            className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/18 via-slate-950/0 to-transparent pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-          />
-        </div>
-
-        <div className="flex items-center justify-between border-t border-slate-100 bg-white p-5">
-          <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold tracking-tight text-slate-900">{product.name}</h3>
-            <p className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-slate-400">
-              {product.subtitle}
-            </p>
-            <p className="mt-1.5 text-sm text-slate-500">
-              from <span className="font-bold text-slate-900">{product.from}</span>
-            </p>
+            <motion.div
+              className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/18 via-slate-950/0 to-transparent pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isHovered ? 1 : 0 }}
+            />
           </div>
-          <motion.div
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition-colors group-hover:bg-gradient-to-br group-hover:from-indigo-600 group-hover:to-purple-600"
-            animate={isHovered ? { x: 2 } : { x: 0 }}
-          >
-            <svg
-              className="h-4 w-4 text-slate-600 transition-colors group-hover:text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+
+          <div className="flex items-center justify-between border-t border-slate-100 bg-white p-5">
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-semibold tracking-tight text-slate-900">{product.name}</h3>
+              <p className="mt-0.5 truncate text-[10px] uppercase tracking-widest text-slate-400">
+                {product.subtitle}
+              </p>
+              <p className="mt-1.5 text-sm text-slate-500">
+                from <span className="font-bold text-slate-900">{product.from}</span>
+              </p>
+            </div>
+            <motion.div
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 transition-colors group-hover:bg-gradient-to-br group-hover:from-indigo-600 group-hover:to-purple-600"
+              animate={isHovered ? { x: 2 } : { x: 0 }}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
-          </motion.div>
-        </div>
+              <svg
+                className="h-4 w-4 text-slate-600 transition-colors group-hover:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </motion.div>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </Link>
   );
 }
 

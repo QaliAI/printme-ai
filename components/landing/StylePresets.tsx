@@ -2,7 +2,23 @@
 
 import { motion } from 'framer-motion';
 import { Container } from '@/components/Container';
+import Link from 'next/link';
 import { STYLE_PRESET_SAMPLES } from '@/lib/assets';
+
+const DATABASE_SLUGS: Record<string, string> = {
+  'oil-painting': 'oil-painting-portrait',
+  'watercolor': 'watercolor-memory',
+  'pop-art': 'pop-art-poster',
+  'vintage': 'vintage-travel-poster',
+  'bw-editorial': 'black-white-editorial',
+  'cartoon': 'cartoon-gift-style',
+  'royal-portrait': 'pet-royal-portrait',
+  'sketch': 'pencil-sketch',
+  'line-art': 'modern-minimal-line-art',
+  'cinematic': 'cinematic-poster',
+  'toy-style': 'toy-figurine-style',
+  'clean-cutout': 'clean-cutout',
+};
 
 export function StylePresets() {
   return (
@@ -29,17 +45,23 @@ export function StylePresets() {
         </motion.div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {STYLE_PRESET_SAMPLES.map((style, i) => (
-            <motion.div
-              key={style.slug}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-30px' }}
-              transition={{ delay: i * 0.04 }}
-              whileHover={{ y: -4 }}
-              className="group cursor-pointer"
-            >
-              <div className="relative aspect-[5/6] rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300">
+          {STYLE_PRESET_SAMPLES.map((style, i) => {
+            const dbSlug = DATABASE_SLUGS[style.slug] || style.slug;
+            return (
+              <Link
+                key={style.slug}
+                href={`/app/create/style?select=${dbSlug}`}
+                className="group cursor-pointer block"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-30px' }}
+                  transition={{ delay: i * 0.04 }}
+                  whileHover={{ y: -4 }}
+                >
+                  <div className="relative aspect-[5/6] rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-300">
+
                 {/* Skeleton gradient — visible while AI sample loads */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br ${style.gradient}`}
@@ -93,7 +115,9 @@ export function StylePresets() {
                 </motion.div>
               </div>
             </motion.div>
-          ))}
+          </Link>
+        );
+      })}
         </div>
 
         <motion.p
