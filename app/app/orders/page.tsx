@@ -10,7 +10,16 @@ import { supabase } from '@/lib/supabase';
 interface OrderItem {
   id: string;
   quantity: number;
-  product_variant?: any;
+  product_variant?: {
+    id: string;
+    size?: string | null;
+    color?: string | null;
+    product?: {
+      id: string;
+      name: string;
+      emoji?: string | null;
+    } | null;
+  } | null;
 }
 
 interface Order {
@@ -20,7 +29,7 @@ interface Order {
   total_amount: number;
   status: string;
   fulfillment_status?: string;
-  shipping_address?: any;
+  shipping_address?: Record<string, unknown> | null;
   order_items: OrderItem[];
 }
 
@@ -28,10 +37,6 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
 
   const fetchOrders = async () => {
     try {
@@ -65,7 +70,7 @@ export default function OrdersPage() {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setOrders(data || []);
+      setOrders((data as unknown as Order[]) || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError('Failed to load orders');
@@ -73,6 +78,11 @@ export default function OrdersPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -138,7 +148,7 @@ export default function OrdersPage() {
       {orders.length === 0 ? (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+            <p className="text-gray-600 mb-6">You haven&apos;t placed any orders yet.</p>
             <Link href="/app">
               <Button>Start Creating</Button>
             </Link>
@@ -165,8 +175,8 @@ export default function OrdersPage() {
               <CardBody>
                 <div className="mb-4">
                   {order.order_items.map((item) => {
-                    const product = (item.product_variant as any)?.product;
-                    const variant = item.product_variant as any;
+                    const product = item.product_variant?.product;
+                    const variant = item.product_variant;
                     return (
                       <div key={item.id} className="flex justify-between text-sm py-2">
                         <div>
