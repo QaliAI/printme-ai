@@ -131,6 +131,28 @@ export async function POST(req: NextRequest) {
 
         const isShippingValid = missingFields.length === 0;
 
+        // Printify payload validation checks:
+        // Validate that each item has a product ID, variant ID, design URL, and valid quantity
+        const missingPrintifyDetails: string[] = [];
+        cart.cart_items.forEach((item: any, index: number) => {
+          const productVariant = getFirstOrValue(item.product_variant);
+          const design = getFirstOrValue(item.design);
+
+          const productId = productVariant?.product?.id;
+          const variantId = productVariant?.id;
+          const designUrl = design?.design_url;
+          const quantity = item.quantity;
+
+          if (!productId) missingPrintifyDetails.push(`item[${index}] missing product ID`);
+          if (!variantId) missingPrintifyDetails.push(`item[${index}] missing variant ID`);
+          if (!designUrl) missingPrintifyDetails.push(`item[${index}] missing design URL`);
+          if (!quantity || quantity <= 0 || !Number.isInteger(quantity)) {
+            missingPrintifyDetails.push(`item[${index}] invalid quantity: ${quantity}`);
+          }
+        });
+
+        const isPrintifyPayloadValid = missingPrintifyDetails.length === 0;
+
         // Calculate order total
         let total = 0;
         (cart.cart_items as CartItemWithRelations[]).forEach((item) => {
@@ -141,11 +163,32 @@ export async function POST(req: NextRequest) {
           total += itemPrice * item.quantity;
         });
 
-        // Determine status and error message
-        const orderStatus = isShippingValid ? 'pending_fulfillment' : 'needs_review';
-        const orderErrorMessage = isShippingValid
-          ? null
-          : `Fulfillment blocked: Missing required shipping fields: ${missingFields.join(', ')}`;
+        // Determine status, error message, and if we should submit to Printify based on safety configuration
+        const isLiveMode = session.livemode;
+        const autoSubmitLive = process.env.PRINTIFY_AUTO_SUBMIT_LIVE_ORDERS === 'true';
+        const createDraftLive = process.env.PRINTIFY_CREATE_DRAFT_IN_LIVE_MODE === 'true';
+
+        let shouldSubmitToPrintify = isShippingValid && isPrintifyPayloadValid;
+        let orderStatus = 'pending_fulfillment';
+        let orderErrorMessage = null;
+
+        if (!isShippingValid || !isPrintifyPayloadValid) {
+          shouldSubmitToPrintify = false;
+          orderStatus = 'needs_review';
+          const reasons = [];
+          if (missingFields.length > 0) {
+            reasons.push(`Missing shipping details: ${missingFields.join(', ')}`);
+          }
+          if (missingPrintifyDetails.length > 0) {
+            reasons.push(`Invalid Printify payload: ${missingPrintifyDetails.join(', ')}`);
+          }
+          orderErrorMessage = `Fulfillment blocked: ${reasons.join(' | ')}`;
+        } else if (isLiveMode && !autoSubmitLive && !createDraftLive) {
+          // Live mode safety check: draft or auto-submit not configured, flag for manual review
+          shouldSubmitToPrintify = false;
+          orderStatus = 'needs_review';
+          orderErrorMessage = 'Manual review required: Live order auto-submission and draft creation are disabled.';
+        }
 
         // Create order
         let orderInsertResult = await supabase
@@ -161,8 +204,8 @@ export async function POST(req: NextRequest) {
           .single();
 
         // Fallback in case 'needs_review' is not allowed in the database constraint
-        if (orderInsertResult.error && !isShippingValid) {
-          console.warn('Failed to insert order with status needs_review, trying pending_fulfillment fallback:', orderInsertResult.error);
+        if (orderInsertResult.error && orderStatus === 'needs_review') {
+          console.warn('[Stripe Webhook] Failed to insert order with status needs_review, trying pending_fulfillment fallback:', orderInsertResult.error);
           orderInsertResult = await supabase
             .from('orders')
             .insert({
@@ -179,7 +222,7 @@ export async function POST(req: NextRequest) {
         const { data: order, error: orderError } = orderInsertResult;
 
         if (orderError || !order) {
-          console.error('Failed to create order:', orderError);
+          console.error('[Stripe Webhook] Failed to create order:', orderError);
           throw new Error('Failed to create order');
         }
 
@@ -200,7 +243,7 @@ export async function POST(req: NextRequest) {
           .insert(orderItems);
 
         if (itemsError) {
-          console.error('Failed to create order items:', itemsError);
+          console.error('[Stripe Webhook] Failed to create order items:', itemsError);
           throw new Error('Failed to create order items');
         }
 
@@ -210,8 +253,8 @@ export async function POST(req: NextRequest) {
           .update({ status: 'completed', order_id: order.id })
           .eq('stripe_session_id', session.id);
 
-        // Submit to Printify only if shipping is valid
-        if (isShippingValid) {
+        // Submit to Printify only if allowed and safety checks pass
+        if (shouldSubmitToPrintify) {
           try {
             const printifyOrder = await submitToPrintify(
               cart,
@@ -219,26 +262,30 @@ export async function POST(req: NextRequest) {
               session
             );
 
-            // Update order with Printify order ID
+            // Update order with Printify order ID and new status if live auto-submitted
             if (printifyOrder) {
+              const nextStatus = (isLiveMode && autoSubmitLive) ? 'submitted_to_printify' : 'pending_fulfillment';
               await supabase
                 .from('orders')
-                .update({ printify_order_id: printifyOrder.id })
+                .update({
+                  printify_order_id: printifyOrder.id,
+                  status: nextStatus
+                })
                 .eq('id', order.id);
             }
           } catch (printifyError) {
-            console.error('Error submitting to Printify:', printifyError);
-            // Record the error message in the order database for manual admin review
+            console.error('[Stripe Webhook] Error submitting to Printify:', printifyError);
             const errMsg = printifyError instanceof Error ? printifyError.message : String(printifyError);
             await supabase
               .from('orders')
               .update({
+                status: 'needs_review',
                 error_message: `Printify submission failed: ${errMsg}`,
               })
               .eq('id', order.id);
           }
         } else {
-          console.log('Skipping Printify submission because shipping validation failed:', orderErrorMessage);
+          console.log('[Stripe Webhook] Skipping Printify submission. Reason:', orderErrorMessage || 'Fulfillment bypassed.');
         }
 
         // Clear cart items
@@ -247,9 +294,9 @@ export async function POST(req: NextRequest) {
           .delete()
           .eq('cart_id', checkoutSession.cart_id);
 
-        console.log('Order created successfully:', order.id);
+        console.log('[Stripe Webhook] Order created successfully:', order.id);
       } catch (error) {
-        console.error('Error processing checkout:', error);
+        console.error('[Stripe Webhook] Error processing checkout:', error);
         return NextResponse.json(
           { error: 'Failed to process checkout' },
           { status: 500 }
@@ -260,7 +307,7 @@ export async function POST(req: NextRequest) {
     // Return success for all webhook events
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error('Webhook error:', err);
+    console.error('[Stripe Webhook] Webhook error:', err);
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }
@@ -273,54 +320,71 @@ async function submitToPrintify(
   order: any,
   stripeSession: Stripe.Checkout.Session
 ) {
-  // Get user's Stripe customer email as fallback contact info
   const userEmail = stripeSession.customer_details?.email || 'customer@example.com';
   const userName = stripeSession.customer_details?.name || 'Customer';
   const shipping = (stripeSession as any).shipping_details;
+
+  // Split name into first and last name for Printify
+  const nameParts = (shipping?.name || userName).trim().split(/\s+/);
+  const first_name = nameParts[0] || 'Customer';
+  const last_name = nameParts.slice(1).join(' ') || 'Customer';
 
   // Build Printify order from cart items
   const lineItems = (cart.cart_items as CartItemWithRelations[]).map((item) => {
     const productVariant = getFirstOrValue(item.product_variant);
     const design = getFirstOrValue(item.design);
+
+    // Convert printify_variant_id to integer if available
+    const variantIdStr = productVariant?.printify_variant_id || '';
+    const variant_id = parseInt(variantIdStr, 10) || 0;
+
     return {
-      product_id: productVariant?.product?.id || '',
-      variant_ids: [productVariant?.id || ''],
+      product_id: productVariant?.product?.printify_blueprint_id || '',
+      variant_id: variant_id,
       quantity: item.quantity,
       files: [
         {
           type: 'front' as const,
-          url: design?.design_url,
+          url: design?.design_url || '',
         },
       ],
     };
   });
 
-  const recipient = {
-    name: shipping?.name || userName,
+  const address_to = {
+    first_name,
+    last_name,
     email: userEmail,
     phone: stripeSession.customer_details?.phone || '',
     address1: shipping?.address?.line1 || '',
     address2: shipping?.address?.line2 || '',
     city: shipping?.address?.city || '',
-    state: shipping?.address?.state || '',
+    region: shipping?.address?.state || '',
     zip: shipping?.address?.postal_code || '',
-    country_code: shipping?.address?.country || 'US',
+    country: shipping?.address?.country || 'US',
   };
 
-  // Safe mode: Submit as DRAFT order if in Stripe test mode to avoid auto-submitting live production orders
-  if (!stripeSession.livemode) {
-    console.log('Stripe Checkout Session is in test mode. Creating DRAFT order on Printify.');
-    return printifyClient.createDraftOrder({
-      recipient,
-      line_items: lineItems,
-    });
+  const printifyPayload = {
+    external_id: order.id,
+    line_items: lineItems,
+    address_to,
+    shipping_method: 1, // Default standard shipping method
+  };
+
+  const isLiveMode = stripeSession.livemode;
+  const autoSubmitLive = process.env.PRINTIFY_AUTO_SUBMIT_LIVE_ORDERS === 'true';
+
+  if (!isLiveMode) {
+    console.log('[Printify] Stripe Checkout Session is in test mode. Creating DRAFT order on Printify.');
+    return printifyClient.createDraftOrder(printifyPayload);
   }
 
-  // Create Printify order and auto-confirm for production (live mode only)
-  const printifyOrder = await printifyClient.submitOrder({
-    recipient,
-    line_items: lineItems,
-  });
+  if (autoSubmitLive) {
+    console.log('[Printify] Live auto-submit enabled. Creating and CONFIRMING order on Printify.');
+    return printifyClient.submitOrder(printifyPayload);
+  }
 
-  return printifyOrder;
+  // Conservative default: Create as draft in live mode
+  console.log('[Printify] Creating DRAFT order on Printify for live session.');
+  return printifyClient.createDraftOrder(printifyPayload);
 }
