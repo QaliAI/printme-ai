@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Card, CardBody, CardHeader, CardFooter } from '@/components/Card';
 import { signIn } from '@/lib/auth';
 
-export default function SignInPage() {
+function SignInContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/app';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -21,13 +23,15 @@ export default function SignInPage() {
     try {
       setLoading(true);
       await signIn(formData.email, formData.password);
-      router.push('/app');
+      router.push(redirect);
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }
   };
+
+  const redirectParam = searchParams.get('redirect');
 
   return (
     <Card className="w-full max-w-md">
@@ -71,7 +75,10 @@ export default function SignInPage() {
       <CardFooter className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 text-center">
           Don't have an account?{' '}
-          <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-700">
+          <Link
+            href={`/auth/signup${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
+            className="font-medium text-blue-600 hover:text-blue-700"
+          >
             Sign up
           </Link>
         </p>
@@ -80,5 +87,19 @@ export default function SignInPage() {
         </Link>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md p-8 text-center bg-white rounded-2xl shadow-lg">
+          <div className="text-4xl animate-pulse">✨</div>
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/Button';
@@ -29,7 +29,7 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => {
   };
 });
 
-export default function PreviewPage() {
+function PreviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const uploadId = searchParams.get('upload');
@@ -114,8 +114,6 @@ export default function PreviewPage() {
       router.push('/app/create/style');
       return;
     }
-    // Data fetching pattern - intentionally triggers setState inside effect
-    // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     fetchData();
   }, [uploadId, styleId, router]);
 
@@ -212,19 +210,35 @@ export default function PreviewPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 uppercase tracking-wider">
+            <span>Step 3 of 3</span>
+            <span className="w-1 h-1 rounded-full bg-indigo-300" />
+            <span>AI Transformation</span>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
             Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AI Design</span>
           </h1>
-          <p className="text-lg text-gray-600">Slide to see the magic transformation</p>
+          <p className="text-lg text-gray-600">Slide to compare your original photo and the new masterpiece</p>
         </motion.div>
 
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg"
+            className="mb-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
           >
-            <p className="text-sm text-red-700">{error}</p>
+            <div>
+              <h3 className="font-bold text-red-800 mb-1">AI Generation Encountered an Issue</h3>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto">
+              <Button onClick={() => generateDesign()} size="sm" className="flex-1 md:flex-none">
+                Retry Generation
+              </Button>
+              <Button onClick={() => router.push('/app/create/style')} variant="outline" size="sm" className="flex-1 md:flex-none">
+                Choose Another Style
+              </Button>
+            </div>
           </motion.div>
         )}
 
@@ -344,6 +358,20 @@ export default function PreviewPage() {
             transition={{ delay: 0.2 }}
             className="space-y-4"
           >
+            {/* What's next card */}
+            <Card className="backdrop-blur-xl bg-indigo-50/50 border-indigo-100 shadow-md">
+              <CardBody className="p-5">
+                <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2 text-sm">
+                  <span>🚀</span> What's Next?
+                </h3>
+                <ol className="space-y-3.5 text-xs text-indigo-950/80 list-decimal pl-4 leading-relaxed font-medium">
+                  <li>Review the product mockups below</li>
+                  <li>Click "Choose Products" to select sizes, colors, and quantities</li>
+                  <li>Add them to your cart and complete your order securely</li>
+                </ol>
+              </CardBody>
+            </Card>
+
             {/* Info card */}
             <Card className="backdrop-blur-xl bg-white/70 border-white/40 shadow-lg">
               <CardBody>
@@ -439,7 +467,7 @@ export default function PreviewPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 mt-8"
+          className="flex flex-col sm:flex-row gap-4 mt-8 border-t border-slate-200 pt-6"
         >
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
@@ -467,5 +495,19 @@ export default function PreviewPage() {
         </motion.div>
       </Container>
     </div>
+  );
+}
+
+export default function PreviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+          <div className="text-6xl animate-pulse">✨</div>
+        </div>
+      }
+    >
+      <PreviewContent />
+    </Suspense>
   );
 }
