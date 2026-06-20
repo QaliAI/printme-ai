@@ -118,6 +118,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log(`[Stripe Checkout] Initiating session creation for user: ${user.id}, cart: ${cartId}. Items count: ${lineItems.length}`);
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -137,6 +139,8 @@ export async function POST(req: NextRequest) {
         userId: user.id,
       },
     });
+
+    console.log(`[Stripe Checkout] Session successfully created: ${session.id}`);
 
     // Store checkout reference in database
     const { error: checkoutError } = await supabase

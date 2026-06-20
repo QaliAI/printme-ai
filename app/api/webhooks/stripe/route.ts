@@ -35,16 +35,19 @@ export async function POST(req: NextRequest) {
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.error('Webhook signature verification failed:', err);
+      console.error('[Stripe Webhook] Webhook signature verification failed:', err);
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 400 }
       );
     }
 
+    console.log(`[Stripe Webhook] Received event: ${event.type}, ID: ${event.id}`);
+
     // Handle checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log(`[Stripe Webhook] Processing checkout.session.completed for session: ${session.id}`);
 
       try {
         // Get checkout session from database
@@ -55,7 +58,7 @@ export async function POST(req: NextRequest) {
           .single();
 
         if (!checkoutSession) {
-          console.error('Checkout session not found:', session.id);
+          console.error('[Stripe Webhook] Checkout session not found in database:', session.id);
           return NextResponse.json({ error: 'Session not found' }, { status: 404 });
         }
 
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         if (existingOrder) {
-          console.log('Stripe checkout session already processed (order exists):', session.id);
+          console.log(`[Stripe Webhook] Idempotency hit: Order already exists (ID: ${existingOrder.id}) for session: ${session.id}`);
           return NextResponse.json({ received: true });
         }
 

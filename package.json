@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "preflight": "node scripts/preflight-integrations.mjs"
+    "preflight": "node scripts/preflight-integrations.mjs",
+    "mock-webhook": "node scripts/mock-stripe-webhook.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
