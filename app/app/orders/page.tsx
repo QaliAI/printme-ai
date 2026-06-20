@@ -77,28 +77,36 @@ export default function OrdersPage() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'completed':
+        return 'bg-amber-50/30 border-amber-200';
+      case 'paid':
+      case 'processing':
+        return 'bg-indigo-50/30 border-indigo-200';
       case 'shipped':
-        return 'bg-green-50 border-green-200';
+      case 'delivered':
+        return 'bg-emerald-50/30 border-emerald-200';
       case 'cancelled':
-        return 'bg-red-50 border-red-200';
+      case 'failed':
+        return 'bg-rose-50/30 border-rose-200';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-slate-50/30 border-slate-200';
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'text-yellow-700 bg-yellow-100';
-      case 'completed':
+        return 'text-amber-700 bg-amber-50 border-amber-200/50';
+      case 'paid':
+      case 'processing':
+        return 'text-indigo-700 bg-indigo-50 border-indigo-200/50';
       case 'shipped':
-        return 'text-green-700 bg-green-100';
+      case 'delivered':
+        return 'text-emerald-700 bg-emerald-50 border-emerald-200/50';
       case 'cancelled':
-        return 'text-red-700 bg-red-100';
+      case 'failed':
+        return 'text-rose-700 bg-rose-50 border-rose-200/50';
       default:
-        return 'text-gray-700 bg-gray-100';
+        return 'text-slate-700 bg-slate-50 border-slate-200/50';
     }
   };
 
