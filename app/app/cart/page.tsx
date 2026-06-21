@@ -14,7 +14,7 @@ import {
   PrintifyCachedMockup,
   getFirstOrValue,
 } from '@/lib/types';
-import { blueprintIdForProductName } from '@/lib/assets';
+import { blueprintIdForProductName, PRODUCT_PHOTOS } from '@/lib/assets';
 
 /**
  * Pick the best Printify mockup image for a cart item by matching the
@@ -515,15 +515,47 @@ export default function CartPage() {
                     {/* Personalized Printify mockup → design URL → emoji */}
                     {(() => {
                       const mockupUrl = getCartItemMockupUrl(item);
-                      const fallbackImage = design?.design_url;
-                      const itemImage = mockupUrl || fallbackImage;
+                      const blueprintId = blueprintIdForProductName(product?.name);
+                      const photoKey = Object.keys(PRODUCT_PHOTOS).find(
+                        (k) => PRODUCT_PHOTOS[k as keyof typeof PRODUCT_PHOTOS].blueprintId === blueprintId
+                      ) as keyof typeof PRODUCT_PHOTOS | undefined;
+                      const photoData = photoKey ? PRODUCT_PHOTOS[photoKey] : undefined;
                       const isMockup = !!mockupUrl;
 
                       return (
-                        <div className="relative w-24 h-24 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden ring-1 ring-slate-200">
-                          {itemImage ? (
+                        <div className="relative w-24 h-24 flex-shrink-0 bg-slate-100 rounded-lg overflow-hidden ring-1 ring-slate-200 flex items-center justify-center">
+                          {isMockup ? (
                             <img
-                              src={itemImage}
+                              src={mockupUrl}
+                              alt={product?.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : photoData?.image && design?.design_url ? (
+                            <div className="relative w-full h-full">
+                              <img
+                                src={photoData.image}
+                                alt={product?.name}
+                                className="w-full h-full object-contain"
+                              />
+                              <div
+                                className="absolute pointer-events-none"
+                                style={{
+                                  top: photoData.designArea.top,
+                                  left: photoData.designArea.left,
+                                  width: photoData.designArea.width,
+                                  height: photoData.designArea.height,
+                                }}
+                              >
+                                <img
+                                  src={design.design_url}
+                                  alt="Design overlay"
+                                  className="w-full h-full object-cover mix-blend-multiply"
+                                />
+                              </div>
+                            </div>
+                          ) : design?.design_url ? (
+                            <img
+                              src={design.design_url}
                               alt={product?.name}
                               className="w-full h-full object-cover"
                             />

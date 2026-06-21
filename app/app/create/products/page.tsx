@@ -382,17 +382,19 @@ function ProductsContent() {
               const productVariants = variants[product.id] || [];
 
               const blueprintId = blueprintIdForProductName(product.name);
+              const photoKey = Object.keys(PRODUCT_PHOTOS).find(
+                (k) => PRODUCT_PHOTOS[k as keyof typeof PRODUCT_PHOTOS].blueprintId === blueprintId
+              ) as keyof typeof PRODUCT_PHOTOS | undefined;
+              const photoData = photoKey ? PRODUCT_PHOTOS[photoKey] : undefined;
+
               const personalizedMockup = blueprintId
                 ? pickBestMockup(personalizedMockups[blueprintId])
                 : undefined;
               const isPersonalized = !!personalizedMockup;
 
               let fallbackImage = product.mockup_url;
-              if (!fallbackImage && blueprintId) {
-                const assetMatch = Object.values(PRODUCT_PHOTOS).find(
-                  (p) => p.blueprintId === blueprintId
-                );
-                fallbackImage = assetMatch?.image;
+              if (!fallbackImage && photoData) {
+                fallbackImage = photoData.image;
               }
               const displayImage = personalizedMockup || fallbackImage;
 
@@ -431,11 +433,44 @@ function ProductsContent() {
                     <CardBody className="space-y-4 pt-14">
                       {/* Product mockup container */}
                       <div className="relative aspect-square bg-[#f8f9fa] rounded-2xl overflow-hidden border border-slate-100 flex items-center justify-center">
-                        {displayImage ? (
+                        {isPersonalized ? (
+                          <motion.img
+                            key={personalizedMockup}
+                            src={personalizedMockup}
+                            alt={`${product.name} with your design`}
+                            className="w-full h-full object-contain p-3"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.4 }}
+                          />
+                        ) : fallbackImage && design?.design_url && photoData?.designArea ? (
+                          <div className="relative w-full h-full p-3 flex items-center justify-center">
+                            <img
+                              src={fallbackImage}
+                              alt={product.name}
+                              className="w-full h-full object-contain"
+                            />
+                            <div
+                              className="absolute pointer-events-none"
+                              style={{
+                                top: photoData.designArea.top,
+                                left: photoData.designArea.left,
+                                width: photoData.designArea.width,
+                                height: photoData.designArea.height,
+                              }}
+                            >
+                              <img
+                                src={design.design_url}
+                                alt="Your design overlay"
+                                className="w-full h-full object-cover shadow-sm opacity-90 mix-blend-multiply"
+                              />
+                            </div>
+                          </div>
+                        ) : displayImage ? (
                           <motion.img
                             key={displayImage}
                             src={displayImage}
-                            alt={`${product.name} with your design`}
+                            alt={`${product.name} preview`}
                             className="w-full h-full object-contain p-3"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
