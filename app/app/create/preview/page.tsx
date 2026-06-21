@@ -280,11 +280,11 @@ function PreviewContent() {
           >
             <div className="flex-1">
               <h3 className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5 text-sm">
-                <span>✂️</span> Clean Cutout Mode Active
+                <span>✂️</span> Clean Cutout Preview
               </h3>
               <p className="text-xs text-emerald-700 leading-relaxed">
-                Ideal for stickers, shirts, mugs, and custom logos.
-                <strong className="block mt-1">Note:</strong> Automatic real-time background removal is in sandbox mode. Our design team will manually isolate the subject of your photo for the final print before shipping!
+                Best for stickers, shirts, mugs, and logos.
+                <strong className="block mt-1">Note:</strong> Final cleanup may be reviewed and manually perfected by our professional design team before print to guarantee crisp, clean edges on your physical products!
               </p>
             </div>
             <div className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider text-center flex-shrink-0">
