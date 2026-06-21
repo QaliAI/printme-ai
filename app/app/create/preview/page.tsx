@@ -518,6 +518,35 @@ function PreviewContent() {
           </motion.div>
         </motion.div>
       </Container>
+
+      {/* Sticky Bottom CTA for Mobile */}
+      <AnimatePresence>
+        {design?.design_url && !regenerating && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 p-4 md:hidden flex items-center justify-between shadow-2xl"
+          >
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Design Ready</p>
+              <p className="text-sm font-black text-indigo-900">Choose Products</p>
+            </div>
+            <Button
+              onClick={() => {
+                if (design?.id.startsWith('guest-design-')) {
+                  router.push(`/app/create/products?design=${design.id}&designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`);
+                } else {
+                  router.push(`/app/create/products?design=${design?.id}`);
+                }
+              }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg"
+            >
+              Select Products →
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

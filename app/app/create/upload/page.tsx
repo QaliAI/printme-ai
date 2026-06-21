@@ -199,24 +199,32 @@ function UploadContent() {
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
                           onClick={() => galleryInputRef.current?.click()}
-                          className={`border-3 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
+                          className={`border-3 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
                             dragActive
                               ? 'border-indigo-600 bg-indigo-50/50 scale-[0.99]'
                               : 'border-slate-300 hover:border-indigo-500 hover:bg-slate-50/50'
                           }`}
                         >
-                          <div className="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mb-4 text-indigo-600 shadow-inner">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mb-4 text-indigo-600 shadow-inner">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                             </svg>
                           </div>
-                          <h3 className="font-bold text-slate-800 text-lg mb-1">Drag and drop your photo here</h3>
-                          <p className="text-sm text-slate-500 mb-6">or click to browse your files</p>
+
+                          {/* Large Primary CTA */}
+                          <div className="mb-4 w-full max-w-xs mx-auto">
+                            <span className="w-full inline-flex items-center justify-center bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold text-base py-3 px-6 rounded-xl shadow-lg transition-transform active:scale-95">
+                              📸 Choose a photo
+                            </span>
+                          </div>
+
+                          <h3 className="font-bold text-slate-800 text-sm mb-1 hidden sm:block">Drag and drop your photo here</h3>
+                          <p className="text-xs text-slate-500 mb-4 hidden sm:block">or click to browse your files</p>
                           <div className="flex flex-wrap justify-center gap-3">
-                            <span className="bg-white/90 border border-slate-200 text-slate-600 text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">
+                            <span className="bg-white/90 border border-slate-200 text-slate-500 text-[10px] px-2.5 py-1.5 rounded-full font-medium shadow-sm">
                               JPEG, PNG, WebP
                             </span>
-                            <span className="bg-white/90 border border-slate-200 text-slate-600 text-xs px-3 py-1.5 rounded-full font-medium shadow-sm">
+                            <span className="bg-white/90 border border-slate-200 text-slate-500 text-[10px] px-2.5 py-1.5 rounded-full font-medium shadow-sm">
                               Max size 10MB
                             </span>
                           </div>
@@ -228,9 +236,9 @@ function UploadContent() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => cameraInputRef.current?.click()}
-                            className="relative group overflow-hidden bg-indigo-600 text-white font-semibold rounded-xl py-4 px-6 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
+                            className="relative group overflow-hidden bg-indigo-600 text-white font-semibold rounded-xl py-3.5 px-6 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 text-sm"
                           >
-                            <span className="text-xl">📷</span>
+                            <span className="text-lg">📷</span>
                             <span>Take Live Photo</span>
                           </motion.button>
 
@@ -238,9 +246,9 @@ function UploadContent() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => galleryInputRef.current?.click()}
-                            className="relative group overflow-hidden bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl py-4 px-6 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3"
+                            className="relative group overflow-hidden bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl py-3.5 px-6 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 text-sm"
                           >
-                            <span className="text-xl">🖼️</span>
+                            <span className="text-lg">🖼️</span>
                             <span>Photo Library</span>
                           </motion.button>
                         </div>
@@ -249,7 +257,7 @@ function UploadContent() {
                           ref={cameraInputRef}
                           type="file"
                           className="hidden"
-                          accept={ACCEPTED_TYPES.join(',')}
+                          accept="image/*"
                           capture="environment"
                           onChange={handleFileSelect}
                         />
@@ -257,7 +265,7 @@ function UploadContent() {
                           ref={galleryInputRef}
                           type="file"
                           className="hidden"
-                          accept={ACCEPTED_TYPES.join(',')}
+                          accept="image/*"
                           onChange={handleFileSelect}
                         />
                       </motion.div>
@@ -416,6 +424,29 @@ function UploadContent() {
           </motion.div>
         </motion.div>
       </Container>
+
+      {/* Sticky Bottom CTA for Mobile */}
+      <AnimatePresence>
+        {selectedFile && !loading && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 p-4 md:hidden flex items-center justify-between shadow-2xl"
+          >
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Photo Selected</p>
+              <p className="text-sm font-black text-indigo-900">Ready to transform</p>
+            </div>
+            <Button
+              onClick={handleUpload}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg"
+            >
+              Generate Design →
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
