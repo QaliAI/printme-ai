@@ -37,6 +37,7 @@ function PreviewContent() {
 
   const [upload, setUpload] = useState<UserUpload | null>(null);
   const [design, setDesign] = useState<GeneratedDesign | null>(null);
+  const [stylePreset, setStylePreset] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +80,17 @@ function PreviewContent() {
 
   const fetchData = async () => {
     try {
+      if (styleId) {
+        const { data: styleData } = await supabase
+          .from('style_presets')
+          .select('*')
+          .eq('id', styleId)
+          .single();
+        if (styleData) {
+          setStylePreset(styleData);
+        }
+      }
+
       if (uploadId?.startsWith('guest-upload-')) {
         const imageUrl = searchParams.get('imageUrl') || '';
         const guestUpload: UserUpload = {
@@ -256,6 +268,27 @@ function PreviewContent() {
               <Button onClick={() => router.push('/app/create/style')} variant="outline" size="sm" className="flex-1 md:flex-none">
                 Choose Another Style
               </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {stylePreset?.slug === 'clean-cutout' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-6 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
+          >
+            <div className="flex-1">
+              <h3 className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5 text-sm">
+                <span>✂️</span> Clean Cutout Mode Active
+              </h3>
+              <p className="text-xs text-emerald-700 leading-relaxed">
+                Ideal for stickers, shirts, mugs, and custom logos.
+                <strong className="block mt-1">Note:</strong> Automatic real-time background removal is in sandbox mode. Our design team will manually isolate the subject of your photo for the final print before shipping!
+              </p>
+            </div>
+            <div className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider text-center flex-shrink-0">
+              Designer Assisted
             </div>
           </motion.div>
         )}
