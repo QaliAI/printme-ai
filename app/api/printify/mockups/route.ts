@@ -25,7 +25,7 @@ import { z } from 'zod';
 
 const mockupsRequestSchema = z.object({
   imageUrl: z.string().url(),
-  designId: z.string().uuid().optional(),
+  designId: z.string().optional(),
   blueprintIds: z.array(z.number()).optional(),
   forceRefresh: z.boolean().optional().default(false),
 });
@@ -184,6 +184,7 @@ async function loadCachedMockups(
   mockups: CachedMockup[] | null;
   imageId: string | null;
 } | null> {
+  if (designId.startsWith('guest-design-')) return null;
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
@@ -221,6 +222,7 @@ async function saveCachedMockups(
   imageId: string,
   mockups: CachedMockup[]
 ): Promise<void> {
+  if (designId.startsWith('guest-design-')) return;
   const supabase = getSupabaseAdmin();
   if (!supabase) return;
 

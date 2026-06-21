@@ -79,27 +79,44 @@ function PreviewContent() {
 
   const fetchData = async () => {
     try {
-      const { data: uploadData, error: uploadError } = await supabase
-        .from('user_uploads')
-        .select('*')
-        .eq('id', uploadId)
-        .single();
-
-      if (uploadError) throw uploadError;
-      setUpload(uploadData);
-
-      const { data: designData } = await supabase
-        .from('generated_designs')
-        .select('*')
-        .eq('upload_id', uploadId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (designData) {
-        setDesign(designData);
+      if (uploadId?.startsWith('guest-upload-')) {
+        const imageUrl = searchParams.get('imageUrl') || '';
+        const guestUpload: UserUpload = {
+          id: uploadId,
+          user_id: '',
+          style_id: styleId || '',
+          original_url: imageUrl,
+          file_size: 1000000,
+          created_at: new Date().toISOString(),
+          original_file_name: 'upload.png',
+          width: 1000,
+          height: 1000,
+        } as unknown as UserUpload;
+        setUpload(guestUpload);
+        await generateDesign(guestUpload);
       } else {
-        await generateDesign(uploadData);
+        const { data: uploadData, error: uploadError } = await supabase
+          .from('user_uploads')
+          .select('*')
+          .eq('id', uploadId)
+          .single();
+
+        if (uploadError) throw uploadError;
+        setUpload(uploadData);
+
+        const { data: designData } = await supabase
+          .from('generated_designs')
+          .select('*')
+          .eq('upload_id', uploadId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (designData) {
+          setDesign(designData);
+        } else {
+          await generateDesign(uploadData);
+        }
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -486,7 +503,13 @@ function PreviewContent() {
             whileTap={!regenerating && design?.design_url ? { scale: 0.98 } : {}}
           >
             <Button
-              onClick={() => router.push(`/app/create/products?design=${design?.id}`)}
+              onClick={() => {
+                if (design?.id.startsWith('guest-design-')) {
+                  router.push(`/app/create/products?design=${design.id}&designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`);
+                } else {
+                  router.push(`/app/create/products?design=${design?.id}`);
+                }
+              }}
               disabled={!design?.design_url || regenerating}
               className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8"
             >

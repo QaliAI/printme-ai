@@ -88,13 +88,29 @@ function ProductsContent() {
 
   const fetchData = async () => {
     try {
-      const { data: designData, error: designError } = await supabase
-        .from('generated_designs')
-        .select('*')
-        .eq('id', designId)
-        .single();
+      let designData: GeneratedDesign | null = null;
+      if (designId?.startsWith('guest-design-')) {
+        const designUrl = searchParams.get('designUrl') || '';
+        const style = searchParams.get('style') || '';
+        const imageUrl = searchParams.get('imageUrl') || '';
+        designData = {
+          id: designId,
+          design_url: designUrl,
+          style_preset_id: style,
+          original_image_url: imageUrl,
+          status: 'completed',
+          created_at: new Date().toISOString(),
+        } as unknown as GeneratedDesign;
+      } else {
+        const { data, error: designError } = await supabase
+          .from('generated_designs')
+          .select('*')
+          .eq('id', designId)
+          .single();
 
-      if (designError) throw designError;
+        if (designError) throw designError;
+        designData = data;
+      }
       setDesign(designData);
 
       if (designData?.design_url) {
@@ -196,6 +212,42 @@ function ProductsContent() {
     if (selectedProducts.length === 0 || !design) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Guest mode: save items to localStorage guest cart
+        const guestCartStr = localStorage.getItem('printme_guest_cart');
+        let guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+
+        // For each selected product
+        for (const sel of selectedProducts) {
+          const originalImageUrl = searchParams.get('imageUrl') || design.original_image_url || '';
+          const styleId = searchParams.get('style') || design.style_preset_id || '';
+
+          // Check if variant already exists in guest cart
+          const existingIdx = guestCart.findIndex(
+            (item: any) => item.variantId === sel.variantId && item.designId === design.id
+          );
+
+          if (existingIdx > -1) {
+            guestCart[existingIdx].quantity += sel.quantity;
+          } else {
+            guestCart.push({
+              productId: sel.productId,
+              variantId: sel.variantId,
+              quantity: sel.quantity,
+              designId: design.id,
+              designUrl: design.design_url,
+              originalImageUrl: originalImageUrl,
+              styleId: styleId,
+            });
+          }
+        }
+
+        localStorage.setItem('printme_guest_cart', JSON.stringify(guestCart));
+        router.push('/app/cart');
+        return;
+      }
+
       const response = await fetch('/api/cart/add-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -628,6 +680,29 @@ function ProductsContent() {
           </motion.div>
         </motion.div>
       </Container>
+
+      {/* Sticky Bottom CTA for Mobile */}
+      <AnimatePresence>
+        {selectedProducts.length > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 p-4 md:hidden flex items-center justify-between shadow-2xl"
+          >
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Selected Items</p>
+              <p className="text-sm font-black text-indigo-900">{selectedProducts.length} Product{selectedProducts.length !== 1 ? 's' : ''}</p>
+            </div>
+            <Button
+              onClick={handleProceedToCart}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg"
+            >
+              Add to Cart →
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

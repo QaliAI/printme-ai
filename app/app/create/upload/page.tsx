@@ -100,44 +100,30 @@ function UploadContent() {
     }, 200);
 
     try {
-      const user = await getCurrentUser();
-      if (!user) {
-        // Redirect to signin and preserve upload configuration
-        router.push(`/auth/signin?redirect=${encodeURIComponent(`/app/create/upload?style=${styleId}`)}`);
-        return;
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+      formData.append('styleId', styleId);
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
-      const timestamp = Date.now();
-      const filename = `${user.id}/${timestamp}-${selectedFile.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('user-uploads')
-        .upload(filename, selectedFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from('user-uploads').getPublicUrl(filename);
-      const publicUrl = data?.publicUrl || '';
-
-      const { data: uploadRecord, error: dbError } = await supabase
-        .from('user_uploads')
-        .insert({
-          user_id: user.id,
-          style_id: styleId,
-          original_url: publicUrl,
-          storage_path: filename,
-          file_size: selectedFile.size,
-          width: dimensions?.width,
-          height: dimensions?.height,
-        })
-        .select()
-        .single();
-
-      if (dbError) throw dbError;
+      const uploadRecord = await response.json();
 
       setUploadProgress(100);
       setTimeout(() => {
-        router.push(`/app/create/preview?upload=${uploadRecord.id}&style=${styleId}`);
+        const isGuest = uploadRecord.id.startsWith('guest-upload-');
+        if (isGuest) {
+          router.push(`/app/create/preview?upload=${uploadRecord.id}&style=${styleId}&imageUrl=${encodeURIComponent(uploadRecord.original_url)}`);
+        } else {
+          router.push(`/app/create/preview?upload=${uploadRecord.id}&style=${styleId}`);
+        }
       }, 400);
     } catch (err) {
       console.error('Upload failed:', err);

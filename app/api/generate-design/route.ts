@@ -5,7 +5,7 @@ import { getImageProvider } from '@/lib/ai/image-provider';
 import { z } from 'zod';
 
 const generateDesignSchema = z.object({
-  uploadId: z.string().uuid(),
+  uploadId: z.string().optional(),
   styleId: z.string().uuid(),
   imageUrl: z.string().url(),
 });
@@ -16,17 +16,45 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { uploadId, styleId, imageUrl } = generateDesignSchema.parse(body);
 
-    // Check authentication
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // Initialize Supabase admin client
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+
+    // Fetch style details
+    const { data: style, error: styleError } = await supabase
+      .from('style_presets')
+      .select('name, description')
+      .eq('id', styleId)
+      .single();
+
+    if (styleError || !style) {
+      return NextResponse.json({ error: 'Style not found' }, { status: 404 });
+    }
+
+    // Check authentication
+    const user = await getCurrentUser();
+    if (!user) {
+      // Guest design path: generate design and return mock design object directly
+      const provider = await getImageProvider();
+      const result = await provider.generateDesign({
+        imageUrl,
+        promptTemplate: `${style.name} style: ${style.description}`,
+      });
+
+      return NextResponse.json({
+        id: `guest-design-${Date.now()}`,
+        status: 'completed',
+        design_url: result.imageUrl,
+        original_image_url: imageUrl,
+        style_preset_id: styleId,
+      });
+    }
+
+    if (!uploadId) {
+      return NextResponse.json({ error: 'Upload ID is required for signed-in users' }, { status: 400 });
+    }
 
     // Verify user owns this upload
     const { data: upload, error: uploadError } = await supabase
@@ -38,17 +66,6 @@ export async function POST(req: NextRequest) {
 
     if (uploadError || !upload) {
       return NextResponse.json({ error: 'Upload not found' }, { status: 404 });
-    }
-
-    // Fetch style details
-    const { data: style, error: styleError } = await supabase
-      .from('style_presets')
-      .select('name, description')
-      .eq('id', styleId)
-      .single();
-
-    if (styleError || !style) {
-      return NextResponse.json({ error: 'Style not found' }, { status: 404 });
     }
 
     // Create pending design record

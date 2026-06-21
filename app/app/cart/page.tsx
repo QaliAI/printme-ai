@@ -87,6 +87,62 @@ export default function CartPage() {
 
   const fetchCart = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Guest mode: load cart from localStorage
+        const guestCartStr = localStorage.getItem('printme_guest_cart');
+        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+
+        if (guestCart.length === 0) {
+          setCart(null);
+          setLoading(false);
+          return;
+        }
+
+        const productIds = guestCart.map((item: any) => item.productId);
+        const variantIds = guestCart.map((item: any) => item.variantId);
+
+        const { data: products } = await supabase.from('products').select('*').in('id', productIds);
+        const { data: variants } = await supabase.from('product_variants').select('*').in('id', variantIds);
+
+        const itemsMapped = guestCart.map((guestItem: any) => {
+          const variant = variants?.find(v => v.id === guestItem.variantId);
+          const product = products?.find(p => p.id === guestItem.productId);
+
+          return {
+            id: `${guestItem.variantId}-${guestItem.designId}`, // temporary ID
+            cart_id: 'guest',
+            quantity: guestItem.quantity,
+            product_id: guestItem.productId,
+            product_variant_id: guestItem.variantId,
+            design_id: guestItem.designId,
+            unit_price: product && variant ? (Number(product.base_price) + Number(variant.price_modifier)) : 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            product_variant: variant ? {
+              ...variant,
+              product: product || null
+            } : null,
+            design: {
+              id: guestItem.designId,
+              design_url: guestItem.designUrl,
+              original_image_url: guestItem.originalImageUrl,
+              style_preset_id: guestItem.styleId,
+              status: 'completed',
+            }
+          };
+        });
+
+        setCart({
+          id: 'guest',
+          user_id: 'guest',
+          created_at: new Date().toISOString(),
+          cart_items: itemsMapped as unknown as CartItemWithRelations[]
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error: fetchError } = await supabase
         .from('carts')
         .select(
@@ -182,9 +238,7 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleUpdateQuantity = async (itemId: string, quantity: number) => {
@@ -192,6 +246,26 @@ export default function CartPage() {
 
     setUpdating(itemId);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Guest mode: update quantity in localStorage
+        const guestCartStr = localStorage.getItem('printme_guest_cart');
+        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+
+        const updatedCart = guestCart.map((item: any) => {
+          const tempId = `${item.variantId}-${item.designId}`;
+          if (tempId === itemId) {
+            return { ...item, quantity };
+          }
+          return item;
+        });
+
+        localStorage.setItem('printme_guest_cart', JSON.stringify(updatedCart));
+        await fetchCart();
+        setUpdating(null);
+        return;
+      }
+
       const { error: updateError } = await supabase
         .from('cart_items')
         .update({ quantity })
@@ -220,6 +294,23 @@ export default function CartPage() {
   const handleRemoveItem = async (itemId: string) => {
     setUpdating(itemId);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Guest mode: remove item from localStorage
+        const guestCartStr = localStorage.getItem('printme_guest_cart');
+        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+
+        const updatedCart = guestCart.filter((item: any) => {
+          const tempId = `${item.variantId}-${item.designId}`;
+          return tempId !== itemId;
+        });
+
+        localStorage.setItem('printme_guest_cart', JSON.stringify(updatedCart));
+        await fetchCart();
+        setUpdating(null);
+        return;
+      }
+
       const { error: deleteError } = await supabase
         .from('cart_items')
         .delete()
@@ -247,10 +338,22 @@ export default function CartPage() {
     if (!cart || cart.cart_items.length === 0) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let body: any;
+
+      if (!user) {
+        // Guest mode: pass guestItems
+        const guestCartStr = localStorage.getItem('printme_guest_cart');
+        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        body = { guestItems: guestCart };
+      } else {
+        body = { cartId: cart.id };
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartId: cart.id }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -259,7 +362,11 @@ export default function CartPage() {
 
       const { sessionId, redirectUrl } = await response.json();
 
-      // Redirect to Stripe Checkout if available, otherwise to confirmation page
+      // Clear local guest cart on redirect
+      if (!user) {
+        localStorage.removeItem('printme_guest_cart');
+      }
+
       if (redirectUrl) {
         window.location.href = redirectUrl;
       } else {

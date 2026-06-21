@@ -5,10 +5,10 @@ import { getImageProvider } from '@/lib/ai/image-provider';
 import { z } from 'zod';
 
 const regenerateSchema = z.object({
-  uploadId: z.string().uuid(),
+  uploadId: z.string().optional(),
   styleId: z.string().uuid(),
   imageUrl: z.string().url(),
-  previousDesignId: z.string().uuid().optional(),
+  previousDesignId: z.string().optional(),
 });
 
 /**
@@ -47,15 +47,46 @@ export async function POST(req: NextRequest) {
     const { uploadId, styleId, imageUrl, previousDesignId: _previousDesignId } = regenerateSchema.parse(body);
     void _previousDesignId; // reserved for future "exclude this prompt" logic
 
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+
+    // Get style
+    const { data: style } = await supabase
+      .from('style_presets')
+      .select('name, description')
+      .eq('id', styleId)
+      .single();
+
+    if (!style) {
+      return NextResponse.json({ error: 'Style not found' }, { status: 404 });
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+      // Guest path: simply call provider and return mock design object directly
+      const variation = VARIATION_MODIFIERS[Math.floor(Math.random() * VARIATION_MODIFIERS.length)];
+      const prompt = `${style.name} style: ${style.description}, ${variation}`;
+
+      const provider = await getImageProvider();
+      const result = await provider.generateDesign({
+        imageUrl,
+        promptTemplate: prompt,
+      });
+
+      return NextResponse.json({
+        id: `guest-design-${Date.now()}`,
+        status: 'completed',
+        design_url: result.imageUrl,
+        original_image_url: imageUrl,
+        style_preset_id: styleId,
+      });
+    }
+
+    if (!uploadId) {
+      return NextResponse.json({ error: 'Upload ID is required for signed-in users' }, { status: 400 });
+    }
 
     // Verify ownership
     const { data: upload } = await supabase
@@ -69,17 +100,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Upload not found' }, { status: 404 });
     }
 
-    // Get style
-    const { data: style } = await supabase
-      .from('style_presets')
-      .select('name, description')
-      .eq('id', styleId)
-      .single();
-
-    if (!style) {
-      return NextResponse.json({ error: 'Style not found' }, { status: 404 });
-    }
-
     // Count previous attempts to pick a varied prompt
     const { count: previousCount } = await supabase
       .from('generated_designs')
@@ -88,9 +108,8 @@ export async function POST(req: NextRequest) {
 
     const attemptIdx = previousCount || 0;
     const variation = VARIATION_MODIFIERS[attemptIdx % VARIATION_MODIFIERS.length];
-    const negative = NEGATIVE_PROMPTS[attemptIdx % NEGATIVE_PROMPTS.length];
-
     const prompt = `${style.name} style: ${style.description}, ${variation}`;
+    const negative = NEGATIVE_PROMPTS[attemptIdx % NEGATIVE_PROMPTS.length];
 
     // Create pending design record
     const { data: pendingDesign, error: insertError } = await supabase

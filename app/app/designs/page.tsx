@@ -28,6 +28,13 @@ export default function DesignsPage() {
 
   const fetchDesigns = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setDesigns([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error: fetchError } = await supabase
         .from('generated_designs')
         .select(
