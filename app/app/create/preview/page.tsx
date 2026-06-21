@@ -530,6 +530,26 @@ function PreviewContent() {
               {regenerating ? '✨ Generating...' : '🔄 Try Different Style'}
             </Button>
           </motion.div>
+          {design?.design_url && (
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={() => {
+                  let shareUrl = '';
+                  if (design.id.startsWith('guest-design-')) {
+                    shareUrl = `${window.location.origin}/designs/guest?designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`;
+                  } else {
+                    shareUrl = `${window.location.origin}/designs/${design.id}`;
+                  }
+                  navigator.clipboard.writeText(shareUrl);
+                  alert('Share link copied to clipboard! 🚀');
+                }}
+                variant="outline"
+                className="w-full sm:w-auto border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+              >
+                🔗 Share Design
+              </Button>
+            </motion.div>
+          )}
           <div className="flex-1" />
           <motion.div
             whileHover={!regenerating && design?.design_url ? { scale: 1.02 } : {}}
