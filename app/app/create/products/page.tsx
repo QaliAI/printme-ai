@@ -462,7 +462,7 @@ function ProductsContent() {
                               <img
                                 src={design.design_url}
                                 alt="Your design overlay"
-                                className="w-full h-full object-cover shadow-sm opacity-90 mix-blend-multiply"
+                                className="w-full h-full object-cover shadow-sm opacity-100 mix-blend-multiply"
                               />
                             </div>
                           </div>
