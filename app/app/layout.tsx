@@ -1,25 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser();
-      if (!user) {
-        router.push('/auth/signin?redirect=/app');
+      const requiresAuth = pathname?.startsWith('/app/orders');
+
+      if (requiresAuth && !user) {
+        router.push(`/auth/signin?redirect=${encodeURIComponent(pathname)}`);
       } else {
         setLoading(false);
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return (
