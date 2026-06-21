@@ -15,67 +15,67 @@ const getAIGeneratedUrl = (prompt: string, seed: number) => {
   return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=800&nologo=true&seed=${seed}&model=flux`;
 };
 
-// Seed structure for featured/funny designs
+// Curated featured designs matching user intent (funny, emotional, giftable)
 const FEATURED_DESIGNS = [
   {
-    title: "Cosmic Astronaut Cat",
-    slug: "cosmic-astronaut-cat",
+    title: "Presidential Pug Portrait",
+    slug: "presidential-pug-portrait",
     styleSlug: "oil-painting-portrait",
-    category: "Space Art",
-    prompt: "oil painting masterpiece of a majestic cat wearing an astronaut suit in deep space, colorful nebula, stars, cinematic detail",
-    seed: 2026,
-    tag: "Best Seller",
-    description: "An adventurous feline exploring the final frontier. Perfect for canvas prints and hoodies."
+    category: "Funny Gifts",
+    prompt: "oil painting of a serious pug dog dressed in a formal suit and red tie behind a presidential podium, official portrait style, highly detailed",
+    seed: 2040,
+    tag: "Popular Choice",
+    description: "Give the gift of absolute executive authority. This hilarious pug portrait is guaranteed to command respect and bring belly laughs to any home or office."
   },
   {
-    title: "Neon Cyberpunk Bulldog",
-    slug: "cyberpunk-bulldog",
-    styleSlug: "pop-art-poster",
-    category: "Sci-Fi",
-    prompt: "synthwave cyberpunk portrait of a cool bulldog wearing sunglasses, neon colors, grid landscape, 80s retro futurism",
-    seed: 2027,
-    tag: "Trending",
-    description: "Retro-futuristic bulldog with neon style. Looks stunning on t-shirts and stickers."
-  },
-  {
-    title: "Royal Golden Retriever",
-    slug: "royal-golden-retriever",
+    title: "Majestic Fluffy King Cat",
+    slug: "majestic-king-cat",
     styleSlug: "pet-royal-portrait",
-    category: "Humorous",
-    prompt: "renaissance royal portrait of a regal golden retriever puppy wearing a crown and velvet robe with gold embroidery",
-    seed: 1007,
-    tag: "Customer Favorite",
-    description: "His royal highness, the goodest boy. Bring classical laughter to your mugs and canvases."
+    category: "Pet Lovers",
+    prompt: "renaissance royal portrait of a majestic fluffy Persian cat wearing a gold crown and deep red royal velvet cloak, oil painting, museum quality",
+    seed: 2041,
+    tag: "Best Seller",
+    description: "Your pet already rules the household—now let them rule the walls. Immortalize your feline companion with this elegant, regal Renaissance portrait."
   },
   {
-    title: "Watercolor Ocean Turtle",
-    slug: "watercolor-ocean-turtle",
+    title: "Grandpa's Golden Hour Fishing",
+    slug: "grandpa-fishing-sunset",
     styleSlug: "watercolor-memory",
-    category: "Nature",
-    prompt: "watercolor painting of a sea turtle swimming in turquoise ocean water, soft pastel washes, dreamy brushstrokes",
-    seed: 1088,
-    tag: "Nature Vibe",
-    description: "A calming underwater scene with delicate textures. Ideal for canvas prints and tote bags."
+    category: "Family Moments",
+    prompt: "watercolor painting of a grandfather and grandson fishing on a calm lake at sunset, warm golden rays, dreamy pastel washes, emotional memory",
+    seed: 2042,
+    tag: "Heartwarming",
+    description: "Capture the quiet warmth of family bonding. A touching, emotional watercolor print that makes a deeply personal keepsake for Father's Day or birthdays."
   },
   {
-    title: "Happy Shiba Cutout",
-    slug: "happy-shiba-cutout",
+    title: "Monday Morning Meltdown",
+    slug: "monday-morning-meltdown",
+    styleSlug: "cartoon-gift-style",
+    category: "Office Chaos",
+    prompt: "funny cartoon illustration of a stressed cup of coffee with a cute face screaming while holding a computer mouse, bold outline cartoon style",
+    seed: 2043,
+    tag: "Office Favorite",
+    description: "A tribute to the corporate grind. The ultimate desk accessory mug to help you power through endless video calls and Monday morning status reports."
+  },
+  {
+    title: "Weekend Golf Champion",
+    slug: "weekend-golf-champion",
+    styleSlug: "cartoon-gift-style",
+    category: "Sports & Hobbies",
+    prompt: "playful cartoon caricature of a golfer sleeping in a sand trap hugging his golf club, bright colors, humorous illustration",
+    seed: 2044,
+    tag: "Trending",
+    description: "For the golf enthusiast whose relationship with the game is 'complicated.' Perfect for bringing good-natured laughs to their custom weekend t-shirt."
+  },
+  {
+    title: "Retro Campfire Adventure",
+    slug: "retro-campfire-adventure",
     styleSlug: "clean-cutout",
-    category: "Stickers",
-    prompt: "clean studio cutout of a cute happy shiba inu puppy smiling, isolated on pure white background, crisp edges",
-    seed: 1012,
+    category: "Stickers & Logos",
+    prompt: "clean vintage circular sticker design of a campfire in front of pine trees and mountains, 1970s retro graphic style, bold flat colors, isolated on white background",
+    seed: 2045,
     tag: "Sticker Ready",
-    description: "Crisp outline of a joyful Shiba Inu. Made specifically for die-cut stickers and t-shirts."
-  },
-  {
-    title: "Vintage Mountain Adventure",
-    slug: "vintage-mountain-adventure",
-    styleSlug: "vintage-travel-poster",
-    category: "Travel",
-    prompt: "vintage 1970s travel poster illustration of a mountain lake, warm retro tones, nostalgic adventure travel graphic art",
-    seed: 2028,
-    tag: "Retro",
-    description: "Nostalgic wanderlust vibes from the 70s. Perfect for posters and phone cases."
+    description: "Celebrate the great outdoors with a clean, vintage 70s badge design. Looks incredibly authentic printed on outdoor hoodies, camper mugs, or sticker packs."
   }
 ];
 
@@ -95,8 +95,16 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
     .select('id, slug, name')
     .eq('is_active', true);
 
-  // Extract unique categories for filter tabs
-  const categories = ['All', ...Array.from(new Set(FEATURED_DESIGNS.map(d => d.category)))];
+  // Hardcoded list of buyer-friendly categories to ensure perfect ordering
+  const categories = [
+    'All',
+    'Funny Gifts',
+    'Pet Lovers',
+    'Family Moments',
+    'Office Chaos',
+    'Sports & Hobbies',
+    'Stickers & Logos'
+  ];
 
   // Filter designs based on category
   const filteredDesigns = activeCategory === 'All'
@@ -108,14 +116,14 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
       <Container size="lg">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 uppercase tracking-wider">
-            ✨ Curated Masterpieces
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 uppercase tracking-wider animate-pulse">
+            ✨ Curated Printable Gifts
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight">
             Featured <span className="bg-gradient-to-r from-indigo-600 to-pink-600 bg-clip-text text-transparent">AI Designs</span>
           </h1>
           <p className="text-sm md:text-base text-slate-600 leading-relaxed">
-            Pick a stunning AI design from our community and print it on any premium product instantly. No account required.
+            Pick a beautifully curated AI design to print on any premium product instantly. No account or login required.
           </p>
         </div>
 
@@ -126,7 +134,7 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
             return (
               <Link
                 key={cat}
-                href={cat === 'All' ? '/app/designs' : `/app/designs?category=${encodeURIComponent(cat)}`}
+                href={cat === 'All' ? '/designs' : `/designs?category=${encodeURIComponent(cat)}`}
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
                   isActive
                     ? 'bg-slate-900 text-white shadow-md'
@@ -196,7 +204,7 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
                     </div>
 
                     {/* CTAs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-auto">
+                    <div className="grid grid-cols-2 gap-2 mt-auto">
                       <Link href={shareUrl} className="w-full">
                         <Button variant="outline" className="w-full border-slate-200 text-slate-700 font-bold py-2.5 text-xs rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-1">
                           <span>👁️</span> Previews
