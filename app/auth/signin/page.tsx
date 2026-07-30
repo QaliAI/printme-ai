@@ -22,8 +22,8 @@ export default function SignInPage() {
       setLoading(true);
       await signIn(formData.email, formData.password);
       router.push('/app');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in');
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export default function SignInPage() {
 
       <CardFooter className="flex flex-col gap-4">
         <p className="text-sm text-gray-600 text-center">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-700">
             Sign up
           </Link>

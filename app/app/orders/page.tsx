@@ -6,11 +6,25 @@ import { Container } from '@/components/Container';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue, type Json } from '@/lib/types';
+
+interface OrderProduct {
+  id: string;
+  name: string;
+  emoji?: string;
+}
+
+interface OrderProductVariant {
+  id: string;
+  size?: string;
+  color?: string;
+  product?: OrderProduct | OrderProduct[];
+}
 
 interface OrderItem {
   id: string;
   quantity: number;
-  product_variant?: any;
+  product_variant?: OrderProductVariant | OrderProductVariant[];
 }
 
 interface Order {
@@ -20,7 +34,7 @@ interface Order {
   total_amount: number;
   status: string;
   fulfillment_status?: string;
-  shipping_address?: any;
+  shipping_address?: Json;
   order_items: OrderItem[];
 }
 
@@ -29,11 +43,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     try {
       const { data, error: fetchError } = await supabase
         .from('orders')
@@ -72,7 +82,13 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // Fetching the initial server-backed collection is the effect's purpose.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -130,7 +146,7 @@ export default function OrdersPage() {
       {orders.length === 0 ? (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+            <p className="text-gray-600 mb-6">You haven&apos;t placed any orders yet.</p>
             <Link href="/app">
               <Button>Start Creating</Button>
             </Link>
@@ -157,8 +173,8 @@ export default function OrdersPage() {
               <CardBody>
                 <div className="mb-4">
                   {order.order_items.map((item) => {
-                    const product = (item.product_variant as any)?.product;
-                    const variant = item.product_variant as any;
+                    const variant = getFirstOrValue(item.product_variant);
+                    const product = getFirstOrValue(variant?.product);
                     return (
                       <div key={item.id} className="flex justify-between text-sm py-2">
                         <div>

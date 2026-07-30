@@ -94,9 +94,11 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
         }
 
+        const cartItems = cart.cart_items as CartItemWithRelations[];
+
         // Calculate order total
         let total = 0;
-        (cart.cart_items as CartItemWithRelations[]).forEach((item) => {
+        cartItems.forEach((item) => {
           const productVariant = getFirstOrValue(item.product_variant);
           const itemPrice =
             (productVariant?.product?.base_price || 0) +
@@ -122,16 +124,19 @@ export async function POST(req: NextRequest) {
         }
 
         // Create order items
-        const orderItems = cart.cart_items.map((item: any) => ({
-          order_id: order.id,
-          design_id: item.design_id,
-          product_id: item.product_variant.product.id,
-          product_variant_id: item.product_variant.id,
-          quantity: item.quantity,
-          unit_price:
-            item.product_variant.product.base_price +
-            (item.product_variant.price_modifier || 0),
-        }));
+        const orderItems = cartItems.map((item) => {
+          const productVariant = getFirstOrValue(item.product_variant);
+          return {
+            order_id: order.id,
+            design_id: item.design_id,
+            product_id: productVariant?.product?.id ?? '',
+            product_variant_id: productVariant?.id ?? '',
+            quantity: item.quantity,
+            unit_price:
+              (productVariant?.product?.base_price ?? 0) +
+              (productVariant?.price_modifier ?? 0),
+          };
+        });
 
         const { error: itemsError } = await supabase
           .from('order_items')
@@ -151,8 +156,7 @@ export async function POST(req: NextRequest) {
         // Submit to Printify
         try {
           const printifyOrder = await submitToPrintify(
-            cart,
-            order,
+            cartItems,
             session
           );
 
@@ -196,8 +200,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function submitToPrintify(
-  cart: any,
-  order: any,
+  cartItems: CartItemWithRelations[],
   stripeSession: Stripe.Checkout.Session
 ) {
   // Get user's Stripe customer email as fallback contact info
@@ -205,7 +208,7 @@ async function submitToPrintify(
   const userName = stripeSession.customer_details?.name || 'Customer';
 
   // Build Printify order from cart items
-  const lineItems = (cart.cart_items as CartItemWithRelations[]).map((item) => {
+  const lineItems = cartItems.map((item) => {
     const productVariant = getFirstOrValue(item.product_variant);
     const design = getFirstOrValue(item.design);
     return {

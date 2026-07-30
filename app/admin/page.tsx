@@ -5,13 +5,28 @@ import Link from 'next/link';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue } from '@/lib/types';
 
 interface Stats {
   totalOrders: number;
   totalRevenue: number;
   totalDesigns: number;
   activeUsers: number;
-  recentOrders: any[];
+  recentOrders: RecentOrder[];
+}
+
+interface RecentOrder {
+  id: string;
+  order_number: string;
+  created_at: string;
+  total_amount: number;
+  status: string;
+  user?: RecentOrderUser | RecentOrderUser[] | null;
+}
+
+interface RecentOrderUser {
+  full_name?: string;
+  email?: string;
 }
 
 export default function AdminDashboard() {
@@ -19,11 +34,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  async function fetchStats() {
     try {
       // Fetch total orders
       const { count: orderCount } = await supabase
@@ -80,7 +91,13 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // Fetching the initial server-backed metrics is the effect's purpose.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchStats();
+  }, []);
 
   if (loading) {
     return (
@@ -169,7 +186,8 @@ export default function AdminDashboard() {
                         #{order.order_number}
                       </td>
                       <td className="py-3 px-4 text-gray-600">
-                        {(order.user as any)?.full_name || 'Unknown'}
+                        {getFirstOrValue(order.user ?? undefined)?.full_name ||
+                          'Unknown'}
                       </td>
                       <td className="py-3 px-4 font-semibold text-gray-900">
                         ${(order.total_amount / 100).toFixed(2)}
