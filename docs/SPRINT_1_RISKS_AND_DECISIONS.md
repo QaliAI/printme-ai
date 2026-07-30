@@ -11,7 +11,7 @@
 | Transparent artwork and product switching can distort placement | Store normalized placement separately from render pixels, always derive dimensions from source aspect ratio, and use explicit compatible-position/default rules. |
 | Public feature flag is build-time in Next.js | Default the flag to false in `.env.example`; server-render a not-found response when disabled. A rebuild is required to change a `NEXT_PUBLIC_` value. |
 | Existing lint fails repository-wide | Do not hide baseline failures. Fix touched-file errors and, if time permits, the bounded pre-existing blockers required for a green acceptance run. |
-| New test tooling increases dependency surface | Add only Vitest, Testing Library, and Playwright, matching the installed Next.js 16.2.6 guides. |
+| New test tooling increases dependency surface | Add only Vitest and Playwright; no DOM component-test library is needed for this slice. |
 | Browser storage is not cross-device or checkout-safe | Version the local payload, validate it on read, and list server persistence plus price/catalog revalidation as Sprint 2 work. |
 | Printify rate limiting | Retry only idempotent GET requests, honor `Retry-After`, cap attempts, and never automatically retry product/order creation. |
 
