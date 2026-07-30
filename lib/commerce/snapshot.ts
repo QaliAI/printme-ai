@@ -46,9 +46,14 @@ export const productConfigurationSchema = z.object({
   selectedColor: z.string().nullable(),
   selectedSize: z.string().nullable(),
   previewTemplateId: z.string().min(1),
+  previewBindingKey: z.string().min(1).optional(),
   previewViewId: z.string().min(1),
   instantPreview: instantPreviewSchema,
   officialMockupUrl: z.string().min(1).optional(),
+  officialMockupState: z
+    .enum(['not-requested', 'generating', 'ready', 'review'])
+    .optional(),
+  officialMockupRenderKey: z.string().min(1).optional(),
   unitPrice: z.number().int().nonnegative(),
   currency: z.literal('USD'),
 });

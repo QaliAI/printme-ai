@@ -10,6 +10,11 @@ import type {
   ProductConfiguration,
   ProductVariant,
 } from './types';
+import {
+  getPreviewBinding,
+  getPreviewTemplate,
+  resolvePreviewTemplate,
+} from './templates';
 
 const EPSILON = 0.0001;
 
@@ -134,7 +139,11 @@ export function calculateArtworkBox(
 export const instant2dRenderer: PreviewRendererAdapter = {
   id: 'instant-2d-v1',
   supports(template) {
-    return template.kind === 'flat' || template.kind === 'apparel';
+    return (
+      template.kind === 'flat' ||
+      template.kind === 'apparel' ||
+      template.kind === 'drinkware'
+    );
   },
   render(input) {
     if (!this.supports(input.template)) {
@@ -222,20 +231,30 @@ export function createProductConfiguration(input: {
   previous?: ProductConfiguration;
 }): ProductConfiguration {
   const variant = getSelectedVariant(input.product, input.previous);
+  const resolved = resolvePreviewTemplate({
+    product: input.product,
+    variant,
+    position: input.previous?.printPosition,
+    viewId: input.previous?.previewViewId,
+  });
+  const template = resolved.binding ? resolved.template : input.template;
   const previousPlacement = input.previous
     ? placementFromConfiguration(input.previous)
     : undefined;
   const placement =
     previousPlacement &&
-    isPlacementCompatible(previousPlacement, input.template, variant)
+    isPlacementCompatible(previousPlacement, template, variant)
       ? previousPlacement
       : input.product.defaultPlacement;
   const view =
-    input.template.views.find((candidate) => candidate.position === placement.position) ??
-    input.template.views[0];
+    template.views.find(
+      (candidate) =>
+        candidate.id === resolved.viewId ||
+        candidate.position === placement.position,
+    ) ?? template.views[0];
   const render = instant2dRenderer.render({
     artwork: input.design,
-    template: input.template,
+    template,
     viewId: view.id,
     placement,
   });
@@ -270,7 +289,8 @@ export function createProductConfiguration(input: {
     fit: placement.fit,
     selectedColor: variant.color,
     selectedSize: variant.size,
-    previewTemplateId: input.template.id,
+    previewTemplateId: template.id,
+    previewBindingKey: resolved.binding?.key,
     previewViewId: view.id,
     instantPreview: {
       rendererId: render.rendererId,
@@ -280,5 +300,129 @@ export function createProductConfiguration(input: {
     },
     unitPrice: variant.unitPrice,
     currency: variant.currency,
+  };
+}
+
+function placeholderAspect(
+  variant: ProductVariant,
+  position: PrintPlacement['position'],
+  decorationMethod: string,
+) {
+  const placeholder = variant.placeholders.find(
+    (candidate) =>
+      candidate.position === position &&
+      candidate.decorationMethod === decorationMethod,
+  );
+  return placeholder ? placeholder.width / placeholder.height : null;
+}
+
+export function changeProductVariantConfiguration(input: {
+  configuration: ProductConfiguration;
+  design: DesignAsset;
+  product: MerchProduct;
+  variant: ProductVariant;
+}) {
+  const previousVariant = input.product.variants.find(
+    (candidate) =>
+      candidate.printifyVariantId === input.configuration.printifyVariantId,
+  );
+  const previousAspect = previousVariant
+    ? placeholderAspect(
+        previousVariant,
+        input.configuration.printPosition,
+        input.configuration.decorationMethod,
+      )
+    : null;
+  const nextAspect = placeholderAspect(
+    input.variant,
+    input.configuration.printPosition,
+    input.configuration.decorationMethod,
+  );
+  const previous = {
+    ...input.configuration,
+    selectedColor: input.variant.color,
+    selectedSize: input.variant.size,
+    printifyVariantId: input.variant.printifyVariantId,
+  };
+  const configuration = createProductConfiguration({
+    designId: input.configuration.designId,
+    design: input.design,
+    product: input.product,
+    template: getPreviewTemplate(input.configuration.previewTemplateId),
+    previous,
+  });
+  const printRegionChangedMaterially =
+    previousAspect !== null &&
+    nextAspect !== null &&
+    Math.abs(previousAspect - nextAspect) / previousAspect > 0.05;
+
+  return { configuration, printRegionChangedMaterially };
+}
+
+export function changePreviewViewConfiguration(input: {
+  configuration: ProductConfiguration;
+  design: DesignAsset;
+  product: MerchProduct;
+  viewId: string;
+}) {
+  const variant = input.product.variants.find(
+    (candidate) =>
+      candidate.printifyVariantId === input.configuration.printifyVariantId,
+  );
+  if (!variant) throw new Error('Selected variant is not available.');
+  const binding = getPreviewBinding({
+    product: input.product,
+    variant,
+    viewId: input.viewId,
+  });
+  if (!binding) throw new Error('Selected preview view is not available.');
+  return createProductConfiguration({
+    designId: input.configuration.designId,
+    design: input.design,
+    product: input.product,
+    template: getPreviewTemplate(binding.previewTemplateId),
+    previous: {
+      ...input.configuration,
+      previewViewId: binding.previewViewId,
+      printPosition: binding.printPosition,
+      decorationMethod: binding.decorationMethod,
+    },
+  });
+}
+
+export function refreshConfigurationPreview(
+  configuration: ProductConfiguration,
+  design: DesignAsset,
+): ProductConfiguration {
+  const template = getPreviewTemplate(configuration.previewTemplateId);
+  const view = template.views.find(
+    (candidate) => candidate.id === configuration.previewViewId,
+  );
+  if (!view) {
+    throw new Error(
+      `Unknown preview view ${configuration.previewViewId} for ${template.id}.`,
+    );
+  }
+  const render = instant2dRenderer.render({
+    artwork: design,
+    template,
+    viewId: view.id,
+    placement: placementFromConfiguration(configuration),
+  });
+  return {
+    ...configuration,
+    instantPreview: {
+      rendererId: render.rendererId,
+      state: 'ready',
+      viewId: view.id,
+      renderKey: render.renderKey,
+    },
+    officialMockupState:
+      configuration.officialMockupState === 'ready' ||
+      configuration.officialMockupState === 'review'
+        ? 'not-requested'
+        : configuration.officialMockupState,
+    officialMockupUrl: undefined,
+    officialMockupRenderKey: undefined,
   };
 }

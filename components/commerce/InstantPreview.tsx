@@ -111,7 +111,13 @@ export function InstantPreview({
       )}
       <figcaption className={styles.previewStatus}>
         <span aria-hidden="true" />
-        Instant preview · artwork kept proportional
+        {configuration.officialMockupState === 'ready'
+          ? 'Official preview ready'
+          : configuration.officialMockupState === 'review'
+            ? 'Official preview needs review; your approved placement was kept'
+            : configuration.officialMockupState === 'generating'
+              ? 'Instant preview ready; official preview is generating'
+              : 'Instant preview · artwork kept proportional'}
       </figcaption>
     </figure>
   );

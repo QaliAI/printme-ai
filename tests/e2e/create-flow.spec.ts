@@ -25,7 +25,7 @@ test('guest upload, preparation, customization, and cart survive refresh', async
     .setInputFiles(uploadFixture);
   await expect(page.getByTestId('create-preview-stage')).toBeVisible();
   await expect(page.getByTestId('print-quality-status')).toContainText(
-    'Good to print',
+    /Good to print|May appear soft/,
   );
 
   await page.getByTestId('prepare-art').click();

@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:printify:live": "vitest run tests/printify/live-smoke.test.ts"
+    "test:printify:live": "vitest run tests/printify/live-smoke.test.ts",
+    "validate:product-templates": "vitest run tests/commerce/product-template-validation.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

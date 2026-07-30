@@ -213,7 +213,7 @@ describe('idempotent Printify fulfillment', () => {
         ...placementPayload,
         configuration: {
           ...placementPayload.configuration,
-          printPosition: 'back',
+          printPosition: 'all-over',
         },
       }),
     ];

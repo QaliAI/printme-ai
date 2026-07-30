@@ -48,13 +48,16 @@ import {
   writeLocalCart,
 } from '@/lib/commerce/local-cart';
 import {
+  changePreviewViewConfiguration,
+  changeProductVariantConfiguration,
   clamp,
   createProductConfiguration,
   getSelectedVariant,
-  instant2dRenderer,
   isPlacementCompatible,
   placementFromConfiguration,
+  refreshConfigurationPreview,
 } from '@/lib/commerce/placement';
+import { runDesignPreflight } from '@/lib/commerce/preflight';
 import { upsertPersistentCartItem } from '@/lib/commerce/persistent-cart-client';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type {
@@ -74,7 +77,13 @@ interface UnifiedCreateExperienceProps {
   products: MerchProduct[];
 }
 
-type SheetName = 'product' | 'variant' | 'placement' | 'style' | null;
+type SheetName =
+  | 'product'
+  | 'variant'
+  | 'view'
+  | 'placement'
+  | 'style'
+  | null;
 
 function formatPrice(cents: number) {
   return new Intl.NumberFormat('en-US', {
@@ -236,16 +245,22 @@ export function UnifiedCreateExperience({
       ? getVariant(selectedProduct, configuration.printifyVariantId)
       : selectedProduct.variants.find((variant) => variant.available) ??
         selectedProduct.variants[0];
+  const selectedTemplate = configuration
+    ? getPreviewTemplate(configuration.previewTemplateId)
+    : null;
+  const selectedView = selectedTemplate?.views.find(
+    (view) => view.id === configuration?.previewViewId,
+  );
 
-  const printState = useMemo(() => {
+  const qualityReport = useMemo(() => {
     if (!asset || !configuration) return null;
-    return instant2dRenderer.render({
-      artwork: asset,
-      template: getPreviewTemplate(configuration.previewTemplateId),
-      viewId: configuration.previewViewId,
-      placement: placementFromConfiguration(configuration),
+    return runDesignPreflight({
+      asset,
+      configuration,
+      product: selectedProduct,
+      variant: selectedVariant,
     });
-  }, [asset, configuration]);
+  }, [asset, configuration, selectedProduct, selectedVariant]);
 
   useEffect(() => {
     let cancelled = false;
@@ -285,6 +300,7 @@ export function UnifiedCreateExperience({
           saved.designId,
           saved.revision,
         ),
+        byteSize: blob.size,
       };
       const product = getProduct(products, saved.productId);
       const next = createProductConfiguration({
@@ -299,18 +315,29 @@ export function UnifiedCreateExperience({
       setArtStyle(saved.artStyle);
       setOriginalBlob(original ?? blob);
       setAsset(restoredAsset);
-      setConfiguration({
-        ...next,
-        printifyVariantId: saved.printifyVariantId,
-        normalizedX: saved.placement.normalizedX,
-        normalizedY: saved.placement.normalizedY,
-        normalizedScale: saved.placement.normalizedScale,
-        angle: saved.placement.angle,
-        fit: saved.placement.fit,
-        selectedColor: getVariant(product, saved.printifyVariantId).color,
-        selectedSize: getVariant(product, saved.printifyVariantId).size,
-        unitPrice: getVariant(product, saved.printifyVariantId).unitPrice,
-      });
+      const restoredVariant = getVariant(
+        product,
+        saved.printifyVariantId,
+      );
+      const variantAware = changeProductVariantConfiguration({
+        configuration: next,
+        design: restoredAsset,
+        product,
+        variant: restoredVariant,
+      }).configuration;
+      setConfiguration(
+        refreshConfigurationPreview(
+          {
+            ...variantAware,
+            normalizedX: saved.placement.normalizedX,
+            normalizedY: saved.placement.normalizedY,
+            normalizedScale: saved.placement.normalizedScale,
+            angle: saved.placement.angle,
+            fit: saved.placement.fit,
+          },
+          restoredAsset,
+        ),
+      );
       setRestored(true);
     }
     void restore();
@@ -409,6 +436,7 @@ export function UnifiedCreateExperience({
       role: 'original',
       productionAssetId: `production-${crypto.randomUUID()}`,
       storageKey: createAssetStorageKey(nextDesignId, 1),
+      byteSize: file.size,
     };
     const product = products[0];
     await saveCreateAsset(createAssetStorageKey(nextDesignId, 1), file);
@@ -453,6 +481,7 @@ export function UnifiedCreateExperience({
           height: prepared.height,
           mimeType: prepared.mimeType,
           hasTransparency: prepared.hasTransparency,
+          byteSize: prepared.blob.size,
         },
         nextRevision,
         mode,
@@ -516,15 +545,32 @@ export function UnifiedCreateExperience({
   }
 
   function selectVariant(variant: ProductVariant) {
-    if (!configuration) return;
-    replaceConfiguration({
-      ...configuration,
-      printifyVariantId: variant.printifyVariantId,
-      selectedColor: variant.color,
-      selectedSize: variant.size,
-      unitPrice: variant.unitPrice,
-      currency: variant.currency,
+    if (!configuration || !asset) return;
+    const changed = changeProductVariantConfiguration({
+      configuration,
+      design: asset,
+      product: selectedProduct,
+      variant,
     });
+    replaceConfiguration(changed.configuration);
+    setPlacementMessage(
+      changed.printRegionChangedMaterially
+        ? 'The print area changed for this variant. Your normalized placement was preserved and recalculated.'
+        : 'Your placement was preserved for this variant.',
+    );
+    setSheet(null);
+  }
+
+  function selectPreviewView(viewId: string) {
+    if (!configuration || !asset) return;
+    replaceConfiguration(
+      changePreviewViewConfiguration({
+        configuration,
+        design: asset,
+        product: selectedProduct,
+        viewId,
+      }),
+    );
     setSheet(null);
   }
 
@@ -541,28 +587,31 @@ export function UnifiedCreateExperience({
     >,
     record = true,
   ) {
-    if (!configuration) return;
+    if (!configuration || !asset) return;
     replaceConfiguration(
-      {
-        ...configuration,
-        ...patch,
-        normalizedX: clamp(
-          patch.normalizedX ?? configuration.normalizedX,
-          0,
-          1,
-        ),
-        normalizedY: clamp(
-          patch.normalizedY ?? configuration.normalizedY,
-          0,
-          1,
-        ),
-        normalizedScale: clamp(
-          patch.normalizedScale ?? configuration.normalizedScale,
-          0.2,
-          2.4,
-        ),
-        angle: clamp(patch.angle ?? configuration.angle, -180, 180),
-      },
+      refreshConfigurationPreview(
+        {
+          ...configuration,
+          ...patch,
+          normalizedX: clamp(
+            patch.normalizedX ?? configuration.normalizedX,
+            0,
+            1,
+          ),
+          normalizedY: clamp(
+            patch.normalizedY ?? configuration.normalizedY,
+            0,
+            1,
+          ),
+          normalizedScale: clamp(
+            patch.normalizedScale ?? configuration.normalizedScale,
+            0.2,
+            2.4,
+          ),
+          angle: clamp(patch.angle ?? configuration.angle, -180, 180),
+        },
+        asset,
+      ),
       record,
     );
   }
@@ -814,28 +863,25 @@ export function UnifiedCreateExperience({
           </div>
           <div
             className={
-              printState?.isWithinSafeZone
+              qualityReport?.primary.severity === 'info'
                 ? styles.goodPrint
                 : styles.printWarning
             }
             role="status"
             data-testid="print-quality-status"
           >
-            {printState?.isWithinSafeZone ? (
+            {qualityReport?.primary.severity === 'info' ? (
               <Check aria-hidden="true" size={18} />
             ) : (
               <Palette aria-hidden="true" size={18} />
             )}
             <span>
               <strong>
-                {printState?.isWithinSafeZone
-                  ? 'Good to print'
-                  : 'Outside the safe print area'}
+                {qualityReport?.primary.message ?? 'Checking print quality'}
               </strong>
               <small>
-                {printState?.isWithinSafeZone
-                  ? 'Your artwork is inside the recommended area.'
-                  : 'Move or resize the artwork before adding it.'}
+                {qualityReport?.primary.detail ??
+                  'Reviewing image resolution and placement.'}
               </small>
             </span>
           </div>
@@ -896,6 +942,15 @@ export function UnifiedCreateExperience({
               </span>
               <ChevronRight aria-hidden="true" size={19} />
             </button>
+            {selectedTemplate && selectedTemplate.views.length > 1 && (
+              <button type="button" onClick={() => setSheet('view')}>
+                <span>
+                  <small>Preview view</small>
+                  <strong>{selectedView?.label ?? 'Front'}</strong>
+                </span>
+                <ChevronRight aria-hidden="true" size={19} />
+              </button>
+            )}
             <button type="button" onClick={() => setSheet('placement')}>
               <span>
                 <small>Placement</small>
@@ -979,7 +1034,7 @@ export function UnifiedCreateExperience({
         <button
           type="button"
           onClick={() => void addToCart()}
-          disabled={!printState?.isWithinSafeZone}
+          disabled={!qualityReport?.canAddToCart}
           data-testid="create-add-to-cart"
         >
           <ShoppingBag aria-hidden="true" size={18} />
@@ -1041,6 +1096,31 @@ export function UnifiedCreateExperience({
                 <small>{variant.available ? 'Available' : 'Unavailable'}</small>
               </span>
               <b>{formatPrice(variant.unitPrice)}</b>
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
+        open={sheet === 'view'}
+        title="Choose a preview view"
+        onClose={closeSheet}
+      >
+        <div className={styles.sheetChoices}>
+          {selectedTemplate?.views.map((view) => (
+            <button
+              type="button"
+              key={view.id}
+              aria-pressed={view.id === configuration.previewViewId}
+              onClick={() => selectPreviewView(view.id)}
+            >
+              <span>
+                <strong>{view.label}</strong>
+                <small>{view.position} print area</small>
+              </span>
+              {view.id === configuration.previewViewId && (
+                <Check aria-hidden="true" size={18} />
+              )}
             </button>
           ))}
         </div>

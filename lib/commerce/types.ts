@@ -1,5 +1,5 @@
 export type CurrencyCode = 'USD';
-export type ProductKind = 'flat' | 'apparel';
+export type ProductKind = 'flat' | 'apparel' | 'drinkware';
 export type PrintPosition = 'front' | 'back' | 'all-over';
 export type PreviewFit = 'contain' | 'cover';
 export type DesignSourceType =
@@ -32,6 +32,10 @@ export interface DesignAsset {
   productionAssetId?: string;
   derivativeId?: string;
   storageKey?: string;
+  byteSize?: number;
+  transparentPaddingRatio?: number;
+  minimumLineWidthPx?: number;
+  dominantLuminance?: number;
 }
 
 export interface CuratedDesign {
@@ -55,6 +59,8 @@ export interface PrintablePlaceholder {
   decorationMethod: string;
   width: number;
   height: number;
+  printWidthInches?: number;
+  printHeightInches?: number;
 }
 
 export interface ProductVariant {
@@ -101,6 +107,7 @@ export interface PreviewTemplateView {
   productMask?: string;
   shadowOverlay?: string;
   highlightOverlay?: string;
+  productColor?: string;
 }
 
 export interface PreviewTemplate {
@@ -108,6 +115,18 @@ export interface PreviewTemplate {
   kind: ProductKind;
   supportedPrintPositions: PrintPosition[];
   views: PreviewTemplateView[];
+}
+
+export interface PreviewTemplateBinding {
+  key: string;
+  printifyBlueprintId: number;
+  printifyProviderId: number;
+  printifyVariantId: number;
+  productColor: string | null;
+  printPosition: PrintPosition;
+  decorationMethod: string;
+  previewViewId: string;
+  previewTemplateId: string;
 }
 
 export interface MerchProduct {
@@ -118,6 +137,7 @@ export interface MerchProduct {
   printifyBlueprintId: number;
   provider: ProductProvider;
   previewTemplateId: string;
+  previewBindings?: PreviewTemplateBinding[];
   variants: ProductVariant[];
   defaultPlacement: PrintPlacement;
 }
@@ -160,9 +180,12 @@ export interface ProductConfiguration {
   selectedColor: string | null;
   selectedSize: string | null;
   previewTemplateId: string;
+  previewBindingKey?: string;
   previewViewId: string;
   instantPreview: InstantPreview;
   officialMockupUrl?: string;
+  officialMockupState?: 'not-requested' | 'generating' | 'ready' | 'review';
+  officialMockupRenderKey?: string;
   unitPrice: number;
   currency: CurrencyCode;
 }

@@ -10,6 +10,7 @@ import {
   writeLocalCart,
 } from '@/lib/commerce/local-cart';
 import {
+  changeProductVariantConfiguration,
   createProductConfiguration,
 } from '@/lib/commerce/placement';
 import {
@@ -267,15 +268,15 @@ export function ShopV2Experience({
   }
 
   function selectVariant(variant: ProductVariant) {
-    if (!configuration) return;
-    setConfiguration({
-      ...configuration,
-      printifyVariantId: variant.printifyVariantId,
-      selectedColor: variant.color,
-      selectedSize: variant.size,
-      unitPrice: variant.unitPrice,
-      currency: variant.currency,
-    });
+    if (!configuration || !selectedDesign || !selectedProduct) return;
+    setConfiguration(
+      changeProductVariantConfiguration({
+        configuration,
+        design: selectedDesign.asset,
+        product: selectedProduct,
+        variant,
+      }).configuration,
+    );
   }
 
   function closeConfigurator() {
