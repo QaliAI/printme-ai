@@ -29,6 +29,7 @@ export function DesignCatalogHeader({
       <nav aria-label="Commerce preview">
         <Link href="/designs">Designs</Link>
         <Link href="/drops">Drops</Link>
+        <Link href="/collections">Collections</Link>
         <Link href="/shop-v2">Shop preview</Link>
       </nav>
       <p>{eyebrow}</p>

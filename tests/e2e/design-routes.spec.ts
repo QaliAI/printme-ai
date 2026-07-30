@@ -9,6 +9,11 @@ test('server-rendered design, collection, and drop routes use published seed dat
   ).toBeVisible();
   await expect(page.getByRole('link', { name: /Sunday Sidekick/ })).toBeVisible();
 
+  await page.goto('/collections');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Collections' }),
+  ).toBeVisible();
+
   await page.goto('/designs/sunday-sidekick');
   await expect(
     page.getByRole('heading', { level: 1, name: 'Sunday Sidekick' }),
