@@ -31,6 +31,7 @@ export interface DesignAsset {
   role?: DesignAssetRole;
   productionAssetId?: string;
   derivativeId?: string;
+  storageKey?: string;
 }
 
 export interface CuratedDesign {
@@ -138,6 +139,12 @@ export interface ProductConfiguration {
   productionAssetId?: string;
   designDerivativeId?: string;
   designAssetUrl: string;
+  designAssetWidth?: number;
+  designAssetHeight?: number;
+  designAssetAlt?: string;
+  designAssetMimeType?: string;
+  designAssetHasTransparency?: boolean;
+  designAssetStorageKey?: string;
   productionAssetUrl: string;
   merchProductId: string;
   printifyBlueprintId: number;
@@ -149,6 +156,7 @@ export interface ProductConfiguration {
   normalizedY: number;
   normalizedScale: number;
   angle: number;
+  fit?: PreviewFit;
   selectedColor: string | null;
   selectedSize: string | null;
   previewTemplateId: string;
@@ -173,7 +181,8 @@ export interface CartConfigurationSnapshot {
 }
 
 export interface PreviewRenderInput {
-  artwork: Pick<DesignAsset, 'url' | 'width' | 'height'>;
+  artwork: Pick<DesignAsset, 'url' | 'width' | 'height'> &
+    Partial<Pick<DesignAsset, 'id' | 'version'>>;
   template: PreviewTemplate;
   viewId: string;
   placement: PrintPlacement;

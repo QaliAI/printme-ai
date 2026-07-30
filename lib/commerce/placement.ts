@@ -142,7 +142,9 @@ export const instant2dRenderer: PreviewRendererAdapter = {
     }
     const result = calculateArtworkBox(input);
     const renderKey = [
-      input.artwork.url,
+      input.artwork.id && input.artwork.version
+        ? `${input.artwork.id}@${input.artwork.version}`
+        : input.artwork.url,
       input.template.id,
       input.viewId,
       input.placement.position,
@@ -208,7 +210,7 @@ export function placementFromConfiguration(
     normalizedY: configuration.normalizedY,
     normalizedScale: configuration.normalizedScale,
     angle: configuration.angle,
-    fit: 'contain',
+    fit: configuration.fit ?? 'contain',
   };
 }
 
@@ -248,6 +250,12 @@ export function createProductConfiguration(input: {
       input.design.productionAssetId ?? input.design.id,
     designDerivativeId: input.design.derivativeId,
     designAssetUrl: input.design.url,
+    designAssetWidth: input.design.width,
+    designAssetHeight: input.design.height,
+    designAssetAlt: input.design.alt,
+    designAssetMimeType: input.design.mimeType,
+    designAssetHasTransparency: input.design.hasTransparency,
+    designAssetStorageKey: input.design.storageKey,
     productionAssetUrl: input.design.productionUrl ?? input.design.url,
     merchProductId: input.product.id,
     printifyBlueprintId: input.product.printifyBlueprintId,
@@ -259,6 +267,7 @@ export function createProductConfiguration(input: {
     normalizedY: placement.normalizedY,
     normalizedScale: placement.normalizedScale,
     angle: placement.angle,
+    fit: placement.fit,
     selectedColor: variant.color,
     selectedSize: variant.size,
     previewTemplateId: input.template.id,

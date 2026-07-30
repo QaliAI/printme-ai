@@ -69,6 +69,10 @@ export function InstantPreview({
             src={design.url}
             alt={design.alt}
             fill
+            unoptimized={
+              design.url.startsWith('blob:') ||
+              design.url.startsWith('data:')
+            }
             sizes={compact ? '120px' : '(max-width: 700px) 55vw, 300px'}
             className={styles.artworkImage}
           />

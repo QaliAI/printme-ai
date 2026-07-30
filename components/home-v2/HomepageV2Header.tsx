@@ -8,7 +8,7 @@ import { Navbar } from '@/components/Navbar';
 
 const navigation = [
   { href: '/designs', label: 'Shop Designs' },
-  { href: '/app/create/style', label: 'Create Yours' },
+  { href: '/create', label: 'Create Yours' },
   { href: '/#products', label: 'Products' },
   { href: '/#gifts', label: 'Gifts' },
 ];

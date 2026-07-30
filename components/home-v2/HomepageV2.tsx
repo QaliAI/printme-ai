@@ -42,7 +42,7 @@ export async function HomepageV2() {
             or tee before you buy.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/app/create/style">Create Yours</Link>
+            <Link href="/create">Create Yours</Link>
             <Link href="/designs">Shop Designs</Link>
           </div>
           <span className={styles.startingPrice}>
@@ -114,7 +114,7 @@ export async function HomepageV2() {
             before selecting a product.
           </p>
           <div className={styles.photoActions}>
-            <Link href="/app/create/style">
+              <Link href="/create">
               Create Yours
               <ArrowRight aria-hidden="true" size={18} strokeWidth={1.8} />
             </Link>
@@ -227,7 +227,7 @@ export async function HomepageV2() {
         aria-label="Quick commerce actions"
         data-testid="home-mobile-commerce-bar"
       >
-        <Link href="/app/create/style">Create Yours</Link>
+        <Link href="/create">Create Yours</Link>
         <Link href="/shop-v2">
           <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
           Cart

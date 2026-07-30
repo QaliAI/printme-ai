@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { InstantPreview } from '@/components/commerce/InstantPreview';
+import { PersistedInstantPreview } from '@/components/commerce/PersistedInstantPreview';
 import {
   createCartSnapshot,
   readLocalCart,
@@ -48,6 +48,64 @@ function findById<T extends { id: string }>(items: T[], id: string, label: strin
   const item = items.find((candidate) => candidate.id === id);
   if (!item) throw new Error(`Unknown ${label}: ${id}`);
   return item;
+}
+
+function designFromConfiguration(
+  configuration: ProductConfiguration,
+  productIds: string[],
+): CuratedDesignRecord | null {
+  if (
+    !configuration.designAssetWidth ||
+    !configuration.designAssetHeight
+  ) {
+    return null;
+  }
+
+  return {
+    id: configuration.designId,
+    slug: configuration.designId,
+    title: 'Your design',
+    description: 'Customer-provided artwork prepared in PrintMe Create.',
+    collection: 'Your uploads',
+    asset: {
+      id: configuration.designAssetId ?? configuration.designId,
+      version: configuration.designVersionId ?? configuration.designVersion,
+      url: configuration.designAssetUrl,
+      productionUrl: configuration.productionAssetUrl,
+      alt: configuration.designAssetAlt ?? 'Customer-provided artwork',
+      width: configuration.designAssetWidth,
+      height: configuration.designAssetHeight,
+      mimeType: configuration.designAssetMimeType ?? 'image/png',
+      hasTransparency:
+        configuration.designAssetHasTransparency ?? false,
+      sourceType: configuration.designSourceType,
+      productionAssetId: configuration.productionAssetId,
+      derivativeId: configuration.designDerivativeId,
+      storageKey: configuration.designAssetStorageKey,
+    },
+    artistOrSource: 'Customer upload',
+    rightsStatus: 'customer-provided',
+    publicationStatus: 'draft',
+    publicationDate: null,
+    tags: [],
+    recommendedProductId: configuration.merchProductId,
+    defaultProductColor: configuration.selectedColor,
+    defaultPlacement: {
+      position: configuration.printPosition,
+      decorationMethod: configuration.decorationMethod,
+      normalizedX: configuration.normalizedX,
+      normalizedY: configuration.normalizedY,
+      normalizedScale: configuration.normalizedScale,
+      angle: configuration.angle,
+      fit: 'contain',
+    },
+    compatibleProductIds: productIds,
+    incompatibleProductIds: [],
+    merchandisingPriority: 0,
+    seoTitle: 'Your design',
+    seoDescription: 'Customer-provided artwork.',
+    filters: [],
+  };
 }
 
 export function ShopV2Experience({
@@ -152,7 +210,13 @@ export function ShopV2Experience({
   }, [cartOpen, selectedDesignId]);
 
   const selectedDesign = selectedDesignId
-    ? findById(designs, selectedDesignId, 'design')
+    ? designs.find((design) => design.id === selectedDesignId) ??
+      (configuration
+        ? designFromConfiguration(
+            configuration,
+            products.map((product) => product.id),
+          )
+        : null)
     : null;
   const selectedProduct = configuration
     ? findById(products, configuration.merchProductId, 'product')
@@ -383,7 +447,7 @@ export function ShopV2Experience({
               ×
             </button>
             <div className={styles.previewColumn}>
-              <InstantPreview
+              <PersistedInstantPreview
                 design={selectedDesign.asset}
                 configuration={configuration}
               />
@@ -541,11 +605,15 @@ export function ShopV2Experience({
                 </div>
               ) : (
                 cartItems.map((item) => {
-                  const design = findById(
-                    designs,
-                    item.configuration.designId,
-                    'cart design'
-                  );
+                  const design =
+                    designs.find(
+                      (candidate) =>
+                        candidate.id === item.configuration.designId,
+                    ) ??
+                    designFromConfiguration(
+                      item.configuration,
+                      products.map((product) => product.id),
+                    );
                   return (
                     <article
                       className={styles.cartItem}
@@ -553,12 +621,18 @@ export function ShopV2Experience({
                       data-testid="cart-item"
                       data-render-key={item.configuration.instantPreview.renderKey}
                     >
-                      <InstantPreview
-                        design={design.asset}
-                        configuration={item.configuration}
-                        showSafeZone={false}
-                        compact
-                      />
+                      {design ? (
+                        <PersistedInstantPreview
+                          design={design.asset}
+                          configuration={item.configuration}
+                          showSafeZone={false}
+                          compact
+                        />
+                      ) : (
+                        <div role="img" aria-label="Preview unavailable">
+                          Preview unavailable for this legacy item
+                        </div>
+                      )}
                       <div className={styles.cartItemDetails}>
                         <div className={styles.cartItemTitle}>
                           <div>
