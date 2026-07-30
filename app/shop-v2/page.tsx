@@ -1,17 +1,24 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ShopV2Experience } from './ShopV2Experience';
-import { curatedDesigns, merchProducts } from '@/lib/commerce/fixtures';
+import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 
 export const metadata: Metadata = {
   title: 'Curated Shop Preview | PrintMe.ai',
   description: 'Feature-flagged commerce preview for PrintMe.ai.',
 };
 
-export default function ShopV2Page() {
+export default async function ShopV2Page() {
   if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED !== 'true') {
     notFound();
   }
 
-  return <ShopV2Experience designs={curatedDesigns} products={merchProducts} />;
+  const designs = await getDesignCatalogService().listPublished();
+  return (
+    <ShopV2Experience
+      designs={designs}
+      products={getApprovedMerchProducts()}
+    />
+  );
 }

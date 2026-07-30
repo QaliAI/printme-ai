@@ -7,6 +7,7 @@ export interface DesignAsset {
   id: string;
   version: string;
   url: string;
+  productionUrl?: string;
   alt: string;
   width: number;
   height: number;
@@ -44,6 +45,7 @@ export interface ProductVariant {
   color: string | null;
   size: string | null;
   unitPrice: number;
+  unitCost?: number | null;
   currency: CurrencyCode;
   available: boolean;
   placeholders: PrintablePlaceholder[];
@@ -113,6 +115,7 @@ export interface ProductConfiguration {
   designId: string;
   designVersion: string;
   designAssetUrl: string;
+  productionAssetUrl: string;
   merchProductId: string;
   printifyBlueprintId: number;
   printifyProviderId: number;
@@ -134,13 +137,16 @@ export interface ProductConfiguration {
 }
 
 export interface CartConfigurationSnapshot {
-  schemaVersion: 1;
+  schemaVersion: 2;
   id: string;
   configuration: ProductConfiguration;
   designTitle: string;
-  productName: string;
+  productTitle: string;
+  variantTitle: string;
+  productCost: number | null;
+  configurationHash: string;
   quantity: number;
-  addedAt: string;
+  createdAt: string;
 }
 
 export interface PreviewRenderInput {

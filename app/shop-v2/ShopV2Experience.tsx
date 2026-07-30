@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
 import {
   createCartSnapshot,
@@ -12,10 +12,20 @@ import {
 import {
   createProductConfiguration,
 } from '@/lib/commerce/placement';
+import {
+  readPersistentCart,
+  removePersistentCartItem,
+  upsertPersistentCartItem,
+} from '@/lib/commerce/persistent-cart-client';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
+import {
+  assertDesignProductCompatible,
+  getRecommendedProduct,
+  isDesignProductCompatible,
+} from '@/lib/commerce/designs/rules';
+import type { CuratedDesignRecord } from '@/lib/commerce/designs/models';
 import type {
   CartConfigurationSnapshot,
-  CuratedDesign,
   MerchProduct,
   ProductConfiguration,
   ProductVariant,
@@ -23,7 +33,7 @@ import type {
 import styles from './shop-v2.module.css';
 
 interface ShopV2ExperienceProps {
-  designs: CuratedDesign[];
+  designs: CuratedDesignRecord[];
   products: MerchProduct[];
 }
 
@@ -50,17 +60,92 @@ export function ShopV2Experience({
   const [cartItems, setCartItems] = useState<CartConfigurationSnapshot[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [cartPending, setCartPending] = useState(false);
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const configuratorRef = useRef<HTMLElement>(null);
+  const cartDialogRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    const localItems = readLocalCart(window.localStorage);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCartItems(readLocalCart(window.localStorage));
+    setCartItems(localItems);
+
+    async function restorePersistentCart() {
+      const persistedItems = await readPersistentCart();
+      if (cancelled || persistedItems === null) return;
+
+      if (persistedItems.length > 0) {
+        writeLocalCart(window.localStorage, persistedItems);
+        setCartItems(persistedItems);
+        return;
+      }
+
+      if (localItems.length === 0) return;
+      const restored = (
+        await Promise.all(
+          localItems.map((item) => upsertPersistentCartItem(item))
+        )
+      ).filter(
+        (item): item is CartConfigurationSnapshot => item !== null
+      );
+      if (cancelled || restored.length === 0) return;
+      writeLocalCart(window.localStorage, restored);
+      setCartItems(restored);
+    }
+
+    void restorePersistentCart();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
+    const dialog = cartOpen
+      ? cartDialogRef.current
+      : selectedDesignId
+        ? configuratorRef.current
+        : null;
+
+    if (!dialog) {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+      return;
+    }
+
+    if (!previousFocusRef.current) {
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+    }
+
+    const focusableSelector =
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(focusableSelector)
+    );
+    (focusable[0] ?? dialog).focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      if (cartOpen) setCartOpen(false);
-      else if (selectedDesignId) setSelectedDesignId(null);
+      if (event.key === 'Escape') {
+        if (cartOpen) setCartOpen(false);
+        else setSelectedDesignId(null);
+        return;
+      }
+      if (event.key !== 'Tab' || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -72,6 +157,11 @@ export function ShopV2Experience({
   const selectedProduct = configuration
     ? findById(products, configuration.merchProductId, 'product')
     : null;
+  const compatibleProducts = selectedDesign
+    ? products.filter((product) =>
+        isDesignProductCompatible(selectedDesign, product.id)
+      )
+    : products;
   const cartTotal = useMemo(
     () =>
       cartItems.reduce(
@@ -82,12 +172,8 @@ export function ShopV2Experience({
     [cartItems]
   );
 
-  function openDesign(design: CuratedDesign) {
-    const product = findById(
-      products,
-      design.recommendedProductId,
-      'recommended product'
-    );
+  function openDesign(design: CuratedDesignRecord) {
+    const product = getRecommendedProduct(design, products);
     const template = getPreviewTemplate(product.previewTemplateId);
     setSelectedDesignId(design.id);
     setConfiguration(
@@ -103,6 +189,7 @@ export function ShopV2Experience({
 
   function switchProduct(product: MerchProduct) {
     if (!selectedDesign || !configuration) return;
+    assertDesignProductCompatible(selectedDesign, product.id);
     const template = getPreviewTemplate(product.previewTemplateId);
     setConfiguration(
       createProductConfiguration({
@@ -135,24 +222,31 @@ export function ShopV2Experience({
 
   function persistCart(nextItems: CartConfigurationSnapshot[]) {
     writeLocalCart(window.localStorage, nextItems);
+    window.sessionStorage.removeItem('printme:checkout:idempotency');
     setCartItems(nextItems);
   }
 
-  function addToCart() {
+  async function addToCart() {
     if (!selectedDesign || !selectedProduct || !configuration) return;
-    const existing = editingItemId
-      ? cartItems.find((item) => item.id === editingItemId)
-      : undefined;
-    const snapshot = createCartSnapshot({
-      id: editingItemId ?? `cart-${crypto.randomUUID()}`,
-      configuration,
-      design: selectedDesign,
-      product: selectedProduct,
-      addedAt: existing?.addedAt ?? new Date().toISOString(),
-    });
-    persistCart(upsertCartItem(cartItems, snapshot));
-    closeConfigurator();
-    setCartOpen(true);
+    setCartPending(true);
+    try {
+      const existing = editingItemId
+        ? cartItems.find((item) => item.id === editingItemId)
+        : undefined;
+      const snapshot = createCartSnapshot({
+        id: editingItemId ?? crypto.randomUUID(),
+        configuration,
+        design: selectedDesign,
+        product: selectedProduct,
+        createdAt: existing?.createdAt ?? new Date().toISOString(),
+      });
+      const persisted = await upsertPersistentCartItem(snapshot);
+      persistCart(upsertCartItem(cartItems, persisted ?? snapshot));
+      closeConfigurator();
+      setCartOpen(true);
+    } finally {
+      setCartPending(false);
+    }
   }
 
   function editCartItem(item: CartConfigurationSnapshot) {
@@ -164,6 +258,44 @@ export function ShopV2Experience({
 
   function removeCartItem(itemId: string) {
     persistCart(cartItems.filter((item) => item.id !== itemId));
+    void removePersistentCartItem(itemId);
+  }
+
+  async function beginCheckout() {
+    setCheckoutPending(true);
+    setCheckoutError(null);
+    try {
+      const storageKey = 'printme:checkout:idempotency';
+      const idempotencyKey =
+        window.sessionStorage.getItem(storageKey) ?? crypto.randomUUID();
+      window.sessionStorage.setItem(storageKey, idempotencyKey);
+      const response = await fetch('/api/commerce/checkout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ idempotencyKey }),
+      });
+      const payload = (await response.json()) as {
+        redirectUrl?: string;
+        error?: string;
+      };
+      if (
+        !response.ok ||
+        !payload.redirectUrl?.startsWith('https://checkout.stripe.com/')
+      ) {
+        throw new Error(
+          payload.error ?? 'Test checkout is not available yet.',
+        );
+      }
+      window.location.assign(payload.redirectUrl);
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error
+          ? error.message
+          : 'Test checkout is not available yet.',
+      );
+      setCheckoutPending(false);
+    }
   }
 
   return (
@@ -232,10 +364,12 @@ export function ShopV2Experience({
       {selectedDesign && configuration && selectedProduct && (
         <div className={styles.backdrop} onMouseDown={closeConfigurator}>
           <section
+            ref={configuratorRef}
             className={styles.configurator}
             role="dialog"
             aria-modal="true"
             aria-labelledby="configurator-title"
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
             data-testid="configurator"
           >
@@ -265,7 +399,7 @@ export function ShopV2Experience({
                 <fieldset className={styles.controlGroup}>
                   <legend>Choose a product</legend>
                   <div className={styles.productSwitcher}>
-                    {products.map((product) => (
+                    {compatibleProducts.map((product) => (
                       <button
                         type="button"
                         key={product.id}
@@ -356,8 +490,13 @@ export function ShopV2Experience({
                   className={styles.primaryButton}
                   onClick={addToCart}
                   data-testid="add-to-cart"
+                  disabled={cartPending}
                 >
-                  {editingItemId ? 'Save changes' : 'Add to bag'}
+                  {cartPending
+                    ? 'Saving...'
+                    : editingItemId
+                      ? 'Save changes'
+                      : 'Add to bag'}
                 </button>
               </footer>
             </div>
@@ -368,10 +507,12 @@ export function ShopV2Experience({
       {cartOpen && (
         <div className={styles.backdrop} onMouseDown={() => setCartOpen(false)}>
           <aside
+            ref={cartDialogRef}
             className={styles.cartDrawer}
             role="dialog"
             aria-modal="true"
             aria-labelledby="cart-title"
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
             data-testid="cart-drawer"
           >
@@ -422,7 +563,7 @@ export function ShopV2Experience({
                         <div className={styles.cartItemTitle}>
                           <div>
                             <strong>{item.designTitle}</strong>
-                            <span>{item.productName}</span>
+                            <span>{item.productTitle}</span>
                           </div>
                           <strong>
                             {formatPrice(
@@ -477,7 +618,23 @@ export function ShopV2Experience({
             <footer className={styles.cartFooter}>
               <span>Subtotal</span>
               <strong>{formatPrice(cartTotal)}</strong>
-              <small>Local prototype · checkout is intentionally disabled</small>
+              {cartItems.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={beginCheckout}
+                  disabled={checkoutPending}
+                  data-testid="begin-checkout"
+                >
+                  {checkoutPending
+                    ? 'Opening test checkout...'
+                    : 'Secure test checkout'}
+                </button>
+              )}
+              {checkoutError && (
+                <small role="alert">{checkoutError}</small>
+              )}
+              <small>Preview only · Stripe test mode is required</small>
             </footer>
           </aside>
         </div>
