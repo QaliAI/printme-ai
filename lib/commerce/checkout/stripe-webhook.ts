@@ -19,6 +19,7 @@ const shippingDetailsSchema = z.object({
 
 export interface StripeWebhookStore {
   beginEvent(event: Stripe.Event): Promise<boolean>;
+  claimFailedEvent(eventId: string): Promise<Stripe.Event | null>;
   completeEvent(eventId: string): Promise<void>;
   failEvent(
     eventId: string,
@@ -59,7 +60,16 @@ export class StripeCheckoutWebhookService {
   async process(event: Stripe.Event) {
     const isNew = await this.store.beginEvent(event);
     if (!isNew) return { duplicate: true, orderId: null };
+    return this.processClaimed(event);
+  }
 
+  async replay(eventId: string) {
+    const event = await this.store.claimFailedEvent(eventId);
+    if (!event) return { duplicate: true, orderId: null };
+    return this.processClaimed(event);
+  }
+
+  private async processClaimed(event: Stripe.Event) {
     try {
       if (
         event.type !== 'checkout.session.completed' &&

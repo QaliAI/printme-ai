@@ -185,6 +185,7 @@ describe('secure Stripe test checkout', () => {
 
 class MemoryWebhookStore implements StripeWebhookStore {
   events = new Set<string>();
+  failedEvents = new Map<string, Stripe.Event>();
   completed: Parameters<StripeWebhookStore['completePayment']>[0] | null =
     null;
   failedCode: string | null = null;
@@ -193,6 +194,12 @@ class MemoryWebhookStore implements StripeWebhookStore {
     if (this.events.has(event.id)) return false;
     this.events.add(event.id);
     return true;
+  }
+
+  async claimFailedEvent(eventId: string) {
+    const event = this.failedEvents.get(eventId) ?? null;
+    this.failedEvents.delete(eventId);
+    return event;
   }
 
   async completeEvent() {}
@@ -307,5 +314,20 @@ describe('Stripe webhook authority', () => {
       new StripeCheckoutWebhookService(amountStore).process(wrongAmount),
     ).rejects.toThrow(/amount mismatch/i);
     expect(amountStore.failedCode).toBe('WEBHOOK_PROCESSING_FAILED');
+  });
+
+  it('claims each failed Stripe event for replay only once', async () => {
+    const store = new MemoryWebhookStore();
+    const event = paidEvent('evt_test_replay');
+    store.failedEvents.set(event.id, event);
+    const service = new StripeCheckoutWebhookService(store);
+
+    const replayed = await service.replay(event.id);
+    const duplicateReplay = await service.replay(event.id);
+
+    expect(replayed.orderId).toBe(
+      'ecb5afe4-ff4d-4a98-8069-2d5fd1142f4a',
+    );
+    expect(duplicateReplay.duplicate).toBe(true);
   });
 });

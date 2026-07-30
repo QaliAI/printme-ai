@@ -23,11 +23,47 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
         p_source: 'stripe',
         p_event_id: event.id,
         p_event_type: event.type,
-        p_payload: event.data.object,
+        p_payload: event,
       },
     );
     if (error) throw error;
     return z.boolean().parse(data);
+  }
+
+  async claimFailedEvent(eventId: string) {
+    const { data, error } = await this.client.rpc(
+      'claim_failed_commerce_webhook_event',
+      {
+        p_source: 'stripe',
+        p_event_id: eventId,
+      },
+    );
+    if (error) throw error;
+    try {
+      const result = z
+        .array(
+          z.object({
+            event_type: z.string(),
+            payload: z
+              .object({
+                id: z.string().min(1),
+                type: z.string().min(1),
+                data: z.object({ object: z.unknown() }),
+              })
+              .passthrough(),
+          }),
+        )
+        .max(1)
+        .parse(data ?? [])[0];
+      return result ? (result.payload as unknown as Stripe.Event) : null;
+    } catch (claimError) {
+      await this.failEvent(
+        eventId,
+        'STORED_EVENT_INVALID',
+        'Stored Stripe event cannot be replayed safely.',
+      );
+      throw claimError;
+    }
   }
 
   async completeEvent(eventId: string) {

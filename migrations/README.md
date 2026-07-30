@@ -17,3 +17,13 @@ To verify: `node scripts/test-supabase-setup.mjs` (or run a Supabase advisor).
 
 To replay against a fresh project, apply migrations in numbered order via the
 Supabase dashboard SQL editor or via the Supabase CLI.
+
+Application-owned commerce migrations:
+
+1. `001_add_mockup_cache.sql`
+2. `002_add_cart_configuration_snapshot.sql`
+3. `003_add_curated_catalog.sql`
+4. `004_add_curated_designs.sql`
+5. `005_add_secure_checkout.sql`
+6. `006_add_fulfillment_jobs.sql`
+7. `007_harden_commerce_webhooks.sql`
