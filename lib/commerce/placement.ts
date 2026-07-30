@@ -241,6 +241,12 @@ export function createProductConfiguration(input: {
   return {
     designId: input.designId,
     designVersion: input.design.version,
+    designVersionId: input.design.version,
+    designSourceType: input.design.sourceType,
+    designAssetId: input.design.id,
+    productionAssetId:
+      input.design.productionAssetId ?? input.design.id,
+    designDerivativeId: input.design.derivativeId,
     designAssetUrl: input.design.url,
     productionAssetUrl: input.design.productionUrl ?? input.design.url,
     merchProductId: input.product.id,

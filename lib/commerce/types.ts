@@ -2,6 +2,20 @@ export type CurrencyCode = 'USD';
 export type ProductKind = 'flat' | 'apparel';
 export type PrintPosition = 'front' | 'back' | 'all-over';
 export type PreviewFit = 'contain' | 'cover';
+export type DesignSourceType =
+  | 'uploaded-photo'
+  | 'uploaded-artwork'
+  | 'ai-generated'
+  | 'ai-styled'
+  | 'background-removed'
+  | 'curated'
+  | 'text-personalized';
+export type DesignAssetRole =
+  | 'original'
+  | 'preview'
+  | 'display'
+  | 'production'
+  | 'product-derivative';
 
 export interface DesignAsset {
   id: string;
@@ -13,6 +27,10 @@ export interface DesignAsset {
   height: number;
   mimeType: string;
   hasTransparency: boolean;
+  sourceType?: DesignSourceType;
+  role?: DesignAssetRole;
+  productionAssetId?: string;
+  derivativeId?: string;
 }
 
 export interface CuratedDesign {
@@ -114,6 +132,11 @@ export interface InstantPreview {
 export interface ProductConfiguration {
   designId: string;
   designVersion: string;
+  designVersionId?: string;
+  designSourceType?: DesignSourceType;
+  designAssetId?: string;
+  productionAssetId?: string;
+  designDerivativeId?: string;
   designAssetUrl: string;
   productionAssetUrl: string;
   merchProductId: string;

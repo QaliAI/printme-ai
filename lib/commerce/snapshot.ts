@@ -3,6 +3,7 @@ import type {
   CartConfigurationSnapshot,
   ProductConfiguration,
 } from './types';
+import { designSourceTypeSchema } from './designs/canonical';
 
 export const COMMERCE_SNAPSHOT_SCHEMA_VERSION = 2 as const;
 export const CONFIGURATION_HASH_ALGORITHM = 'pmcfg-v2';
@@ -18,6 +19,11 @@ export const instantPreviewSchema = z.object({
 export const productConfigurationSchema = z.object({
   designId: z.string().min(1),
   designVersion: z.string().min(1),
+  designVersionId: z.string().min(1).optional(),
+  designSourceType: designSourceTypeSchema.optional(),
+  designAssetId: z.string().min(1).optional(),
+  productionAssetId: z.string().min(1).optional(),
+  designDerivativeId: z.string().min(1).optional(),
   designAssetUrl: z.string().min(1),
   productionAssetUrl: z.string().min(1),
   merchProductId: z.string().min(1),
