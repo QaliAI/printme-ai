@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@/components/Card';
+import { Card, CardBody } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
 
 interface Product {
@@ -15,11 +15,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     try {
       const { data } = await supabase
         .from('products')
@@ -30,7 +26,11 @@ export default function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;

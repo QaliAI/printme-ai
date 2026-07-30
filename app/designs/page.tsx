@@ -3,6 +3,15 @@ import Link from 'next/link';
 import { Container } from '@/components/Container';
 import { Card, CardBody } from '@/components/Card';
 import { Button } from '@/components/Button';
+import {
+  CollectionLinks,
+  DesignCatalogHeader,
+  DesignFilters,
+  DesignGrid,
+} from '@/components/commerce/DesignCatalog';
+import type { DesignFilter } from '@/lib/commerce/designs/models';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
+import styles from './designs.module.css';
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -82,11 +91,46 @@ const FEATURED_DESIGNS = [
 interface GalleryPageProps {
   searchParams: Promise<{
     category?: string;
+    filter?: string | string[];
   }>;
 }
 
 export default async function FeaturedDesignsGalleryPage({ searchParams }: GalleryPageProps) {
   const query = await searchParams;
+
+  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === 'true') {
+    const validFilters = new Set<DesignFilter>([
+      'new',
+      'trending',
+      'bestsellers',
+      'archive',
+    ]);
+    const requested = query.filter;
+    const filter =
+      typeof requested === 'string' &&
+      validFilters.has(requested as DesignFilter)
+        ? (requested as DesignFilter)
+        : undefined;
+    const service = getDesignCatalogService();
+    const [designs, collections] = await Promise.all([
+      service.listPublished(filter),
+      service.listCollections(),
+    ]);
+
+    return (
+      <main className={styles.shell}>
+        <DesignCatalogHeader
+          eyebrow="Curated by PrintMe"
+          title="Choose the art first."
+          description="Published designs with server-controlled product compatibility and purchase-time versioning."
+        />
+        <DesignFilters active={filter} />
+        <DesignGrid designs={designs} />
+        <CollectionLinks collections={collections} />
+      </main>
+    );
+  }
+
   const activeCategory = query.category || 'All';
 
   // Fetch active style presets to match URLs and IDs properly

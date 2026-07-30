@@ -1,4 +1,12 @@
 // Auth & User
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 export interface User {
   id: string;
   email: string;
@@ -95,7 +103,7 @@ export interface Product {
   emoji?: string;
   mockup_url?: string; // Alias for mockup_template_url
   mockup_template_url?: string;
-  print_area_config?: any;
+  print_area_config?: Json;
   printify_blueprint_id?: string;
   printify_provider_id?: string;
   is_active: boolean;
@@ -172,7 +180,7 @@ export interface Order {
   tax: number;
   total: number;
   customer_email?: string;
-  shipping_address?: any;
+  shipping_address?: Json;
   notes?: string;
   error_message?: string;
   created_at: string;
@@ -198,7 +206,7 @@ export interface WebhookEvent {
   event_source: 'stripe' | 'printify';
   event_id: string;
   order_id?: string;
-  payload: any;
+  payload: Json;
   processed: boolean;
   error_message?: string;
   created_at: string;

@@ -1,0 +1,22 @@
+{
+  "id": 12,
+  "title": "Unisex Jersey Short Sleeve Tee",
+  "variants": [
+    {
+      "id": 9576,
+      "title": "White / M",
+      "options": {
+        "color": "White",
+        "size": "M"
+      },
+      "placeholders": [
+        {
+          "position": "front",
+          "decoration_method": "dtg",
+          "height": 5700,
+          "width": 4500
+        }
+      ]
+    }
+  ]
+}

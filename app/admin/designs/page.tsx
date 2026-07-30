@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@/components/Card';
+import { Card, CardBody } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
 
 interface Design {
@@ -19,11 +19,7 @@ export default function AdminDesignsPage() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDesigns();
-  }, []);
-
-  const fetchDesigns = async () => {
+  async function fetchDesigns() {
     try {
       const { data } = await supabase
         .from('generated_designs')
@@ -34,7 +30,11 @@ export default function AdminDesignsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchDesigns();
+  }, []);
 
   const handleDelete = async (designId: string) => {
     if (!confirm('Are you sure you want to delete this design?')) return;

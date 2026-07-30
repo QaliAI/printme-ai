@@ -3,17 +3,21 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Container } from '@/components/Container';
-import { Card, CardBody, CardHeader } from '@/components/Card';
+import { Card, CardBody } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue } from '@/lib/types';
 
 interface Design {
   id: string;
   design_url: string;
   status: string;
   created_at: string;
-  style?: any;
-  upload?: any;
+  style?: { name?: string } | Array<{ name?: string }> | null;
+  upload?:
+    | { original_url?: string }
+    | Array<{ original_url?: string }>
+    | null;
 }
 
 export default function DesignsPage() {
@@ -22,11 +26,7 @@ export default function DesignsPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDesigns();
-  }, []);
-
-  const fetchDesigns = async () => {
+  async function fetchDesigns() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -57,7 +57,13 @@ export default function DesignsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // Fetching the initial server-backed collection is the effect's purpose.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchDesigns();
+  }, []);
 
   const handleDeleteDesign = async (designId: string) => {
     if (!confirm('Are you sure you want to delete this design?')) return;
@@ -108,7 +114,7 @@ export default function DesignsPage() {
       {designs.length === 0 ? (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-gray-600 mb-6">You haven't created any designs yet.</p>
+            <p className="text-gray-600 mb-6">You haven&apos;t created any designs yet.</p>
             <Link href="/app/create/style">
               <Button>Create Your First Design</Button>
             </Link>
@@ -133,9 +139,12 @@ export default function DesignsPage() {
 
               <CardBody className="flex-1 flex flex-col">
                 <div className="flex-1">
-                  {design.style && (
+                  {getFirstOrValue(design.style ?? undefined) && (
                     <p className="text-sm text-gray-600 mb-1">
-                      Style: <span className="font-medium text-gray-900">{design.style.name}</span>
+                      Style:{' '}
+                      <span className="font-medium text-gray-900">
+                        {getFirstOrValue(design.style ?? undefined)?.name}
+                      </span>
                     </p>
                   )}
                   <p className="text-xs text-gray-500">

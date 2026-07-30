@@ -37,7 +37,7 @@ function PreviewContent() {
 
   const [upload, setUpload] = useState<UserUpload | null>(null);
   const [design, setDesign] = useState<GeneratedDesign | null>(null);
-  const [stylePreset, setStylePreset] = useState<any | null>(null);
+  const [stylePreset, setStylePreset] = useState<{ slug: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
