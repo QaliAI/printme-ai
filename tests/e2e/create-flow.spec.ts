@@ -42,6 +42,8 @@ test('guest upload, preparation, customization, and cart survive refresh', async
     .getByRole('button', { name: /Color and size/ })
     .click();
   await page.getByRole('button', { name: /White \/ L/ }).click();
+  await page.getByTestId('apply-product-adaptation').click();
+  await expect(page.getByText('Apparel-ready spacing artwork')).toBeVisible();
 
   const gestureLayer = page.getByTestId('artwork-gesture-layer');
   await gestureLayer.focus();
@@ -51,7 +53,7 @@ test('guest upload, preparation, customization, and cart survive refresh', async
     .getAttribute('data-render-key');
 
   await page.reload();
-  await expect(page.getByText('Prepared artwork')).toBeVisible();
+  await expect(page.getByText('Apparel-ready spacing artwork')).toBeVisible();
   await expect(page.getByTestId('instant-preview')).toHaveAttribute(
     'data-render-key',
     renderKey ?? '',

@@ -21,6 +21,7 @@ export const savedCreateSessionSchema = z.object({
   sourceType: designSourceTypeSchema,
   preparation: z.enum(['original', 'background-removed', 'art']),
   artStyle: z.enum(['illustrated', 'poster', 'soft-paint']),
+  adaptationLabel: z.string().min(1).optional(),
   asset: z.object({
     id: z.string().min(1),
     alt: z.string().min(1),

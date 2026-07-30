@@ -215,6 +215,38 @@
   gap: 8px;
 }
 
+.adaptationCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--create-line);
+  border-radius: 12px;
+  background: var(--create-panel-strong);
+  padding: 13px 14px;
+}
+
+.adaptationCard > span {
+  display: grid;
+  gap: 3px;
+}
+
+.adaptationCard small {
+  color: var(--create-muted);
+  line-height: 1.4;
+}
+
+.adaptationCard button {
+  min-height: 44px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 9px;
+  background: var(--create-ink);
+  color: var(--create-panel);
+  font-weight: 800;
+  padding: 0 14px;
+}
+
 .optionRows {
   display: grid;
   border-top: 1px solid var(--create-line);
@@ -651,6 +683,11 @@
   .prepareOptions button {
     justify-content: flex-start;
     padding: 10px 14px;
+  }
+
+  .adaptationCard {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .desktopPlacement {

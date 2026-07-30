@@ -59,6 +59,10 @@ import {
 } from '@/lib/commerce/placement';
 import { runDesignPreflight } from '@/lib/commerce/preflight';
 import { upsertPersistentCartItem } from '@/lib/commerce/persistent-cart-client';
+import {
+  BrowserProductAdaptationService,
+  recordAdaptationCost,
+} from '@/lib/commerce/product-adaptation';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type {
   CuratedDesign,
@@ -217,6 +221,9 @@ export function UnifiedCreateExperience({
   const [preparation, setPreparation] =
     useState<PreparationMode>('original');
   const [artStyle, setArtStyle] = useState<ArtStyle>('illustrated');
+  const [adaptationLabel, setAdaptationLabel] = useState<string | null>(
+    null,
+  );
   const [configuration, setConfiguration] =
     useState<ProductConfiguration | null>(null);
   const [history, setHistory] = useState<ProductConfiguration[]>([]);
@@ -236,6 +243,10 @@ export function UnifiedCreateExperience({
     distance: number;
     scale: number;
   } | null>(null);
+  const adaptationService = useMemo(
+    () => new BrowserProductAdaptationService(),
+    [],
+  );
 
   const selectedProduct = configuration
     ? getProduct(products, configuration.merchProductId)
@@ -245,6 +256,10 @@ export function UnifiedCreateExperience({
       ? getVariant(selectedProduct, configuration.printifyVariantId)
       : selectedProduct.variants.find((variant) => variant.available) ??
         selectedProduct.variants[0];
+  const adaptationPlan = useMemo(
+    () => adaptationService.plan(selectedProduct, selectedVariant),
+    [adaptationService, selectedProduct, selectedVariant],
+  );
   const selectedTemplate = configuration
     ? getPreviewTemplate(configuration.previewTemplateId)
     : null;
@@ -294,7 +309,11 @@ export function UnifiedCreateExperience({
         mimeType: saved.asset.mimeType,
         hasTransparency: saved.asset.hasTransparency,
         sourceType: saved.sourceType,
-        role: saved.preparation === 'original' ? 'original' : 'production',
+        role: saved.adaptationLabel
+          ? 'product-derivative'
+          : saved.preparation === 'original'
+            ? 'original'
+            : 'production',
         productionAssetId: `${saved.asset.id}-production`,
         storageKey: createAssetStorageKey(
           saved.designId,
@@ -313,6 +332,7 @@ export function UnifiedCreateExperience({
       setRevision(saved.revision);
       setPreparation(saved.preparation);
       setArtStyle(saved.artStyle);
+      setAdaptationLabel(saved.adaptationLabel ?? null);
       setOriginalBlob(original ?? blob);
       setAsset(restoredAsset);
       const restoredVariant = getVariant(
@@ -356,6 +376,7 @@ export function UnifiedCreateExperience({
       sourceType: asset.sourceType ?? 'uploaded-photo',
       preparation,
       artStyle,
+      adaptationLabel: adaptationLabel ?? undefined,
       asset: {
         id: asset.id,
         alt: asset.alt,
@@ -378,6 +399,7 @@ export function UnifiedCreateExperience({
     });
   }, [
     artStyle,
+    adaptationLabel,
     asset,
     cartMessage,
     configuration,
@@ -507,6 +529,7 @@ export function UnifiedCreateExperience({
       });
       setRevision(nextRevision);
       setPreparation(mode);
+      setAdaptationLabel(null);
       setAsset(nextAsset);
       replaceConfiguration(nextConfiguration);
       setSheet(null);
@@ -537,11 +560,73 @@ export function UnifiedCreateExperience({
     });
     setPlacementMessage(
       compatible
-        ? 'Your placement was preserved.'
-        : 'Recommended placement applied for this product.',
+        ? 'Your placement was preserved. An optional product-ready adaptation is available.'
+        : 'Recommended placement applied. An optional product-ready adaptation is available.',
     );
     replaceConfiguration(next);
     setSheet(null);
+  }
+
+  async function applyProductAdaptation() {
+    if (!asset || !configuration || !designId) return;
+    setPreparing(true);
+    setUploadError(null);
+    try {
+      const source =
+        (asset.storageKey
+          ? await loadCreateAsset(asset.storageKey)
+          : null) ?? originalBlob;
+      if (!source) throw new Error('The current design source is unavailable.');
+      const nextRevision = revision + 1;
+      const result = await adaptationService.adapt({
+        source,
+        asset,
+        product: selectedProduct,
+        variant: selectedVariant,
+        revision: nextRevision,
+        designId,
+      });
+      const storageKey = createAssetStorageKey(designId, nextRevision);
+      const url = URL.createObjectURL(result.blob);
+      const derivative = {
+        ...result.derivative,
+        url,
+        productionUrl: url,
+        storageKey,
+      };
+      await saveCreateAsset(storageKey, result.blob);
+      const nextConfiguration = createProductConfiguration({
+        designId,
+        design: derivative,
+        product: selectedProduct,
+        template: getPreviewTemplate(selectedProduct.previewTemplateId),
+        previous: configuration,
+      });
+      recordAdaptationCost(window.localStorage, {
+        designId,
+        derivativeId: derivative.derivativeId!,
+        productId: selectedProduct.id,
+        kind: result.plan.kind,
+        provider: result.cost.provider,
+        amountUsd: result.cost.amountUsd,
+        createdAt: new Date().toISOString(),
+      });
+      setRevision(nextRevision);
+      setAsset(derivative);
+      setAdaptationLabel(result.plan.label);
+      replaceConfiguration(nextConfiguration);
+      setPlacementMessage(
+        `${result.plan.label} applied as an optional version. Your original is still available.`,
+      );
+    } catch (error) {
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : 'Product adaptation failed. Your current version was kept.',
+      );
+    } finally {
+      setPreparing(false);
+    }
   }
 
   function selectVariant(variant: ProductVariant) {
@@ -752,6 +837,7 @@ export function UnifiedCreateExperience({
     setDesignId(null);
     setConfiguration(null);
     setRevision(1);
+    setAdaptationLabel(null);
     setHistory([]);
     setFuture([]);
     setCartMessage(null);
@@ -819,7 +905,11 @@ export function UnifiedCreateExperience({
       <header className={styles.createHeader}>
         <div>
           <span>PrintMe Create</span>
-          <strong>{preparation === 'original' ? 'Original' : 'Prepared'} artwork</strong>
+          <strong>
+            {adaptationLabel ??
+              (preparation === 'original' ? 'Original' : 'Prepared')}{' '}
+            artwork
+          </strong>
         </div>
         <button type="button" onClick={() => void startOver()}>
           Start over
@@ -923,6 +1013,25 @@ export function UnifiedCreateExperience({
               More Styles
               <ChevronRight aria-hidden="true" size={17} />
             </button>
+            <div className={styles.adaptationCard}>
+              <span>
+                <strong>
+                  {adaptationPlan.label}
+                </strong>
+                <small>
+                  {adaptationPlan.explanation}{' '}
+                  Optional. Your original stays available.
+                </small>
+              </span>
+              <button
+                type="button"
+                onClick={() => void applyProductAdaptation()}
+                disabled={preparing}
+                data-testid="apply-product-adaptation"
+              >
+                Apply product fit
+              </button>
+            </div>
             {preparing && <span role="status">Preparing a new version...</span>}
             {uploadError && <span role="alert">{uploadError}</span>}
           </div>
