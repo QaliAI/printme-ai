@@ -213,6 +213,7 @@ export function placementFromConfiguration(
 }
 
 export function createProductConfiguration(input: {
+  designId: string;
   design: DesignAsset;
   product: MerchProduct;
   template: PreviewTemplate;
@@ -238,7 +239,7 @@ export function createProductConfiguration(input: {
   });
 
   return {
-    designId: input.design.id,
+    designId: input.designId,
     designVersion: input.design.version,
     designAssetUrl: input.design.url,
     merchProductId: input.product.id,

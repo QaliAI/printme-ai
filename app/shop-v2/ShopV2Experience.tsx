@@ -92,6 +92,7 @@ export function ShopV2Experience({
     setSelectedDesignId(design.id);
     setConfiguration(
       createProductConfiguration({
+        designId: design.id,
         design: design.asset,
         product,
         template,
@@ -105,6 +106,7 @@ export function ShopV2Experience({
     const template = getPreviewTemplate(product.previewTemplateId);
     setConfiguration(
       createProductConfiguration({
+        designId: selectedDesign.id,
         design: selectedDesign.asset,
         product,
         template,
