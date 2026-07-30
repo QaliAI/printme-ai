@@ -11,6 +11,7 @@ const CART_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
 export interface CartRequestIdentity extends CartIdentity {
   rawGuestToken: string;
   isNewGuestToken: boolean;
+  userEmail?: string;
 }
 
 export function hashGuestCartToken(token: string) {
@@ -21,7 +22,7 @@ function createGuestCartToken() {
   return randomBytes(32).toString('base64url');
 }
 
-async function resolveUserId(request: NextRequest) {
+async function resolveUser(request: NextRequest) {
   const authorization = request.headers.get('authorization');
   if (!authorization?.startsWith('Bearer ')) return undefined;
 
@@ -31,7 +32,7 @@ async function resolveUserId(request: NextRequest) {
     error,
   } = await getSupabaseAdminClient().auth.getUser(token);
   if (error || !user) return undefined;
-  return user.id;
+  return { id: user.id, email: user.email };
 }
 
 export async function resolveCartRequestIdentity(
@@ -39,9 +40,11 @@ export async function resolveCartRequestIdentity(
 ): Promise<CartRequestIdentity> {
   const existingToken = request.cookies.get(COMMERCE_CART_COOKIE)?.value;
   const rawGuestToken = existingToken ?? createGuestCartToken();
+  const user = await resolveUser(request);
   return {
     guestTokenHash: hashGuestCartToken(rawGuestToken),
-    userId: await resolveUserId(request),
+    userId: user?.id,
+    userEmail: user?.email,
     rawGuestToken,
     isNewGuestToken: !existingToken,
   };

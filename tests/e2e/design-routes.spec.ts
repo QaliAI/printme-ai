@@ -42,3 +42,16 @@ test('Shop V2 configurator traps focus and restores it on close', async ({
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
 });
+
+test('success redirect does not claim payment without a verified webhook', async ({
+  page,
+}) => {
+  await page.goto('/checkout/success?session_id=cs_test_unverified');
+  await expect(
+    page.getByRole('heading', {
+      level: 1,
+      name: 'Payment verification pending',
+    }),
+  ).toBeVisible();
+  await expect(page.getByText(/does not prove payment/i)).toBeVisible();
+});

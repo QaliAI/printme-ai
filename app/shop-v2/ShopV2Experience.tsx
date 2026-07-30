@@ -61,6 +61,8 @@ export function ShopV2Experience({
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [cartPending, setCartPending] = useState(false);
+  const [checkoutPending, setCheckoutPending] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const configuratorRef = useRef<HTMLElement>(null);
   const cartDialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -220,6 +222,7 @@ export function ShopV2Experience({
 
   function persistCart(nextItems: CartConfigurationSnapshot[]) {
     writeLocalCart(window.localStorage, nextItems);
+    window.sessionStorage.removeItem('printme:checkout:idempotency');
     setCartItems(nextItems);
   }
 
@@ -256,6 +259,43 @@ export function ShopV2Experience({
   function removeCartItem(itemId: string) {
     persistCart(cartItems.filter((item) => item.id !== itemId));
     void removePersistentCartItem(itemId);
+  }
+
+  async function beginCheckout() {
+    setCheckoutPending(true);
+    setCheckoutError(null);
+    try {
+      const storageKey = 'printme:checkout:idempotency';
+      const idempotencyKey =
+        window.sessionStorage.getItem(storageKey) ?? crypto.randomUUID();
+      window.sessionStorage.setItem(storageKey, idempotencyKey);
+      const response = await fetch('/api/commerce/checkout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ idempotencyKey }),
+      });
+      const payload = (await response.json()) as {
+        redirectUrl?: string;
+        error?: string;
+      };
+      if (
+        !response.ok ||
+        !payload.redirectUrl?.startsWith('https://checkout.stripe.com/')
+      ) {
+        throw new Error(
+          payload.error ?? 'Test checkout is not available yet.',
+        );
+      }
+      window.location.assign(payload.redirectUrl);
+    } catch (error) {
+      setCheckoutError(
+        error instanceof Error
+          ? error.message
+          : 'Test checkout is not available yet.',
+      );
+      setCheckoutPending(false);
+    }
   }
 
   return (
@@ -578,9 +618,23 @@ export function ShopV2Experience({
             <footer className={styles.cartFooter}>
               <span>Subtotal</span>
               <strong>{formatPrice(cartTotal)}</strong>
-              <small>
-                Resilient cart · checkout is intentionally disabled
-              </small>
+              {cartItems.length > 0 && (
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={beginCheckout}
+                  disabled={checkoutPending}
+                  data-testid="begin-checkout"
+                >
+                  {checkoutPending
+                    ? 'Opening test checkout...'
+                    : 'Secure test checkout'}
+                </button>
+              )}
+              {checkoutError && (
+                <small role="alert">{checkoutError}</small>
+              )}
+              <small>Preview only · Stripe test mode is required</small>
             </footer>
           </aside>
         </div>

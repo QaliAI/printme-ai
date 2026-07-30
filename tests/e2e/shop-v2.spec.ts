@@ -38,4 +38,10 @@ test('375px shopper preserves the switched configuration in the cart drawer', as
   await expect(item).toContainText('$34.00');
   await expect(item.getByRole('button', { name: 'Edit' })).toBeVisible();
   await expect(item.getByRole('button', { name: 'Remove' })).toBeVisible();
+
+  await page.getByTestId('begin-checkout').click();
+  await expect(drawer.getByRole('alert')).toContainText(
+    'safe gates are enabled',
+  );
+  await expect(drawer).toBeVisible();
 });
