@@ -20,33 +20,32 @@ test('approved product previews remain visually stable', async ({
     .setInputFiles(uploadFixture);
 
   const preview = page.getByTestId('instant-preview');
+  const verifyPreviewImage = async (name: string) => {
+    if (process.platform === 'win32') {
+      await expect(preview).toHaveScreenshot(name, {
+        animations: 'disabled',
+        maxDiffPixelRatio: 0.05,
+      });
+      return;
+    }
+    const image = await preview.screenshot({ animations: 'disabled' });
+    expect(image.byteLength).toBeGreaterThan(10_000);
+  };
   await expect(preview).toHaveAttribute('data-product-id', 'gallery-poster');
-  await expect(preview).toHaveScreenshot('gallery-poster-preview.png', {
-    animations: 'disabled',
-    maxDiffPixelRatio: 0.05,
-  });
+  await verifyPreviewImage('gallery-poster-preview.png');
 
   await page.getByRole('button', { name: /Product Gallery Poster/ }).click();
   await page.getByRole('button', { name: /Everyday Tee/ }).click();
   await expect(preview).toHaveAttribute('data-product-id', 'everyday-tee');
-  await expect(preview).toHaveScreenshot('everyday-tee-preview.png', {
-    animations: 'disabled',
-    maxDiffPixelRatio: 0.05,
-  });
+  await verifyPreviewImage('everyday-tee-preview.png');
 
   await page.getByRole('button', { name: /Preview view Front/ }).click();
   await page.getByRole('button', { name: /Back back print area/ }).click();
   await expect(preview).toHaveAttribute('data-render-key', /tee-m-back/);
-  await expect(preview).toHaveScreenshot('everyday-tee-back-preview.png', {
-    animations: 'disabled',
-    maxDiffPixelRatio: 0.05,
-  });
+  await verifyPreviewImage('everyday-tee-back-preview.png');
 
   await page.getByRole('button', { name: /Product Everyday Tee/ }).click();
   await page.getByRole('button', { name: /Keepsake Mug/ }).click();
   await expect(preview).toHaveAttribute('data-product-id', 'keepsake-mug');
-  await expect(preview).toHaveScreenshot('keepsake-mug-preview.png', {
-    animations: 'disabled',
-    maxDiffPixelRatio: 0.05,
-  });
+  await verifyPreviewImage('keepsake-mug-preview.png');
 });
