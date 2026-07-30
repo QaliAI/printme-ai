@@ -42,6 +42,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       NEXT_PUBLIC_COMMERCE_V2_ENABLED: 'true',
+      NEXT_PUBLIC_HOMEPAGE_V2_ENABLED: 'true',
       COMMERCE_E2E_TEST_MODE: 'true',
       COMMERCE_E2E_TEST_SECRET: 'printme-local-e2e-secret',
       COMMERCE_CHECKOUT_ENABLED: 'true',

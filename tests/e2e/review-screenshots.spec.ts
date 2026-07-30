@@ -40,6 +40,26 @@ test('capture the visible commerce review surfaces', async ({
 
   await mkdir(reviewDirectory, { recursive: true });
   await context.clearCookies();
+
+  await page.goto('/');
+  const homepageHeading = page.getByRole('heading', {
+    level: 1,
+    name: 'Turn photos into keepsakes.',
+  });
+  await expect(homepageHeading).toBeVisible();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByTestId('home-mobile-commerce-bar')).toBeVisible();
+  await page
+    .getByTestId('home-hero-switcher')
+    .locator('img')
+    .first()
+    .evaluate((image) => (image as HTMLImageElement).decode());
+  await capture(page, 'homepage-v2-mobile-375x812.png');
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByTestId('home-mobile-commerce-bar')).toBeHidden();
+  await capture(page, 'homepage-v2-desktop-1440x900.png');
+
   await page.goto('/shop-v2');
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();

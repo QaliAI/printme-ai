@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import { HomepageV2Header } from "@/components/home-v2/HomepageV2Header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,11 +20,13 @@ export default function RootLayout({
 }>) {
   const commercePreviewEnabled =
     process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === "true";
+  const homepageV2Enabled =
+    process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED === "true";
 
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} min-h-full flex flex-col bg-gray-50`}>
-        <Navbar />
+        {homepageV2Enabled ? <HomepageV2Header /> : <Navbar />}
         {commercePreviewEnabled && (
           <aside className="border-y border-stone-300 bg-amber-50 px-4 py-3 text-stone-900">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
