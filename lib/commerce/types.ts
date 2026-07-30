@@ -1,7 +1,21 @@
 export type CurrencyCode = 'USD';
-export type ProductKind = 'flat' | 'apparel';
+export type ProductKind = 'flat' | 'apparel' | 'drinkware';
 export type PrintPosition = 'front' | 'back' | 'all-over';
 export type PreviewFit = 'contain' | 'cover';
+export type DesignSourceType =
+  | 'uploaded-photo'
+  | 'uploaded-artwork'
+  | 'ai-generated'
+  | 'ai-styled'
+  | 'background-removed'
+  | 'curated'
+  | 'text-personalized';
+export type DesignAssetRole =
+  | 'original'
+  | 'preview'
+  | 'display'
+  | 'production'
+  | 'product-derivative';
 
 export interface DesignAsset {
   id: string;
@@ -13,6 +27,15 @@ export interface DesignAsset {
   height: number;
   mimeType: string;
   hasTransparency: boolean;
+  sourceType?: DesignSourceType;
+  role?: DesignAssetRole;
+  productionAssetId?: string;
+  derivativeId?: string;
+  storageKey?: string;
+  byteSize?: number;
+  transparentPaddingRatio?: number;
+  minimumLineWidthPx?: number;
+  dominantLuminance?: number;
 }
 
 export interface CuratedDesign {
@@ -36,6 +59,8 @@ export interface PrintablePlaceholder {
   decorationMethod: string;
   width: number;
   height: number;
+  printWidthInches?: number;
+  printHeightInches?: number;
 }
 
 export interface ProductVariant {
@@ -82,6 +107,7 @@ export interface PreviewTemplateView {
   productMask?: string;
   shadowOverlay?: string;
   highlightOverlay?: string;
+  productColor?: string;
 }
 
 export interface PreviewTemplate {
@@ -89,6 +115,18 @@ export interface PreviewTemplate {
   kind: ProductKind;
   supportedPrintPositions: PrintPosition[];
   views: PreviewTemplateView[];
+}
+
+export interface PreviewTemplateBinding {
+  key: string;
+  printifyBlueprintId: number;
+  printifyProviderId: number;
+  printifyVariantId: number;
+  productColor: string | null;
+  printPosition: PrintPosition;
+  decorationMethod: string;
+  previewViewId: string;
+  previewTemplateId: string;
 }
 
 export interface MerchProduct {
@@ -99,8 +137,27 @@ export interface MerchProduct {
   printifyBlueprintId: number;
   provider: ProductProvider;
   previewTemplateId: string;
+  previewBindings?: PreviewTemplateBinding[];
   variants: ProductVariant[];
   defaultPlacement: PrintPlacement;
+  merchandising?: {
+    slug: string;
+    material: string;
+    fit: string;
+    printMethod: string;
+    careInstructions: string[];
+    sizeGuide: Array<{ label: string; detail: string }>;
+    productionEstimate: string;
+    deliveryEstimate: string | null;
+    shippingExplanation: string;
+    returnPolicy: string;
+    faq: Array<{ question: string; answer: string }>;
+    shippingCost: number | null;
+    stripeFeeRate: number;
+    stripeFixedFee: number;
+    aiProcessingCost: number;
+    supportReserve: number;
+  };
 }
 
 export interface InstantPreview {
@@ -114,7 +171,18 @@ export interface InstantPreview {
 export interface ProductConfiguration {
   designId: string;
   designVersion: string;
+  designVersionId?: string;
+  designSourceType?: DesignSourceType;
+  designAssetId?: string;
+  productionAssetId?: string;
+  designDerivativeId?: string;
   designAssetUrl: string;
+  designAssetWidth?: number;
+  designAssetHeight?: number;
+  designAssetAlt?: string;
+  designAssetMimeType?: string;
+  designAssetHasTransparency?: boolean;
+  designAssetStorageKey?: string;
   productionAssetUrl: string;
   merchProductId: string;
   printifyBlueprintId: number;
@@ -126,12 +194,16 @@ export interface ProductConfiguration {
   normalizedY: number;
   normalizedScale: number;
   angle: number;
+  fit?: PreviewFit;
   selectedColor: string | null;
   selectedSize: string | null;
   previewTemplateId: string;
+  previewBindingKey?: string;
   previewViewId: string;
   instantPreview: InstantPreview;
   officialMockupUrl?: string;
+  officialMockupState?: 'not-requested' | 'generating' | 'ready' | 'review';
+  officialMockupRenderKey?: string;
   unitPrice: number;
   currency: CurrencyCode;
 }
@@ -150,7 +222,8 @@ export interface CartConfigurationSnapshot {
 }
 
 export interface PreviewRenderInput {
-  artwork: Pick<DesignAsset, 'url' | 'width' | 'height'>;
+  artwork: Pick<DesignAsset, 'url' | 'width' | 'height'> &
+    Partial<Pick<DesignAsset, 'id' | 'version'>>;
   template: PreviewTemplate;
   viewId: string;
   placement: PrintPlacement;

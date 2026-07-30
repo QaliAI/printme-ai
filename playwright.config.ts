@@ -43,12 +43,16 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_COMMERCE_V2_ENABLED: 'true',
       NEXT_PUBLIC_HOMEPAGE_V2_ENABLED: 'true',
+      NEXT_PUBLIC_UNIFIED_CREATE_ENABLED: 'true',
+      NEXT_PUBLIC_STUDIO_ENABLED: 'true',
       COMMERCE_E2E_TEST_MODE: 'true',
       COMMERCE_E2E_TEST_SECRET: 'printme-local-e2e-secret',
       COMMERCE_CHECKOUT_ENABLED: 'true',
       STRIPE_SECRET_KEY: 'sk_test_local_e2e_only',
       STRIPE_WEBHOOK_SECRET: 'whsec_local_e2e_only',
       PRINTIFY_FULFILLMENT_MODE: 'dry-run',
+      STUDIO_E2E_TEST_MODE: 'true',
+      STUDIO_E2E_TEST_SECRET: 'printme-local-studio-e2e-secret',
     },
   },
 });

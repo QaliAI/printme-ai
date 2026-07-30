@@ -42,7 +42,7 @@ export function InstantPreview({
         src={view.baseProductImage}
         alt=""
         fill
-        priority={!compact}
+        preload={!compact}
         sizes={compact ? '160px' : '(max-width: 700px) 92vw, 520px'}
         className={styles.previewBase}
       />
@@ -69,6 +69,11 @@ export function InstantPreview({
             src={design.url}
             alt={design.alt}
             fill
+            preload={!compact}
+            unoptimized={
+              design.url.startsWith('blob:') ||
+              design.url.startsWith('data:')
+            }
             sizes={compact ? '120px' : '(max-width: 700px) 55vw, 300px'}
             className={styles.artworkImage}
           />
@@ -107,7 +112,13 @@ export function InstantPreview({
       )}
       <figcaption className={styles.previewStatus}>
         <span aria-hidden="true" />
-        Instant preview · artwork kept proportional
+        {configuration.officialMockupState === 'ready'
+          ? 'Official preview ready'
+          : configuration.officialMockupState === 'review'
+            ? 'Official preview needs review; your approved placement was kept'
+            : configuration.officialMockupState === 'generating'
+              ? 'Instant preview ready; official preview is generating'
+              : 'Instant preview · artwork kept proportional'}
       </figcaption>
     </figure>
   );

@@ -6,6 +6,7 @@ import {
   SupabaseDesignRepository,
   type DesignRepository,
 } from './repository';
+import { listPublishedStudioE2EDesigns } from '@/lib/studio/testing/e2e-harness';
 
 export class DesignCatalogService {
   constructor(
@@ -22,11 +23,17 @@ export class DesignCatalogService {
     }
   }
 
-  listPublished(filter?: DesignFilter) {
-    return this.read((repository) => repository.listPublished(filter));
+  async listPublished(filter?: DesignFilter) {
+    return this.read((repository) =>
+      repository.listPublished(filter),
+    );
   }
 
-  findPublishedBySlug(slug: string) {
+  async findPublishedBySlug(slug: string) {
+    const studio = listPublishedStudioE2EDesigns().find(
+      (design) => design.slug === slug,
+    );
+    if (studio) return studio;
     return this.read((repository) => repository.findPublishedBySlug(slug));
   }
 

@@ -59,10 +59,13 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
     'data-product-id',
     'everyday-tee',
   );
-  const teeRenderKey = await preview.getAttribute('data-render-key');
-  expect(teeRenderKey).not.toBe(posterRenderKey);
+  expect(await preview.getAttribute('data-render-key')).not.toBe(
+    posterRenderKey,
+  );
   await page.getByRole('button', { name: 'White / L' }).click();
   await expect(page.getByText(/front.*dtg/i)).toBeVisible();
+  await page.getByTestId('shop-placement-scale').fill('0.9');
+  const teeRenderKey = await preview.getAttribute('data-render-key');
 
   await page.getByTestId('add-to-cart').click();
   const drawer = page.getByTestId('cart-drawer');
@@ -73,7 +76,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await expect(item).toContainText('Everyday Tee');
   await expect(item).toContainText('White');
   await expect(item).toContainText('L');
-  await expect(item).toContainText('scale 0.82');
+  await expect(item).toContainText('scale 0.90');
   await expect(item).toContainText('$34.00');
 
   await page.evaluate(() => window.localStorage.clear());
@@ -182,4 +185,63 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
     printifyWriteCount: 0,
     eventAttempts: 1,
   });
+});
+
+test('cart preserves quantity and adds an exact same-design upsell', async ({
+  context,
+  page,
+}) => {
+  await context.addCookies([
+    {
+      name: 'printme-e2e-secret',
+      value: e2eSecret,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Strict',
+    },
+    {
+      name: 'printme-e2e-session',
+      value: randomUUID(),
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Strict',
+    },
+  ]);
+  await page.goto('/shop-v2');
+  await page.evaluate(() => window.localStorage.clear());
+  await page.reload();
+
+  await page.getByTestId('open-design-design-pet-pop').click();
+  await page.getByTestId('product-switch-everyday-tee').click();
+  await page.getByTestId('add-to-cart').click();
+
+  const drawer = page.getByTestId('cart-drawer');
+  await expect(drawer.getByTestId('same-design-upsells')).toBeVisible();
+  const upsell = drawer.getByTestId('add-upsell-gallery-poster');
+  await expect(upsell).toBeVisible();
+  await expect(
+    drawer.getByTestId('same-design-upsells').getByTestId('instant-preview'),
+  ).toHaveAttribute('data-product-id', 'gallery-poster');
+
+  await drawer
+    .getByRole('button', { name: 'Increase quantity for Everyday Tee' })
+    .click();
+  await expect(
+    drawer.getByTestId('cart-item').first().getByTestId('cart-item-quantity'),
+  ).toHaveText('2');
+
+  await upsell.click();
+  await expect(drawer.getByTestId('cart-item')).toHaveCount(2);
+  await expect(drawer).toContainText('Sunday Sidekick');
+  await expect(drawer).toContainText('Gallery Poster');
+  await expect(drawer.getByTestId('same-design-upsells')).toHaveCount(0);
+
+  await page.reload();
+  await page.getByTestId('open-cart').click();
+  await expect(page.getByTestId('cart-item')).toHaveCount(2);
+  await expect(
+    page.getByTestId('cart-item').first().getByTestId('cart-item-quantity'),
+  ).toHaveText('2');
 });

@@ -1,8 +1,15 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { InstantPreview } from '@/components/commerce/InstantPreview';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { PersistedInstantPreview } from '@/components/commerce/PersistedInstantPreview';
+import { trackCommerceEvent } from '@/lib/commerce/analytics-events';
 import {
   createCartSnapshot,
   readLocalCart,
@@ -10,7 +17,9 @@ import {
   writeLocalCart,
 } from '@/lib/commerce/local-cart';
 import {
+  changeProductVariantConfiguration,
   createProductConfiguration,
+  refreshConfigurationPreview,
 } from '@/lib/commerce/placement';
 import {
   readPersistentCart,
@@ -18,6 +27,10 @@ import {
   upsertPersistentCartItem,
 } from '@/lib/commerce/persistent-cart-client';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
+import {
+  getSameDesignUpsells,
+  type SameDesignUpsell,
+} from '@/lib/commerce/upsells';
 import {
   assertDesignProductCompatible,
   getRecommendedProduct,
@@ -35,6 +48,7 @@ import styles from './shop-v2.module.css';
 interface ShopV2ExperienceProps {
   designs: CuratedDesignRecord[];
   products: MerchProduct[];
+  initialDesignSlug?: string;
 }
 
 function formatPrice(cents: number, currency = 'USD') {
@@ -50,22 +64,119 @@ function findById<T extends { id: string }>(items: T[], id: string, label: strin
   return item;
 }
 
+function designFromConfiguration(
+  configuration: ProductConfiguration,
+  productIds: string[],
+): CuratedDesignRecord | null {
+  if (
+    !configuration.designAssetWidth ||
+    !configuration.designAssetHeight
+  ) {
+    return null;
+  }
+
+  return {
+    id: configuration.designId,
+    slug: configuration.designId,
+    title: 'Your design',
+    description: 'Customer-provided artwork prepared in PrintMe Create.',
+    collection: 'Your uploads',
+    asset: {
+      id: configuration.designAssetId ?? configuration.designId,
+      version: configuration.designVersionId ?? configuration.designVersion,
+      url: configuration.designAssetUrl,
+      productionUrl: configuration.productionAssetUrl,
+      alt: configuration.designAssetAlt ?? 'Customer-provided artwork',
+      width: configuration.designAssetWidth,
+      height: configuration.designAssetHeight,
+      mimeType: configuration.designAssetMimeType ?? 'image/png',
+      hasTransparency:
+        configuration.designAssetHasTransparency ?? false,
+      sourceType: configuration.designSourceType,
+      productionAssetId: configuration.productionAssetId,
+      derivativeId: configuration.designDerivativeId,
+      storageKey: configuration.designAssetStorageKey,
+    },
+    artistOrSource: 'Customer upload',
+    rightsStatus: 'customer-provided',
+    publicationStatus: 'draft',
+    publicationDate: null,
+    tags: [],
+    recommendedProductId: configuration.merchProductId,
+    defaultProductColor: configuration.selectedColor,
+    defaultPlacement: {
+      position: configuration.printPosition,
+      decorationMethod: configuration.decorationMethod,
+      normalizedX: configuration.normalizedX,
+      normalizedY: configuration.normalizedY,
+      normalizedScale: configuration.normalizedScale,
+      angle: configuration.angle,
+      fit: 'contain',
+    },
+    compatibleProductIds: productIds,
+    incompatibleProductIds: [],
+    merchandisingPriority: 0,
+    seoTitle: 'Your design',
+    seoDescription: 'Customer-provided artwork.',
+    filters: [],
+  };
+}
+
 export function ShopV2Experience({
   designs,
   products,
+  initialDesignSlug,
 }: ShopV2ExperienceProps) {
-  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
+  const initialDesign = designs.find(
+    (design) => design.slug === initialDesignSlug,
+  );
+  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(
+    () => initialDesign?.id ?? null,
+  );
   const [configuration, setConfiguration] =
-    useState<ProductConfiguration | null>(null);
+    useState<ProductConfiguration | null>(() => {
+      if (!initialDesign) return null;
+      const product = getRecommendedProduct(initialDesign, products);
+      return createProductConfiguration({
+        designId: initialDesign.id,
+        design: initialDesign.asset,
+        product,
+        template: getPreviewTemplate(product.previewTemplateId),
+      });
+    });
   const [cartItems, setCartItems] = useState<CartConfigurationSnapshot[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [cartPending, setCartPending] = useState(false);
+  const [upsellPendingId, setUpsellPendingId] = useState<string | null>(
+    null,
+  );
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const viewedUpsellsRef = useRef(new Set<string>());
   const configuratorRef = useRef<HTMLElement>(null);
   const cartDialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  const openDesign = useCallback(
+    (design: CuratedDesignRecord) => {
+      const product = getRecommendedProduct(design, products);
+      const template = getPreviewTemplate(product.previewTemplateId);
+      setSelectedDesignId(design.id);
+      setConfiguration(
+        createProductConfiguration({
+          designId: design.id,
+          design: design.asset,
+          product,
+          template,
+        }),
+      );
+      setEditingItemId(null);
+      trackCommerceEvent('design_view', { designId: design.id });
+      trackCommerceEvent('design_selected', { designId: design.id });
+    },
+    [products],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -152,7 +263,13 @@ export function ShopV2Experience({
   }, [cartOpen, selectedDesignId]);
 
   const selectedDesign = selectedDesignId
-    ? findById(designs, selectedDesignId, 'design')
+    ? designs.find((design) => design.id === selectedDesignId) ??
+      (configuration
+        ? designFromConfiguration(
+            configuration,
+            products.map((product) => product.id),
+          )
+        : null)
     : null;
   const selectedProduct = configuration
     ? findById(products, configuration.merchProductId, 'product')
@@ -171,21 +288,34 @@ export function ShopV2Experience({
       ),
     [cartItems]
   );
+  const cartUpsells = useMemo(
+    () =>
+      cartItems.flatMap((sourceItem) => {
+        const design = designs.find(
+          (candidate) =>
+            candidate.id === sourceItem.configuration.designId,
+        );
+        return getSameDesignUpsells({
+          sourceItem,
+          cartItems,
+          products,
+          compatibleProductIds: design?.compatibleProductIds,
+        });
+      }),
+    [cartItems, designs, products],
+  );
 
-  function openDesign(design: CuratedDesignRecord) {
-    const product = getRecommendedProduct(design, products);
-    const template = getPreviewTemplate(product.previewTemplateId);
-    setSelectedDesignId(design.id);
-    setConfiguration(
-      createProductConfiguration({
-        designId: design.id,
-        design: design.asset,
-        product,
-        template,
-      })
-    );
-    setEditingItemId(null);
-  }
+  useEffect(() => {
+    for (const upsell of cartUpsells) {
+      const key = `${upsell.sourceItemId}:${upsell.product.id}`;
+      if (viewedUpsellsRef.current.has(key)) continue;
+      viewedUpsellsRef.current.add(key);
+      trackCommerceEvent('upsell_viewed', {
+        sourceItemId: upsell.sourceItemId,
+        productId: upsell.product.id,
+      });
+    }
+  }, [cartUpsells]);
 
   function switchProduct(product: MerchProduct) {
     if (!selectedDesign || !configuration) return;
@@ -200,17 +330,42 @@ export function ShopV2Experience({
         previous: configuration,
       })
     );
+    trackCommerceEvent('product_changed', {
+      designId: selectedDesign.id,
+      productId: product.id,
+    });
   }
 
   function selectVariant(variant: ProductVariant) {
-    if (!configuration) return;
-    setConfiguration({
-      ...configuration,
-      printifyVariantId: variant.printifyVariantId,
-      selectedColor: variant.color,
-      selectedSize: variant.size,
-      unitPrice: variant.unitPrice,
-      currency: variant.currency,
+    if (!configuration || !selectedDesign || !selectedProduct) return;
+    setConfiguration(
+      changeProductVariantConfiguration({
+        configuration,
+        design: selectedDesign.asset,
+        product: selectedProduct,
+        variant,
+      }).configuration,
+    );
+    trackCommerceEvent('variant_changed', {
+      productId: selectedProduct.id,
+      variantId: variant.id,
+    });
+  }
+
+  function changePlacementScale(scale: number) {
+    if (!configuration || !selectedDesign) return;
+    setConfiguration(
+      refreshConfigurationPreview(
+        {
+          ...configuration,
+          normalizedScale: Math.min(2, Math.max(0.25, scale)),
+        },
+        selectedDesign.asset,
+      ),
+    );
+    trackCommerceEvent('placement_changed', {
+      productId: configuration.merchProductId,
+      input: 'scale',
     });
   }
 
@@ -242,6 +397,17 @@ export function ShopV2Experience({
       });
       const persisted = await upsertPersistentCartItem(snapshot);
       persistCart(upsertCartItem(cartItems, persisted ?? snapshot));
+      trackCommerceEvent('add_to_cart', {
+        designId: selectedDesign.id,
+        productId: selectedProduct.id,
+        variantId:
+          selectedProduct.variants.find(
+            (variant) =>
+              variant.printifyVariantId ===
+              configuration.printifyVariantId,
+          )?.id ?? 'unknown',
+        quantity: snapshot.quantity,
+      });
       closeConfigurator();
       setCartOpen(true);
     } finally {
@@ -261,7 +427,71 @@ export function ShopV2Experience({
     void removePersistentCartItem(itemId);
   }
 
+  async function changeQuantity(
+    item: CartConfigurationSnapshot,
+    delta: number,
+  ) {
+    const quantity = Math.min(10, Math.max(1, item.quantity + delta));
+    if (quantity === item.quantity) return;
+    const next = { ...item, quantity };
+    persistCart(upsertCartItem(cartItems, next));
+    const persisted = await upsertPersistentCartItem(next);
+    if (persisted) {
+      setCartItems((current) => {
+        const merged = upsertCartItem(current, persisted);
+        writeLocalCart(window.localStorage, merged);
+        return merged;
+      });
+    }
+  }
+
+  async function addUpsell(upsell: SameDesignUpsell) {
+    const sourceItem = cartItems.find(
+      (item) => item.id === upsell.sourceItemId,
+    );
+    if (!sourceItem) return;
+    setUpsellPendingId(upsell.product.id);
+    try {
+      const sourceDesign =
+        designs.find(
+          (design) => design.id === sourceItem.configuration.designId,
+        ) ??
+        designFromConfiguration(
+          sourceItem.configuration,
+          products.map((product) => product.id),
+        );
+      if (!sourceDesign) return;
+      const snapshot = createCartSnapshot({
+        id: crypto.randomUUID(),
+        configuration: upsell.configuration,
+        design: {
+          ...sourceDesign,
+          title: sourceItem.designTitle,
+          asset: upsell.design,
+        },
+        product: upsell.product,
+        createdAt: new Date().toISOString(),
+      });
+      const persisted = await upsertPersistentCartItem(snapshot);
+      persistCart(upsertCartItem(cartItems, persisted ?? snapshot));
+      trackCommerceEvent('upsell_added', {
+        sourceItemId: upsell.sourceItemId,
+        productId: upsell.product.id,
+        designVersion: upsell.design.version,
+      });
+    } finally {
+      setUpsellPendingId(null);
+    }
+  }
+
   async function beginCheckout() {
+    trackCommerceEvent('begin_checkout', {
+      itemCount: cartItems.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      ),
+      subtotal: cartTotal,
+    });
     setCheckoutPending(true);
     setCheckoutError(null);
     try {
@@ -383,7 +613,7 @@ export function ShopV2Experience({
               ×
             </button>
             <div className={styles.previewColumn}>
-              <InstantPreview
+              <PersistedInstantPreview
                 design={selectedDesign.asset}
                 configuration={configuration}
               />
@@ -476,6 +706,20 @@ export function ShopV2Experience({
                     {configuration.angle}°
                   </small>
                 </div>
+                <label className={styles.placementScale}>
+                  <span>Artwork scale</span>
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="2"
+                    step="0.01"
+                    value={configuration.normalizedScale}
+                    onChange={(event) =>
+                      changePlacementScale(Number(event.target.value))
+                    }
+                    data-testid="shop-placement-scale"
+                  />
+                </label>
               </div>
 
               <footer className={styles.configFooter}>
@@ -541,11 +785,15 @@ export function ShopV2Experience({
                 </div>
               ) : (
                 cartItems.map((item) => {
-                  const design = findById(
-                    designs,
-                    item.configuration.designId,
-                    'cart design'
-                  );
+                  const design =
+                    designs.find(
+                      (candidate) =>
+                        candidate.id === item.configuration.designId,
+                    ) ??
+                    designFromConfiguration(
+                      item.configuration,
+                      products.map((product) => product.id),
+                    );
                   return (
                     <article
                       className={styles.cartItem}
@@ -553,12 +801,18 @@ export function ShopV2Experience({
                       data-testid="cart-item"
                       data-render-key={item.configuration.instantPreview.renderKey}
                     >
-                      <InstantPreview
-                        design={design.asset}
-                        configuration={item.configuration}
-                        showSafeZone={false}
-                        compact
-                      />
+                      {design ? (
+                        <PersistedInstantPreview
+                          design={design.asset}
+                          configuration={item.configuration}
+                          showSafeZone={false}
+                          compact
+                        />
+                      ) : (
+                        <div role="img" aria-label="Preview unavailable">
+                          Preview unavailable for this legacy item
+                        </div>
+                      )}
                       <div className={styles.cartItemDetails}>
                         <div className={styles.cartItemTitle}>
                           <div>
@@ -583,7 +837,27 @@ export function ShopV2Experience({
                           </div>
                           <div>
                             <dt>Qty</dt>
-                            <dd>{item.quantity}</dd>
+                            <dd className={styles.quantityControl}>
+                              <button
+                                type="button"
+                                onClick={() => void changeQuantity(item, -1)}
+                                disabled={item.quantity <= 1}
+                                aria-label={`Decrease quantity for ${item.productTitle}`}
+                              >
+                                −
+                              </button>
+                              <span data-testid="cart-item-quantity">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void changeQuantity(item, 1)}
+                                disabled={item.quantity >= 10}
+                                aria-label={`Increase quantity for ${item.productTitle}`}
+                              >
+                                +
+                              </button>
+                            </dd>
                           </div>
                         </dl>
                         <p className={styles.cartPlacement}>
@@ -612,6 +886,64 @@ export function ShopV2Experience({
                     </article>
                   );
                 })
+              )}
+              {cartItems.length > 0 && cartUpsells.length === 0 && (
+                <section
+                  className={styles.upsellUnavailable}
+                  data-testid="upsell-unavailable"
+                >
+                  <strong>Matching products are paused</strong>
+                  <p>
+                    Recommendations unlock after provider cost and shipping
+                    data are synchronized, so every offer stays margin-safe.
+                  </p>
+                </section>
+              )}
+              {cartUpsells.length > 0 && (
+                <section
+                  className={styles.upsellSection}
+                  aria-labelledby="matching-products-title"
+                  data-testid="same-design-upsells"
+                >
+                  <div className={styles.upsellHeading}>
+                    <p className={styles.eyebrow}>Keep the same artwork</p>
+                    <h3 id="matching-products-title">Make it a set</h3>
+                  </div>
+                  <div className={styles.upsellGrid}>
+                    {cartUpsells.map((upsell) => (
+                      <article
+                        className={styles.upsellCard}
+                        key={`${upsell.sourceItemId}:${upsell.product.id}`}
+                      >
+                        <PersistedInstantPreview
+                          design={upsell.design}
+                          configuration={upsell.configuration}
+                          showSafeZone={false}
+                          compact
+                        />
+                        <div>
+                          <strong>{upsell.product.name}</strong>
+                          <span>
+                            {formatPrice(
+                              upsell.configuration.unitPrice,
+                              upsell.configuration.currency,
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void addUpsell(upsell)}
+                            disabled={upsellPendingId === upsell.product.id}
+                            data-testid={`add-upsell-${upsell.product.id}`}
+                          >
+                            {upsellPendingId === upsell.product.id
+                              ? 'Adding…'
+                              : 'Add matching product'}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
 

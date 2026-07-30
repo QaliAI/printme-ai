@@ -3,6 +3,7 @@ import type {
   CartConfigurationSnapshot,
   ProductConfiguration,
 } from './types';
+import { designSourceTypeSchema } from './designs/canonical';
 
 export const COMMERCE_SNAPSHOT_SCHEMA_VERSION = 2 as const;
 export const CONFIGURATION_HASH_ALGORITHM = 'pmcfg-v2';
@@ -18,7 +19,18 @@ export const instantPreviewSchema = z.object({
 export const productConfigurationSchema = z.object({
   designId: z.string().min(1),
   designVersion: z.string().min(1),
+  designVersionId: z.string().min(1).optional(),
+  designSourceType: designSourceTypeSchema.optional(),
+  designAssetId: z.string().min(1).optional(),
+  productionAssetId: z.string().min(1).optional(),
+  designDerivativeId: z.string().min(1).optional(),
   designAssetUrl: z.string().min(1),
+  designAssetWidth: z.number().int().positive().optional(),
+  designAssetHeight: z.number().int().positive().optional(),
+  designAssetAlt: z.string().min(1).optional(),
+  designAssetMimeType: z.string().min(1).optional(),
+  designAssetHasTransparency: z.boolean().optional(),
+  designAssetStorageKey: z.string().min(1).optional(),
   productionAssetUrl: z.string().min(1),
   merchProductId: z.string().min(1),
   printifyBlueprintId: z.number().int().positive(),
@@ -30,12 +42,18 @@ export const productConfigurationSchema = z.object({
   normalizedY: z.number().min(0).max(1),
   normalizedScale: z.number().positive(),
   angle: z.number().finite(),
+  fit: z.enum(['contain', 'cover']).optional(),
   selectedColor: z.string().nullable(),
   selectedSize: z.string().nullable(),
   previewTemplateId: z.string().min(1),
+  previewBindingKey: z.string().min(1).optional(),
   previewViewId: z.string().min(1),
   instantPreview: instantPreviewSchema,
   officialMockupUrl: z.string().min(1).optional(),
+  officialMockupState: z
+    .enum(['not-requested', 'generating', 'ready', 'review'])
+    .optional(),
+  officialMockupRenderKey: z.string().min(1).optional(),
   unitPrice: z.number().int().nonnegative(),
   currency: z.literal('USD'),
 });

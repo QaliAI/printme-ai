@@ -17,7 +17,7 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   await expect(
     page.getByRole('link', { name: 'Shop Designs' }).first(),
   ).toBeVisible();
-  await expect(page.getByText('Approved products start at $29')).toBeVisible();
+  await expect(page.getByText('Approved products start at $26')).toBeVisible();
 
   const heroSwitcher = page.getByTestId('home-hero-switcher');
   await page.getByTestId('home-hero-product-everyday-tee').click();

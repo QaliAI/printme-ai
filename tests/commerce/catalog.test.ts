@@ -28,7 +28,7 @@ class FakeCatalogSource implements PrintifyCatalogSource {
     {
       id: 99,
       title: 'Printify Choice',
-      decoration_methods: ['dtg', 'digital-printing'],
+      decoration_methods: ['dtg', 'digital-printing', 'sublimation'],
     },
   ]);
 
@@ -39,7 +39,11 @@ class FakeCatalogSource implements PrintifyCatalogSource {
       includeOutOfStock = false
     ) => {
       const approvedIds =
-        blueprintId === 12 ? [18541, 18542] : [43138, 43144];
+        blueprintId === 12
+          ? [18541, 18542]
+          : blueprintId === 68
+            ? [721]
+            : [43138, 43144];
       const ids = includeOutOfStock
         ? [...approvedIds, blueprintId * 100_000]
         : approvedIds;
@@ -54,7 +58,11 @@ class FakeCatalogSource implements PrintifyCatalogSource {
             {
               position: 'front',
               decoration_method:
-                blueprintId === 12 ? 'dtg' : 'digital-printing',
+                blueprintId === 12
+                  ? 'dtg'
+                  : blueprintId === 68
+                    ? 'sublimation'
+                    : 'digital-printing',
               width: 1000,
               height: 1000,
             },
@@ -193,11 +201,11 @@ describe('validated curated catalog', () => {
 
     const report = await service.dryRunSync();
 
-    expect(report.productsChecked).toBe(2);
-    expect(report.newVariants).toHaveLength(2);
+    expect(report.productsChecked).toBe(3);
+    expect(report.newVariants).toHaveLength(3);
     expect(report.removedVariants).toEqual([]);
     expect(report.changedAvailability).toEqual([]);
     expect(report.retailPricesChanged).toBe(false);
-    expect(source.getShippingInformation).toHaveBeenCalledTimes(2);
+    expect(source.getShippingInformation).toHaveBeenCalledTimes(3);
   });
 });

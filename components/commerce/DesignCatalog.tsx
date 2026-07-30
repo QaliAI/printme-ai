@@ -7,12 +7,12 @@ import type {
   DesignFilter,
 } from '@/lib/commerce/designs/models';
 import styles from '@/app/designs/designs.module.css';
+import { DesignActivity } from './DesignActivity';
 
 const filters: Array<{ value: DesignFilter; label: string }> = [
   { value: 'new', label: 'New' },
   { value: 'trending', label: 'Trending' },
   { value: 'bestsellers', label: 'Bestsellers' },
-  { value: 'archive', label: 'Archive' },
 ];
 
 export function DesignCatalogHeader({
@@ -47,7 +47,7 @@ export function DesignFilters({ active }: { active?: DesignFilter }) {
       </Link>
       {filters.map((filter) => (
         <Link
-          href={`/designs?filter=${filter.value}`}
+          href={`/designs/${filter.value}`}
           key={filter.value}
           aria-current={active === filter.value ? 'page' : undefined}
         >
@@ -83,6 +83,9 @@ export function DesignGrid({
                 fill
                 sizes="(max-width: 700px) 92vw, 30vw"
                 priority={index === 0}
+                unoptimized={design.asset.url.startsWith(
+                  '/api/studio/e2e/',
+                )}
               />
             </span>
             <span className={styles.cardCopy}>
@@ -113,6 +116,7 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
             fill
             sizes="(max-width: 800px) 92vw, 50vw"
             priority
+            unoptimized={design.asset.url.startsWith('/api/studio/e2e/')}
           />
         </div>
         <div className={styles.detailCopy}>
@@ -131,9 +135,13 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
               <dd>{design.recommendedProductId}</dd>
             </div>
           </dl>
-          <Link className={styles.action} href="/shop-v2">
+          <Link
+            className={styles.action}
+            href={`/shop-v2?design=${encodeURIComponent(design.slug)}`}
+          >
             Configure this design
           </Link>
+          <DesignActivity designId={design.id} />
         </div>
       </section>
     </main>

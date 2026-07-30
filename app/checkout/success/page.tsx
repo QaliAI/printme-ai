@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCheckoutConfirmation } from '@/lib/commerce/checkout/confirmation';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
   searchParams: Promise<{ session_id?: string | string[] }>;
 }) {
-  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED !== 'true') notFound();
+  if (!isReviewFeatureEnabled('commerce')) notFound();
   const sessionId = (await searchParams).session_id;
   const confirmation =
     typeof sessionId === 'string'

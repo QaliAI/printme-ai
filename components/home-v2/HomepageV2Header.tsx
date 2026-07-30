@@ -8,7 +8,7 @@ import { Navbar } from '@/components/Navbar';
 
 const navigation = [
   { href: '/designs', label: 'Shop Designs' },
-  { href: '/app/create/style', label: 'Create Yours' },
+  { href: '/create', label: 'Create Yours' },
   { href: '/#products', label: 'Products' },
   { href: '/#gifts', label: 'Gifts' },
 ];
@@ -16,6 +16,9 @@ const navigation = [
 export function HomepageV2Header() {
   const pathname = usePathname();
 
+  if (pathname.startsWith('/studio')) {
+    return null;
+  }
   if (pathname !== '/') {
     return <Navbar />;
   }
