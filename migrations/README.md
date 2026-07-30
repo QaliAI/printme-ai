@@ -28,3 +28,4 @@ Application-owned commerce migrations:
 6. `006_add_fulfillment_jobs.sql`
 7. `007_harden_commerce_webhooks.sql`
 8. `008_unify_design_pipeline.sql` (Sprint 3 additive, not applied to production)
+9. `009_add_printme_studio.sql` (Sprint 3 additive, not applied to production)
