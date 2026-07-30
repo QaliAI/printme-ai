@@ -6,20 +6,25 @@ import { Container } from '@/components/Container';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue, type Json } from '@/lib/types';
+
+interface OrderProduct {
+  id: string;
+  name: string;
+  emoji?: string;
+}
+
+interface OrderProductVariant {
+  id: string;
+  size?: string;
+  color?: string;
+  product?: OrderProduct | OrderProduct[];
+}
 
 interface OrderItem {
   id: string;
   quantity: number;
-  product_variant?: {
-    id: string;
-    size?: string | null;
-    color?: string | null;
-    product?: {
-      id: string;
-      name: string;
-      emoji?: string | null;
-    } | null;
-  } | null;
+  product_variant?: OrderProductVariant | OrderProductVariant[];
 }
 
 interface Order {
@@ -29,7 +34,7 @@ interface Order {
   total_amount: number;
   status: string;
   fulfillment_status?: string;
-  shipping_address?: Record<string, unknown> | null;
+  shipping_address?: Json;
   order_items: OrderItem[];
 }
 
@@ -38,7 +43,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     try {
       const { data, error: fetchError } = await supabase
         .from('orders')
@@ -77,9 +82,10 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
+    // Fetching the initial server-backed collection is the effect's purpose.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchOrders();
   }, []);
@@ -175,8 +181,8 @@ export default function OrdersPage() {
               <CardBody>
                 <div className="mb-4">
                   {order.order_items.map((item) => {
-                    const product = item.product_variant?.product;
-                    const variant = item.product_variant;
+                    const variant = getFirstOrValue(item.product_variant);
+                    const product = getFirstOrValue(variant?.product);
                     return (
                       <div key={item.id} className="flex justify-between text-sm py-2">
                         <div>

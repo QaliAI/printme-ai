@@ -1,0 +1,24 @@
+{
+  "id": "product-fixture-1",
+  "title": "Fixture Product",
+  "description": "Fixture product description",
+  "blueprint_id": 12,
+  "print_provider_id": 39,
+  "variants": [
+    {
+      "id": 9576,
+      "price": 3400,
+      "title": "White / M",
+      "is_enabled": true,
+      "is_default": true
+    }
+  ],
+  "images": [
+    {
+      "src": "https://images.printify.com/fixture-mockup.png",
+      "variant_ids": [9576],
+      "position": "front",
+      "is_default": true
+    }
+  ]
+}

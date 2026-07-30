@@ -121,6 +121,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
         }
 
+        const cartItems = cart.cart_items as CartItemWithRelations[];
+
         // Validate shipping fields before calling Printify / creating order
         const shipping = (session as any).shipping_details;
         const userEmail = session.customer_details?.email;
@@ -146,7 +148,7 @@ export async function POST(req: NextRequest) {
         // Printify payload validation checks:
         // Validate that each item has a product ID, variant ID, design URL, and valid quantity
         const missingPrintifyDetails: string[] = [];
-        cart.cart_items.forEach((item: any, index: number) => {
+        cartItems.forEach((item, index) => {
           const productVariant = getFirstOrValue(item.product_variant);
           const design = getFirstOrValue(item.design);
 
@@ -164,10 +166,9 @@ export async function POST(req: NextRequest) {
         });
 
         const isPrintifyPayloadValid = missingPrintifyDetails.length === 0;
-
         // Calculate order total
         let total = 0;
-        (cart.cart_items as CartItemWithRelations[]).forEach((item) => {
+        cartItems.forEach((item) => {
           const productVariant = getFirstOrValue(item.product_variant);
           const itemPrice =
             (productVariant?.product?.base_price || 0) +
@@ -265,16 +266,19 @@ export async function POST(req: NextRequest) {
         }
 
         // Create order items
-        const orderItems = cart.cart_items.map((item: any) => ({
-          order_id: order.id,
-          design_id: item.design_id,
-          product_id: item.product_variant.product.id,
-          product_variant_id: item.product_variant.id,
-          quantity: item.quantity,
-          unit_price:
-            item.product_variant.product.base_price +
-            (item.product_variant.price_modifier || 0),
-        }));
+        const orderItems = cartItems.map((item) => {
+          const productVariant = getFirstOrValue(item.product_variant);
+          return {
+            order_id: order.id,
+            design_id: item.design_id,
+            product_id: productVariant?.product?.id ?? '',
+            product_variant_id: productVariant?.id ?? '',
+            quantity: item.quantity,
+            unit_price:
+              (productVariant?.product?.base_price ?? 0) +
+              (productVariant?.price_modifier ?? 0),
+          };
+        });
 
         const { error: itemsError } = await supabase
           .from('order_items')
@@ -295,8 +299,8 @@ export async function POST(req: NextRequest) {
         if (shouldSubmitToPrintify) {
           try {
             const printifyOrder = await submitToPrintify(
-              cart,
-              order,
+              cartItems,
+              order.id,
               session
             );
 
@@ -378,8 +382,8 @@ export async function POST(req: NextRequest) {
 }
 
 async function submitToPrintify(
-  cart: any,
-  order: any,
+  cartItems: CartItemWithRelations[],
+  orderId: string,
   stripeSession: Stripe.Checkout.Session
 ) {
   const userEmail = stripeSession.customer_details?.email || 'customer@example.com';
@@ -392,9 +396,8 @@ async function submitToPrintify(
   const last_name = nameParts.slice(1).join(' ') || 'Customer';
 
   // Build Printify order from cart items
-  const lineItems = (cart.cart_items as CartItemWithRelations[]).map((item) => {
+  const lineItems = cartItems.map((item) => {
     const productVariant = getFirstOrValue(item.product_variant);
-    const design = getFirstOrValue(item.design);
 
     // Convert printify_variant_id to integer if available
     const variantIdStr = productVariant?.printify_variant_id || '';
@@ -404,12 +407,6 @@ async function submitToPrintify(
       product_id: productVariant?.product?.printify_blueprint_id || '',
       variant_id: variant_id,
       quantity: item.quantity,
-      files: [
-        {
-          type: 'front' as const,
-          url: design?.design_url || '',
-        },
-      ],
     };
   });
 
@@ -427,7 +424,7 @@ async function submitToPrintify(
   };
 
   const printifyPayload = {
-    external_id: order.id,
+    external_id: orderId,
     line_items: lineItems,
     address_to,
     shipping_method: 1, // Default standard shipping method
@@ -438,7 +435,7 @@ async function submitToPrintify(
 
   if (!isLiveMode) {
     console.log('[Printify] Stripe Checkout Session is in test mode. Creating DRAFT order on Printify.');
-    return printifyClient.createDraftOrder(printifyPayload);
+    return printifyClient.createOrder(printifyPayload);
   }
 
   if (autoSubmitLive) {
@@ -448,5 +445,5 @@ async function submitToPrintify(
 
   // Conservative default: Create as draft in live mode
   console.log('[Printify] Creating DRAFT order on Printify for live session.');
-  return printifyClient.createDraftOrder(printifyPayload);
+  return printifyClient.createOrder(printifyPayload);
 }

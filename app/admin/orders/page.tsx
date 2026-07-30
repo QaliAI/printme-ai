@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@/components/Card';
+import { Card, CardBody } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue } from '@/lib/types';
+
+interface OrderUser {
+  full_name?: string;
+  email?: string;
+}
 
 interface OrdersListItem {
   id: string;
@@ -14,7 +20,7 @@ interface OrdersListItem {
   stripe_session_id?: string;
   printify_order_id?: string;
   error_message?: string;
-  user?: any;
+  user?: OrderUser | OrderUser[] | null;
 }
 
 export default function AdminOrdersPage() {
@@ -22,11 +28,7 @@ export default function AdminOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     try {
       const { data, error: fetchError } = await supabase
         .from('orders')
@@ -52,7 +54,13 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // Fetching the initial server-backed collection is the effect's purpose.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders();
+  }, []);
 
   if (loading) {
     return <div className="text-center py-12">Loading...</div>;
@@ -83,8 +91,13 @@ export default function AdminOrdersPage() {
                       #{order.order_number || order.id.slice(0, 8)}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
-                      <div className="font-semibold text-gray-900">{(order.user as any)?.full_name || 'Unknown'}</div>
-                      <div className="text-xs opacity-75">{(order.user as any)?.email}</div>
+                      <div className="font-semibold text-gray-900">
+                        {getFirstOrValue(order.user ?? undefined)?.full_name ||
+                          'Unknown'}
+                      </div>
+                      <div className="text-xs opacity-75">
+                        {getFirstOrValue(order.user ?? undefined)?.email}
+                      </div>
                     </td>
                     <td className="py-3 px-4 font-semibold text-gray-900">
                       ${(order.total_amount / 100).toFixed(2)}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@/components/Card';
+import { Card, CardBody } from '@/components/Card';
 import { supabase } from '@/lib/supabase';
 
 interface StylePreset {
@@ -19,11 +19,7 @@ export default function AdminStylesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<StylePreset>>({});
 
-  useEffect(() => {
-    fetchStyles();
-  }, []);
-
-  const fetchStyles = async () => {
+  async function fetchStyles() {
     try {
       const { data } = await supabase
         .from('style_presets')
@@ -34,7 +30,11 @@ export default function AdminStylesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchStyles();
+  }, []);
 
   const handleEdit = (style: StylePreset) => {
     setEditingId(style.id);
