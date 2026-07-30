@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { PersistedInstantPreview } from '@/components/commerce/PersistedInstantPreview';
+import { trackCommerceEvent } from '@/lib/commerce/analytics-events';
 import {
   createCartSnapshot,
   readLocalCart,
@@ -19,6 +20,10 @@ import {
   upsertPersistentCartItem,
 } from '@/lib/commerce/persistent-cart-client';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
+import {
+  getSameDesignUpsells,
+  type SameDesignUpsell,
+} from '@/lib/commerce/upsells';
 import {
   assertDesignProductCompatible,
   getRecommendedProduct,
@@ -122,9 +127,13 @@ export function ShopV2Experience({
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [cartPending, setCartPending] = useState(false);
+  const [upsellPendingId, setUpsellPendingId] = useState<string | null>(
+    null,
+  );
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const deepLinkOpened = useRef(false);
+  const viewedUpsellsRef = useRef(new Set<string>());
   const configuratorRef = useRef<HTMLElement>(null);
   const cartDialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -249,6 +258,34 @@ export function ShopV2Experience({
       ),
     [cartItems]
   );
+  const cartUpsells = useMemo(
+    () =>
+      cartItems.flatMap((sourceItem) => {
+        const design = designs.find(
+          (candidate) =>
+            candidate.id === sourceItem.configuration.designId,
+        );
+        return getSameDesignUpsells({
+          sourceItem,
+          cartItems,
+          products,
+          compatibleProductIds: design?.compatibleProductIds,
+        });
+      }),
+    [cartItems, designs, products],
+  );
+
+  useEffect(() => {
+    for (const upsell of cartUpsells) {
+      const key = `${upsell.sourceItemId}:${upsell.product.id}`;
+      if (viewedUpsellsRef.current.has(key)) continue;
+      viewedUpsellsRef.current.add(key);
+      trackCommerceEvent('upsell_viewed', {
+        sourceItemId: upsell.sourceItemId,
+        productId: upsell.product.id,
+      });
+    }
+  }, [cartUpsells]);
 
   function openDesign(design: CuratedDesignRecord) {
     const product = getRecommendedProduct(design, products);
@@ -263,6 +300,8 @@ export function ShopV2Experience({
       })
     );
     setEditingItemId(null);
+    trackCommerceEvent('design_view', { designId: design.id });
+    trackCommerceEvent('design_selected', { designId: design.id });
   }
 
   function switchProduct(product: MerchProduct) {
@@ -278,6 +317,10 @@ export function ShopV2Experience({
         previous: configuration,
       })
     );
+    trackCommerceEvent('product_changed', {
+      designId: selectedDesign.id,
+      productId: product.id,
+    });
   }
 
   function selectVariant(variant: ProductVariant) {
@@ -290,6 +333,10 @@ export function ShopV2Experience({
         variant,
       }).configuration,
     );
+    trackCommerceEvent('variant_changed', {
+      productId: selectedProduct.id,
+      variantId: variant.id,
+    });
   }
 
   function closeConfigurator() {
@@ -320,6 +367,17 @@ export function ShopV2Experience({
       });
       const persisted = await upsertPersistentCartItem(snapshot);
       persistCart(upsertCartItem(cartItems, persisted ?? snapshot));
+      trackCommerceEvent('add_to_cart', {
+        designId: selectedDesign.id,
+        productId: selectedProduct.id,
+        variantId:
+          selectedProduct.variants.find(
+            (variant) =>
+              variant.printifyVariantId ===
+              configuration.printifyVariantId,
+          )?.id ?? 'unknown',
+        quantity: snapshot.quantity,
+      });
       closeConfigurator();
       setCartOpen(true);
     } finally {
@@ -339,7 +397,71 @@ export function ShopV2Experience({
     void removePersistentCartItem(itemId);
   }
 
+  async function changeQuantity(
+    item: CartConfigurationSnapshot,
+    delta: number,
+  ) {
+    const quantity = Math.min(10, Math.max(1, item.quantity + delta));
+    if (quantity === item.quantity) return;
+    const next = { ...item, quantity };
+    persistCart(upsertCartItem(cartItems, next));
+    const persisted = await upsertPersistentCartItem(next);
+    if (persisted) {
+      setCartItems((current) => {
+        const merged = upsertCartItem(current, persisted);
+        writeLocalCart(window.localStorage, merged);
+        return merged;
+      });
+    }
+  }
+
+  async function addUpsell(upsell: SameDesignUpsell) {
+    const sourceItem = cartItems.find(
+      (item) => item.id === upsell.sourceItemId,
+    );
+    if (!sourceItem) return;
+    setUpsellPendingId(upsell.product.id);
+    try {
+      const sourceDesign =
+        designs.find(
+          (design) => design.id === sourceItem.configuration.designId,
+        ) ??
+        designFromConfiguration(
+          sourceItem.configuration,
+          products.map((product) => product.id),
+        );
+      if (!sourceDesign) return;
+      const snapshot = createCartSnapshot({
+        id: crypto.randomUUID(),
+        configuration: upsell.configuration,
+        design: {
+          ...sourceDesign,
+          title: sourceItem.designTitle,
+          asset: upsell.design,
+        },
+        product: upsell.product,
+        createdAt: new Date().toISOString(),
+      });
+      const persisted = await upsertPersistentCartItem(snapshot);
+      persistCart(upsertCartItem(cartItems, persisted ?? snapshot));
+      trackCommerceEvent('upsell_added', {
+        sourceItemId: upsell.sourceItemId,
+        productId: upsell.product.id,
+        designVersion: upsell.design.version,
+      });
+    } finally {
+      setUpsellPendingId(null);
+    }
+  }
+
   async function beginCheckout() {
+    trackCommerceEvent('begin_checkout', {
+      itemCount: cartItems.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      ),
+      subtotal: cartTotal,
+    });
     setCheckoutPending(true);
     setCheckoutError(null);
     try {
@@ -671,7 +793,27 @@ export function ShopV2Experience({
                           </div>
                           <div>
                             <dt>Qty</dt>
-                            <dd>{item.quantity}</dd>
+                            <dd className={styles.quantityControl}>
+                              <button
+                                type="button"
+                                onClick={() => void changeQuantity(item, -1)}
+                                disabled={item.quantity <= 1}
+                                aria-label={`Decrease quantity for ${item.productTitle}`}
+                              >
+                                −
+                              </button>
+                              <span data-testid="cart-item-quantity">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void changeQuantity(item, 1)}
+                                disabled={item.quantity >= 10}
+                                aria-label={`Increase quantity for ${item.productTitle}`}
+                              >
+                                +
+                              </button>
+                            </dd>
                           </div>
                         </dl>
                         <p className={styles.cartPlacement}>
@@ -700,6 +842,64 @@ export function ShopV2Experience({
                     </article>
                   );
                 })
+              )}
+              {cartItems.length > 0 && cartUpsells.length === 0 && (
+                <section
+                  className={styles.upsellUnavailable}
+                  data-testid="upsell-unavailable"
+                >
+                  <strong>Matching products are paused</strong>
+                  <p>
+                    Recommendations unlock after provider cost and shipping
+                    data are synchronized, so every offer stays margin-safe.
+                  </p>
+                </section>
+              )}
+              {cartUpsells.length > 0 && (
+                <section
+                  className={styles.upsellSection}
+                  aria-labelledby="matching-products-title"
+                  data-testid="same-design-upsells"
+                >
+                  <div className={styles.upsellHeading}>
+                    <p className={styles.eyebrow}>Keep the same artwork</p>
+                    <h3 id="matching-products-title">Make it a set</h3>
+                  </div>
+                  <div className={styles.upsellGrid}>
+                    {cartUpsells.map((upsell) => (
+                      <article
+                        className={styles.upsellCard}
+                        key={`${upsell.sourceItemId}:${upsell.product.id}`}
+                      >
+                        <PersistedInstantPreview
+                          design={upsell.design}
+                          configuration={upsell.configuration}
+                          showSafeZone={false}
+                          compact
+                        />
+                        <div>
+                          <strong>{upsell.product.name}</strong>
+                          <span>
+                            {formatPrice(
+                              upsell.configuration.unitPrice,
+                              upsell.configuration.currency,
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void addUpsell(upsell)}
+                            disabled={upsellPendingId === upsell.product.id}
+                            data-testid={`add-upsell-${upsell.product.id}`}
+                          >
+                            {upsellPendingId === upsell.product.id
+                              ? 'Adding…'
+                              : 'Add matching product'}
+                          </button>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
 

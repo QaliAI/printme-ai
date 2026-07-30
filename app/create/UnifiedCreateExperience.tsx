@@ -26,6 +26,7 @@ import {
   type ReactNode,
 } from 'react';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
+import { trackCommerceEvent } from '@/lib/commerce/analytics-events';
 import {
   clearCreateSession,
   createAssetStorageKey,
@@ -243,6 +244,8 @@ export function UnifiedCreateExperience({
     distance: number;
     scale: number;
   } | null>(null);
+  const trackedPreviewKeys = useRef(new Set<string>());
+  const trackedWarnings = useRef(new Set<string>());
   const adaptationService = useMemo(
     () => new BrowserProductAdaptationService(),
     [],
@@ -276,6 +279,36 @@ export function UnifiedCreateExperience({
       variant: selectedVariant,
     });
   }, [asset, configuration, selectedProduct, selectedVariant]);
+
+  useEffect(() => {
+    const renderKey = configuration?.instantPreview.renderKey;
+    if (!renderKey || trackedPreviewKeys.current.has(renderKey)) return;
+    trackedPreviewKeys.current.add(renderKey);
+    trackCommerceEvent('preview_generated', {
+      productId: configuration.merchProductId,
+      previewViewId: configuration.previewViewId,
+    });
+    if (
+      configuration.officialMockupState === 'ready' &&
+      configuration.officialMockupUrl
+    ) {
+      trackCommerceEvent('official_mockup_ready', {
+        productId: configuration.merchProductId,
+      });
+    }
+  }, [configuration]);
+
+  useEffect(() => {
+    if (!qualityReport || qualityReport.primary.severity === 'info') return;
+    const key = `${configuration?.instantPreview.renderKey}:${qualityReport.primary.code}`;
+    if (trackedWarnings.current.has(key)) return;
+    trackedWarnings.current.add(key);
+    trackCommerceEvent('quality_warning_seen', {
+      code: qualityReport.primary.code,
+      severity: qualityReport.primary.severity,
+      productId: configuration?.merchProductId ?? 'unknown',
+    });
+  }, [configuration, qualityReport]);
 
   useEffect(() => {
     let cancelled = false;
@@ -441,6 +474,10 @@ export function UnifiedCreateExperience({
       return;
     }
 
+    trackCommerceEvent('upload_started', {
+      fileType: file.type,
+      byteSize: file.size,
+    });
     const inspected = await inspectImage(file);
     const nextDesignId = `customer-design-${crypto.randomUUID()}`;
     const url = URL.createObjectURL(file);
@@ -477,6 +514,12 @@ export function UnifiedCreateExperience({
         template: getPreviewTemplate(product.previewTemplateId),
       }),
     );
+    trackCommerceEvent('upload_completed', {
+      fileType: inspected.mimeType,
+      byteSize: file.size,
+      width: inspected.width,
+      height: inspected.height,
+    });
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
@@ -533,6 +576,10 @@ export function UnifiedCreateExperience({
       setAsset(nextAsset);
       replaceConfiguration(nextConfiguration);
       setSheet(null);
+      trackCommerceEvent('preparation_selected', {
+        mode,
+        productId: product.id,
+      });
     } catch (error) {
       setUploadError(
         error instanceof Error ? error.message : 'Image preparation failed.',
@@ -565,6 +612,10 @@ export function UnifiedCreateExperience({
     );
     replaceConfiguration(next);
     setSheet(null);
+    trackCommerceEvent('product_changed', {
+      productId: product.id,
+      designVersion: asset.version,
+    });
   }
 
   async function applyProductAdaptation() {
@@ -644,6 +695,10 @@ export function UnifiedCreateExperience({
         : 'Your placement was preserved for this variant.',
     );
     setSheet(null);
+    trackCommerceEvent('variant_changed', {
+      productId: selectedProduct.id,
+      variantId: variant.id,
+    });
   }
 
   function selectPreviewView(viewId: string) {
@@ -762,6 +817,10 @@ export function UnifiedCreateExperience({
       setHistory((items) => [...items.slice(-29), origin]);
       setFuture([]);
       gestureOrigin.current = null;
+      trackCommerceEvent('placement_changed', {
+        productId: configuration?.merchProductId ?? 'unknown',
+        input: 'gesture',
+      });
     }
   }
 
@@ -821,6 +880,12 @@ export function UnifiedCreateExperience({
       upsertCartItem(current, persisted ?? snapshot),
     );
     setCartMessage(`${product.name} added with your exact placement.`);
+    trackCommerceEvent('add_to_cart', {
+      productId: product.id,
+      variantId: selectedVariant.id,
+      quantity: 1,
+      source: 'create',
+    });
   }
 
   async function startOver() {

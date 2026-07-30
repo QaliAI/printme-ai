@@ -409,15 +409,31 @@ const approvedProducts: MerchProduct[] = [
 ];
 
 export function getApprovedMerchProducts(): MerchProduct[] {
-  return structuredClone(approvedProducts);
+  const products = structuredClone(approvedProducts);
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.COMMERCE_E2E_TEST_MODE === 'true'
+  ) {
+    for (const product of products) {
+      if (product.merchandising) {
+        product.merchandising.shippingCost = 500;
+      }
+      for (const variant of product.variants) {
+        variant.unitCost = 700;
+      }
+    }
+  }
+  return products;
 }
 
 export function getApprovedMerchProduct(productId: string): MerchProduct {
-  const product = approvedProducts.find((candidate) => candidate.id === productId);
+  const product = getApprovedMerchProducts().find(
+    (candidate) => candidate.id === productId,
+  );
   if (!product) {
     throw new CatalogValidationError('PRODUCT_NOT_APPROVED', productId);
   }
-  return structuredClone(product);
+  return product;
 }
 
 export class CatalogValidationError extends Error {

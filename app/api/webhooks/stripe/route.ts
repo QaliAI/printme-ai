@@ -9,6 +9,7 @@ import {
   PrintifyFulfillmentService,
 } from '@/lib/commerce/fulfillment/service';
 import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
+import { trackServerCommerceEvent } from '@/lib/commerce/analytics-server';
 import {
   E2EFulfillmentStore,
   E2EStripeWebhookStore,
@@ -71,7 +72,17 @@ export async function POST(request: NextRequest) {
         fulfillment = job.state;
       } catch {
         fulfillment = 'validation_failed';
+        await trackServerCommerceEvent('fulfillment_failed', {
+          orderId: result.orderId,
+          stage: 'prepare',
+        });
       }
+    }
+    if (result.orderId && !result.duplicate) {
+      await trackServerCommerceEvent('purchase', {
+        orderId: result.orderId,
+        source: 'stripe_webhook',
+      });
     }
     return NextResponse.json({
       received: true,

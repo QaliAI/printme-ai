@@ -618,6 +618,30 @@
   font-size: 0.8rem;
 }
 
+.quantityControl {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.quantityControl button {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffaf2;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.quantityControl button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
 .cartPlacement {
   margin: 0 0 10px;
   color: var(--muted);
@@ -641,6 +665,78 @@
   color: var(--ink);
   font-weight: 750;
   cursor: pointer;
+}
+
+.upsellUnavailable,
+.upsellSection {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffaf2;
+}
+
+.upsellUnavailable strong {
+  font-size: 0.85rem;
+}
+
+.upsellUnavailable p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.upsellHeading h3 {
+  margin: 2px 0 14px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.7rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.upsellGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.upsellCard {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  align-items: center;
+  gap: 13px;
+}
+
+.upsellCard > :first-child {
+  width: 100px;
+  box-shadow: none;
+}
+
+.upsellCard > div {
+  display: grid;
+  gap: 5px;
+}
+
+.upsellCard span {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.upsellCard button {
+  min-height: 42px;
+  margin-top: 3px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--ink);
+  color: #fffaf2;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.upsellCard button:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .cartFooter {
