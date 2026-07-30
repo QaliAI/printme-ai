@@ -19,7 +19,11 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
     slug: slugs[index],
     asset: {
       ...structuredClone(design.asset),
-      productionUrl: design.asset.url,
+      productionUrl:
+        process.env.NODE_ENV !== 'production' &&
+        process.env.COMMERCE_E2E_TEST_MODE === 'true'
+          ? `https://assets.example.test/production/${design.asset.id}.png`
+          : design.asset.url,
     },
     artistOrSource: 'PrintMe development seed',
     rightsStatus: 'internal-demo-cleared',

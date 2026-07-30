@@ -8,11 +8,28 @@ import {
   CheckoutValidationError,
   SecureCheckoutService,
 } from '@/lib/commerce/checkout/service';
+import { commerceCartErrorResponse } from '@/lib/commerce/cart-api';
 import { SupabaseCheckoutStore } from '@/lib/commerce/checkout/supabase-store';
 import { StripeTestCheckoutGateway } from '@/lib/commerce/checkout/stripe-gateway';
 import { getCuratedCatalogService } from '@/lib/commerce/catalog/catalog-service';
+import {
+  createE2ECheckout,
+  getCommerceE2ESession,
+  isCommerceE2ERequest,
+} from '@/lib/commerce/testing/e2e-harness';
 
 export async function POST(request: NextRequest) {
+  if (isCommerceE2ERequest(request)) {
+    try {
+      const attempt = await createE2ECheckout(
+        getCommerceE2ESession(request),
+        await request.json(),
+      );
+      return NextResponse.json(attempt, { status: 201 });
+    } catch (error) {
+      return commerceCartErrorResponse(error);
+    }
+  }
   try {
     const identity = await resolveCartRequestIdentity(request);
     const service = new SecureCheckoutService(

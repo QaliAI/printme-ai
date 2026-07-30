@@ -9,8 +9,14 @@ import {
   PrintifyFulfillmentService,
 } from '@/lib/commerce/fulfillment/service';
 import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
+import {
+  E2EFulfillmentStore,
+  E2EStripeWebhookStore,
+  isCommerceE2ERequest,
+} from '@/lib/commerce/testing/e2e-harness';
 
 export async function POST(request: NextRequest) {
+  const e2eRequest = isCommerceE2ERequest(request);
   const signature = request.headers.get('stripe-signature');
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!signature || !webhookSecret) {
@@ -20,8 +26,10 @@ export async function POST(request: NextRequest) {
     );
   }
   if (
-    process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' ||
+    !e2eRequest &&
+    (process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' ||
     !process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')
+    )
   ) {
     return NextResponse.json(
       { error: 'Stripe test checkout is disabled.' },
@@ -45,7 +53,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await new StripeCheckoutWebhookService(
-      new SupabaseStripeWebhookStore(),
+      e2eRequest
+        ? new E2EStripeWebhookStore()
+        : new SupabaseStripeWebhookStore(),
     ).process(event);
     let fulfillment = 'not_requested';
     if (
@@ -54,7 +64,9 @@ export async function POST(request: NextRequest) {
     ) {
       try {
         const job = await new PrintifyFulfillmentService(
-          new SupabaseFulfillmentStore(),
+          e2eRequest
+            ? new E2EFulfillmentStore()
+            : new SupabaseFulfillmentStore(),
         ).prepare(result.orderId);
         fulfillment = job.state;
       } catch {

@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { getE2EConfirmation } from '../testing/e2e-harness';
 
 export interface CheckoutConfirmation {
   orderId: string;
@@ -12,6 +13,12 @@ export interface CheckoutConfirmation {
 export async function getCheckoutConfirmation(
   stripeSessionId: string,
 ): Promise<CheckoutConfirmation | null> {
+  if (
+    process.env.NODE_ENV !== 'production' &&
+    process.env.COMMERCE_E2E_TEST_MODE === 'true'
+  ) {
+    return getE2EConfirmation(stripeSessionId);
+  }
   if (
     process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' ||
     process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
