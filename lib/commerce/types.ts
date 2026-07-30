@@ -140,6 +140,24 @@ export interface MerchProduct {
   previewBindings?: PreviewTemplateBinding[];
   variants: ProductVariant[];
   defaultPlacement: PrintPlacement;
+  merchandising?: {
+    slug: string;
+    material: string;
+    fit: string;
+    printMethod: string;
+    careInstructions: string[];
+    sizeGuide: Array<{ label: string; detail: string }>;
+    productionEstimate: string;
+    deliveryEstimate: string | null;
+    shippingExplanation: string;
+    returnPolicy: string;
+    faq: Array<{ question: string; answer: string }>;
+    shippingCost: number | null;
+    stripeFeeRate: number;
+    stripeFixedFee: number;
+    aiProcessingCost: number;
+    supportReserve: number;
+  };
 }
 
 export interface InstantPreview {

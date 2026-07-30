@@ -11,6 +11,7 @@ import {
 } from '@/components/commerce/DesignCatalog';
 import type { DesignFilter } from '@/lib/commerce/designs/models';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
+import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import styles from './designs.module.css';
 
 // Initialize Supabase admin client
@@ -92,6 +93,10 @@ interface GalleryPageProps {
   searchParams: Promise<{
     category?: string;
     filter?: string | string[];
+    q?: string;
+    product?: string;
+    occasion?: string;
+    style?: string;
   }>;
 }
 
@@ -112,10 +117,32 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
         ? (requested as DesignFilter)
         : undefined;
     const service = getDesignCatalogService();
-    const [designs, collections] = await Promise.all([
+    const [publishedDesigns, collections] = await Promise.all([
       service.listPublished(filter),
       service.listCollections(),
     ]);
+    const q = query.q?.trim().toLowerCase();
+    const requestedProduct = query.product?.trim();
+    const tokens = [query.occasion, query.style]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.toLowerCase());
+    const designs = publishedDesigns.filter((design) => {
+      const searchable = [
+        design.title,
+        design.description,
+        design.collection,
+        ...design.tags,
+      ]
+        .join(' ')
+        .toLowerCase();
+      return (
+        (!q || searchable.includes(q)) &&
+        (!requestedProduct ||
+          design.compatibleProductIds.includes(requestedProduct)) &&
+        tokens.every((token) => searchable.includes(token))
+      );
+    });
+    const products = getApprovedMerchProducts();
 
     return (
       <main className={styles.shell}>
@@ -125,6 +152,29 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
           description="Published designs with server-controlled product compatibility and purchase-time versioning."
         />
         <DesignFilters active={filter} />
+        <form className={styles.search} action="/designs">
+          <label>
+            Search
+            <input
+              type="search"
+              name="q"
+              defaultValue={query.q}
+              placeholder="Title, tag, collection, occasion"
+            />
+          </label>
+          <label>
+            Product
+            <select name="product" defaultValue={requestedProduct ?? ''}>
+              <option value="">All products</option>
+              {products.map((product) => (
+                <option value={product.id} key={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="submit">Search designs</button>
+        </form>
         <DesignGrid designs={designs} />
         <CollectionLinks collections={collections} />
       </main>

@@ -42,7 +42,7 @@ export function InstantPreview({
         src={view.baseProductImage}
         alt=""
         fill
-        priority={!compact}
+        preload={!compact}
         sizes={compact ? '160px' : '(max-width: 700px) 92vw, 520px'}
         className={styles.previewBase}
       />
@@ -69,6 +69,7 @@ export function InstantPreview({
             src={design.url}
             alt={design.alt}
             fill
+            preload={!compact}
             unoptimized={
               design.url.startsWith('blob:') ||
               design.url.startsWith('data:')

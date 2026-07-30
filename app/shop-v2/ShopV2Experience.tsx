@@ -36,6 +36,7 @@ import styles from './shop-v2.module.css';
 interface ShopV2ExperienceProps {
   designs: CuratedDesignRecord[];
   products: MerchProduct[];
+  initialDesignSlug?: string;
 }
 
 function formatPrice(cents: number, currency = 'USD') {
@@ -112,6 +113,7 @@ function designFromConfiguration(
 export function ShopV2Experience({
   designs,
   products,
+  initialDesignSlug,
 }: ShopV2ExperienceProps) {
   const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
   const [configuration, setConfiguration] =
@@ -122,9 +124,20 @@ export function ShopV2Experience({
   const [cartPending, setCartPending] = useState(false);
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const deepLinkOpened = useRef(false);
   const configuratorRef = useRef<HTMLElement>(null);
   const cartDialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (deepLinkOpened.current) return;
+    const design = designs.find(
+      (candidate) => candidate.slug === initialDesignSlug,
+    );
+    if (!design) return;
+    deepLinkOpened.current = true;
+    openDesign(design);
+  }, [designs, initialDesignSlug]);
 
   useEffect(() => {
     let cancelled = false;

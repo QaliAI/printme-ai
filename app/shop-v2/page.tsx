@@ -9,7 +9,11 @@ export const metadata: Metadata = {
   description: 'Feature-flagged commerce preview for PrintMe.ai.',
 };
 
-export default async function ShopV2Page() {
+export default async function ShopV2Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ design?: string }>;
+}) {
   if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED !== 'true') {
     notFound();
   }
@@ -19,6 +23,7 @@ export default async function ShopV2Page() {
     <ShopV2Experience
       designs={designs}
       products={getApprovedMerchProducts()}
+      initialDesignSlug={(await searchParams).design}
     />
   );
 }

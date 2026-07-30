@@ -93,6 +93,42 @@ const approvedProducts: MerchProduct[] = [
       angle: 0,
       fit: 'contain',
     },
+    merchandising: {
+      slug: 'gallery-poster',
+      material: 'Archival matte paper',
+      fit: 'Portrait wall print in approved 12 × 18 and 18 × 24 sizes',
+      printMethod: 'Digital printing',
+      careInstructions: [
+        'Handle with clean, dry hands.',
+        'Frame behind glazing for long-term display.',
+      ],
+      sizeGuide: [
+        { label: '12 × 18 in', detail: 'Compact portrait wall format' },
+        { label: '18 × 24 in', detail: 'Large portrait wall format' },
+      ],
+      productionEstimate: 'Calculated from the selected provider before checkout.',
+      deliveryEstimate: null,
+      shippingExplanation:
+        'Production and carrier transit are estimated separately after provider shipping data is synchronized.',
+      returnPolicy:
+        'Because each item is made to order, approved reprints cover verified damage or production defects.',
+      faq: [
+        {
+          question: 'Does the poster include a frame?',
+          answer: 'No. This approved product is the printed poster only.',
+        },
+        {
+          question: 'Will screen color match exactly?',
+          answer:
+            'No exact match is promised. Paper, ink, lighting, and screens reproduce color differently.',
+        },
+      ],
+      shippingCost: null,
+      stripeFeeRate: 0.029,
+      stripeFixedFee: 30,
+      aiProcessingCost: 0,
+      supportReserve: 250,
+    },
   },
   {
     id: 'everyday-tee',
@@ -222,6 +258,41 @@ const approvedProducts: MerchProduct[] = [
       angle: 0,
       fit: 'contain',
     },
+    merchandising: {
+      slug: 'everyday-tee',
+      material: 'Soft cotton jersey from the approved provider variant',
+      fit: 'Everyday unisex fit',
+      printMethod: 'Direct-to-garment front or back print',
+      careInstructions: [
+        'Wash cold, inside out.',
+        'Tumble dry low and avoid ironing directly on the print.',
+      ],
+      sizeGuide: [
+        { label: 'M', detail: 'Medium approved provider variant' },
+        { label: 'L', detail: 'Large approved provider variant' },
+      ],
+      productionEstimate: 'Calculated from the selected provider before checkout.',
+      deliveryEstimate: null,
+      shippingExplanation:
+        'Production time is separate from carrier transit. A delivery promise appears only when live rates are available.',
+      returnPolicy:
+        'Made-to-order sizing is final; verified damage or production defects qualify for review and reprint.',
+      faq: [
+        {
+          question: 'Can I print on the back?',
+          answer: 'Yes. Use the preview view control to approve front or back placement.',
+        },
+        {
+          question: 'How should I choose a size?',
+          answer: 'Use provider-specific measurements when they are synchronized.',
+        },
+      ],
+      shippingCost: null,
+      stripeFeeRate: 0.029,
+      stripeFixedFee: 30,
+      aiProcessingCost: 0,
+      supportReserve: 300,
+    },
   },
   {
     id: 'keepsake-mug',
@@ -299,6 +370,40 @@ const approvedProducts: MerchProduct[] = [
       normalizedScale: 0.8,
       angle: 0,
       fit: 'contain',
+    },
+    merchandising: {
+      slug: 'keepsake-mug',
+      material: 'Glossy ceramic',
+      fit: '11 oz handle-safe format',
+      printMethod: 'Sublimation',
+      careInstructions: [
+        'Follow the approved provider care label.',
+        'Avoid abrasive cleaning on the printed surface.',
+      ],
+      sizeGuide: [
+        { label: '11 oz', detail: 'Standard ceramic mug format' },
+      ],
+      productionEstimate: 'Calculated from the selected provider before checkout.',
+      deliveryEstimate: null,
+      shippingExplanation:
+        'Mug packaging and carrier transit are quoted after provider shipping data is synchronized.',
+      returnPolicy:
+        'Verified breakage or production defects qualify for review and reprint.',
+      faq: [
+        {
+          question: 'Where does the design print?',
+          answer: 'Choose the left or right handle-safe preview before adding to cart.',
+        },
+        {
+          question: 'Is an exact color match guaranteed?',
+          answer: 'No. Ceramic, ink, lighting, and screens can shift perceived color.',
+        },
+      ],
+      shippingCost: null,
+      stripeFeeRate: 0.029,
+      stripeFixedFee: 30,
+      aiProcessingCost: 0,
+      supportReserve: 275,
     },
   },
 ];
