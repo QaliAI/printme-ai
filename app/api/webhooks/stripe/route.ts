@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { printifyClient } from '@/lib/printify/client';
 import { CartItemWithRelations, getFirstOrValue } from '@/lib/types';
+import {
+  cartConfigurationSnapshotSchema,
+  copyImmutableOrderSnapshot,
+} from '@/lib/commerce/snapshot';
 
 // Use placeholder during build if env vars missing - real values needed at request time
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
@@ -70,6 +74,8 @@ export async function POST(req: NextRequest) {
               id,
               quantity,
               design_id,
+              configuration_snapshot,
+              configuration_hash,
               product_variant:product_variants(
                 id,
                 price_modifier,
@@ -94,7 +100,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Cart not found' }, { status: 404 });
         }
 
-        const cartItems = cart.cart_items as CartItemWithRelations[];
+        const cartItems =
+          cart.cart_items as unknown as CartItemWithRelations[];
 
         // Calculate order total
         let total = 0;
@@ -126,6 +133,16 @@ export async function POST(req: NextRequest) {
         // Create order items
         const orderItems = cartItems.map((item) => {
           const productVariant = getFirstOrValue(item.product_variant);
+          const snapshotResult = cartConfigurationSnapshotSchema.safeParse(
+            (
+              item as CartItemWithRelations & {
+                configuration_snapshot?: unknown;
+              }
+            ).configuration_snapshot
+          );
+          const snapshot = snapshotResult.success
+            ? copyImmutableOrderSnapshot(snapshotResult.data)
+            : null;
           return {
             order_id: order.id,
             design_id: item.design_id,
@@ -133,8 +150,13 @@ export async function POST(req: NextRequest) {
             product_variant_id: productVariant?.id ?? '',
             quantity: item.quantity,
             unit_price:
+              snapshot?.configuration.unitPrice ??
               (productVariant?.product?.base_price ?? 0) +
-              (productVariant?.price_modifier ?? 0),
+                (productVariant?.price_modifier ?? 0),
+            configuration_snapshot: snapshot,
+            configuration_hash: snapshot?.configurationHash ?? null,
+            snapshot_schema_version: snapshot?.schemaVersion ?? null,
+            snapshot_created_at: snapshot?.createdAt ?? null,
           };
         });
 
