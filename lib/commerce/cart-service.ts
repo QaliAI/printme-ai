@@ -38,7 +38,10 @@ export interface CommerceCartStore {
 export class CommerceCartService {
   constructor(
     private readonly store: CommerceCartStore,
-    private readonly createId: () => string = () => crypto.randomUUID()
+    private readonly createId: () => string = () => crypto.randomUUID(),
+    private readonly validateSnapshot: (
+      snapshot: CartConfigurationSnapshot
+    ) => Promise<void> = async () => undefined
   ) {}
 
   async resolveCart(identity: CartIdentity): Promise<PersistentCart> {
@@ -70,6 +73,7 @@ export class CommerceCartService {
     input: unknown
   ): Promise<CartConfigurationSnapshot> {
     const submitted = cartConfigurationSnapshotSchema.parse(input);
+    await this.validateSnapshot(submitted);
     const cart = await this.resolveCart(identity);
     const existing = await this.store.findItem(cart.id, submitted.id);
 

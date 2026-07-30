@@ -9,13 +9,16 @@ import {
 } from '@/lib/commerce/cart-api';
 import { CommerceCartService } from '@/lib/commerce/cart-service';
 import { SupabaseCommerceCartStore } from '@/lib/commerce/supabase-cart-store';
+import { validateSnapshotAgainstApprovedCatalog } from '@/lib/commerce/catalog/validation';
 
 export async function POST(request: NextRequest) {
   try {
     const identity = await resolveCartRequestIdentity(request);
     const body = cartItemRequestSchema.parse(await request.json());
     const service = new CommerceCartService(
-      new SupabaseCommerceCartStore()
+      new SupabaseCommerceCartStore(),
+      undefined,
+      validateSnapshotAgainstApprovedCatalog
     );
     const snapshot = await service.upsertItem(identity, body.snapshot);
     return attachCartSessionCookie(

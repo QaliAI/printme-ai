@@ -3,6 +3,7 @@ import 'server-only';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CommercePersistenceError } from './supabase-cart-store';
+import { CatalogValidationError } from './catalog/approved-catalog';
 
 export const cartItemRequestSchema = z.object({
   snapshot: z.unknown(),
@@ -13,6 +14,16 @@ export function commerceCartErrorResponse(error: unknown) {
     return NextResponse.json(
       { error: 'Invalid commerce configuration snapshot.' },
       { status: 400 }
+    );
+  }
+
+  if (error instanceof CatalogValidationError) {
+    return NextResponse.json(
+      {
+        error: 'The selected product configuration is no longer available.',
+        code: error.code,
+      },
+      { status: 409 }
     );
   }
 

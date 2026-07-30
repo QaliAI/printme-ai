@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ShopV2Experience } from './ShopV2Experience';
-import { curatedDesigns, merchProducts } from '@/lib/commerce/fixtures';
+import { curatedDesigns } from '@/lib/commerce/fixtures';
+import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 
 export const metadata: Metadata = {
   title: 'Curated Shop Preview | PrintMe.ai',
@@ -13,5 +14,10 @@ export default function ShopV2Page() {
     notFound();
   }
 
-  return <ShopV2Experience designs={curatedDesigns} products={merchProducts} />;
+  return (
+    <ShopV2Experience
+      designs={curatedDesigns}
+      products={getApprovedMerchProducts()}
+    />
+  );
 }
