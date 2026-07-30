@@ -4,6 +4,11 @@ import {
   verifyStripeWebhookPayload,
 } from '@/lib/commerce/checkout/stripe-webhook';
 import { SupabaseStripeWebhookStore } from '@/lib/commerce/checkout/supabase-webhook-store';
+import {
+  getFulfillmentMode,
+  PrintifyFulfillmentService,
+} from '@/lib/commerce/fulfillment/service';
+import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature');
@@ -42,7 +47,25 @@ export async function POST(request: NextRequest) {
     const result = await new StripeCheckoutWebhookService(
       new SupabaseStripeWebhookStore(),
     ).process(event);
-    return NextResponse.json({ received: true, duplicate: result.duplicate });
+    let fulfillment = 'not_requested';
+    if (
+      result.orderId &&
+      getFulfillmentMode() !== 'disabled'
+    ) {
+      try {
+        const job = await new PrintifyFulfillmentService(
+          new SupabaseFulfillmentStore(),
+        ).prepare(result.orderId);
+        fulfillment = job.state;
+      } catch {
+        fulfillment = 'validation_failed';
+      }
+    }
+    return NextResponse.json({
+      received: true,
+      duplicate: result.duplicate,
+      fulfillment,
+    });
   } catch {
     return NextResponse.json(
       { error: 'Stripe event processing failed.' },

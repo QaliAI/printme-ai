@@ -3,13 +3,18 @@ import 'server-only';
 import Stripe from 'stripe';
 import { z } from 'zod';
 
-const shippingAddressSchema = z.object({
+const addressSchema = z.object({
   line1: z.string().min(1),
   line2: z.string().nullable().optional(),
   city: z.string().min(1),
   state: z.string().nullable().optional(),
   postal_code: z.string().min(1),
   country: z.string().length(2),
+});
+
+const shippingDetailsSchema = z.object({
+  name: z.string().min(1),
+  address: addressSchema,
 });
 
 export interface StripeWebhookStore {
@@ -25,7 +30,7 @@ export interface StripeWebhookStore {
     stripeSessionId: string;
     paymentIntentId: string;
     customerEmail: string;
-    shippingAddress: z.infer<typeof shippingAddressSchema>;
+    shippingAddress: z.infer<typeof addressSchema> & { name: string };
     paidAmount: number;
     currency: string;
   }): Promise<string>;
@@ -71,8 +76,8 @@ export class StripeCheckoutWebhookService {
       }
 
       const shipping = session.collected_information?.shipping_details;
-      const address = shippingAddressSchema.safeParse(shipping?.address);
-      if (!address.success) {
+      const shippingDetails = shippingDetailsSchema.safeParse(shipping);
+      if (!shippingDetails.success) {
         throw new StripeWebhookValidationError(
           'INCOMPLETE_SHIPPING_ADDRESS',
         );
@@ -101,7 +106,10 @@ export class StripeCheckoutWebhookService {
         stripeSessionId: session.id,
         paymentIntentId,
         customerEmail: session.customer_details.email,
-        shippingAddress: address.data,
+        shippingAddress: {
+          name: shippingDetails.data.name,
+          ...shippingDetails.data.address,
+        },
         paidAmount: session.amount_total,
         currency: session.currency.toUpperCase(),
       });
