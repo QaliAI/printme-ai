@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
 import {
   createCartSnapshot,
@@ -18,9 +18,14 @@ import {
   upsertPersistentCartItem,
 } from '@/lib/commerce/persistent-cart-client';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
+import {
+  assertDesignProductCompatible,
+  getRecommendedProduct,
+  isDesignProductCompatible,
+} from '@/lib/commerce/designs/rules';
+import type { CuratedDesignRecord } from '@/lib/commerce/designs/models';
 import type {
   CartConfigurationSnapshot,
-  CuratedDesign,
   MerchProduct,
   ProductConfiguration,
   ProductVariant,
@@ -28,7 +33,7 @@ import type {
 import styles from './shop-v2.module.css';
 
 interface ShopV2ExperienceProps {
-  designs: CuratedDesign[];
+  designs: CuratedDesignRecord[];
   products: MerchProduct[];
 }
 
@@ -56,6 +61,9 @@ export function ShopV2Experience({
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [cartPending, setCartPending] = useState(false);
+  const configuratorRef = useRef<HTMLElement>(null);
+  const cartDialogRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,10 +101,49 @@ export function ShopV2Experience({
   }, []);
 
   useEffect(() => {
+    const dialog = cartOpen
+      ? cartDialogRef.current
+      : selectedDesignId
+        ? configuratorRef.current
+        : null;
+
+    if (!dialog) {
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+      return;
+    }
+
+    if (!previousFocusRef.current) {
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
+    }
+
+    const focusableSelector =
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(focusableSelector)
+    );
+    (focusable[0] ?? dialog).focus();
+
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return;
-      if (cartOpen) setCartOpen(false);
-      else if (selectedDesignId) setSelectedDesignId(null);
+      if (event.key === 'Escape') {
+        if (cartOpen) setCartOpen(false);
+        else setSelectedDesignId(null);
+        return;
+      }
+      if (event.key !== 'Tab' || focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -108,6 +155,11 @@ export function ShopV2Experience({
   const selectedProduct = configuration
     ? findById(products, configuration.merchProductId, 'product')
     : null;
+  const compatibleProducts = selectedDesign
+    ? products.filter((product) =>
+        isDesignProductCompatible(selectedDesign, product.id)
+      )
+    : products;
   const cartTotal = useMemo(
     () =>
       cartItems.reduce(
@@ -118,12 +170,8 @@ export function ShopV2Experience({
     [cartItems]
   );
 
-  function openDesign(design: CuratedDesign) {
-    const product = findById(
-      products,
-      design.recommendedProductId,
-      'recommended product'
-    );
+  function openDesign(design: CuratedDesignRecord) {
+    const product = getRecommendedProduct(design, products);
     const template = getPreviewTemplate(product.previewTemplateId);
     setSelectedDesignId(design.id);
     setConfiguration(
@@ -139,6 +187,7 @@ export function ShopV2Experience({
 
   function switchProduct(product: MerchProduct) {
     if (!selectedDesign || !configuration) return;
+    assertDesignProductCompatible(selectedDesign, product.id);
     const template = getPreviewTemplate(product.previewTemplateId);
     setConfiguration(
       createProductConfiguration({
@@ -275,10 +324,12 @@ export function ShopV2Experience({
       {selectedDesign && configuration && selectedProduct && (
         <div className={styles.backdrop} onMouseDown={closeConfigurator}>
           <section
+            ref={configuratorRef}
             className={styles.configurator}
             role="dialog"
             aria-modal="true"
             aria-labelledby="configurator-title"
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
             data-testid="configurator"
           >
@@ -308,7 +359,7 @@ export function ShopV2Experience({
                 <fieldset className={styles.controlGroup}>
                   <legend>Choose a product</legend>
                   <div className={styles.productSwitcher}>
-                    {products.map((product) => (
+                    {compatibleProducts.map((product) => (
                       <button
                         type="button"
                         key={product.id}
@@ -416,10 +467,12 @@ export function ShopV2Experience({
       {cartOpen && (
         <div className={styles.backdrop} onMouseDown={() => setCartOpen(false)}>
           <aside
+            ref={cartDialogRef}
             className={styles.cartDrawer}
             role="dialog"
             aria-modal="true"
             aria-labelledby="cart-title"
+            tabIndex={-1}
             onMouseDown={(event) => event.stopPropagation()}
             data-testid="cart-drawer"
           >
