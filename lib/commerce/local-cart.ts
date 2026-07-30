@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  cartConfigurationSnapshotSchema,
+  finalizeConfigurationSnapshot,
+} from './snapshot';
 import type {
   CartConfigurationSnapshot,
   CuratedDesign,
@@ -6,9 +10,11 @@ import type {
   ProductConfiguration,
 } from './types';
 
-export const SHOP_V2_CART_STORAGE_KEY = 'printme:commerce-v2:cart:v1';
+export const SHOP_V2_CART_STORAGE_KEY = 'printme:commerce-v2:cart:v2';
+export const LEGACY_SHOP_V2_CART_STORAGE_KEY =
+  'printme:commerce-v2:cart:v1';
 
-const productConfigurationSchema = z.object({
+const legacyProductConfigurationSchema = z.object({
   designId: z.string(),
   designVersion: z.string(),
   designAssetUrl: z.string(),
@@ -38,10 +44,10 @@ const productConfigurationSchema = z.object({
   currency: z.literal('USD'),
 });
 
-export const cartConfigurationSnapshotSchema = z.object({
+const legacyCartConfigurationSnapshotSchema = z.object({
   schemaVersion: z.literal(1),
   id: z.string(),
-  configuration: productConfigurationSchema,
+  configuration: legacyProductConfigurationSchema,
   designTitle: z.string(),
   productName: z.string(),
   quantity: z.number().int().positive(),
@@ -49,20 +55,51 @@ export const cartConfigurationSnapshotSchema = z.object({
 });
 
 const storedCartSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   items: z.array(cartConfigurationSnapshotSchema),
+});
+
+const legacyStoredCartSchema = z.object({
+  schemaVersion: z.literal(1),
+  items: z.array(legacyCartConfigurationSnapshotSchema),
 });
 
 type ReadStorage = Pick<Storage, 'getItem'>;
 type WriteStorage = Pick<Storage, 'setItem'>;
 
 export function readLocalCart(storage: ReadStorage): CartConfigurationSnapshot[] {
-  const raw = storage.getItem(SHOP_V2_CART_STORAGE_KEY);
+  const raw =
+    storage.getItem(SHOP_V2_CART_STORAGE_KEY) ??
+    storage.getItem(LEGACY_SHOP_V2_CART_STORAGE_KEY);
   if (!raw) return [];
 
   try {
-    const parsed = storedCartSchema.safeParse(JSON.parse(raw) as unknown);
-    return parsed.success ? parsed.data.items : [];
+    const value = JSON.parse(raw) as unknown;
+    const parsed = storedCartSchema.safeParse(value);
+    if (parsed.success) return parsed.data.items;
+
+    const legacy = legacyStoredCartSchema.safeParse(value);
+    if (!legacy.success) return [];
+
+    return legacy.data.items.map((item) =>
+      finalizeConfigurationSnapshot({
+        schemaVersion: 2,
+        id: item.id,
+        configuration: {
+          ...item.configuration,
+          productionAssetUrl: item.configuration.designAssetUrl,
+        },
+        designTitle: item.designTitle,
+        productTitle: item.productName,
+        variantTitle:
+          [item.configuration.selectedColor, item.configuration.selectedSize]
+            .filter(Boolean)
+            .join(' / ') || 'Standard',
+        productCost: null,
+        quantity: item.quantity,
+        createdAt: item.addedAt,
+      })
+    );
   } catch {
     return [];
   }
@@ -72,7 +109,7 @@ export function writeLocalCart(
   storage: WriteStorage,
   items: CartConfigurationSnapshot[]
 ) {
-  const validated = storedCartSchema.parse({ schemaVersion: 1, items });
+  const validated = storedCartSchema.parse({ schemaVersion: 2, items });
   storage.setItem(SHOP_V2_CART_STORAGE_KEY, JSON.stringify(validated));
 }
 
@@ -81,16 +118,28 @@ export function createCartSnapshot(input: {
   configuration: ProductConfiguration;
   design: CuratedDesign;
   product: MerchProduct;
-  addedAt: string;
+  createdAt: string;
 }): CartConfigurationSnapshot {
-  return cartConfigurationSnapshotSchema.parse({
-    schemaVersion: 1,
+  const variant = input.product.variants.find(
+    (candidate) =>
+      candidate.printifyVariantId === input.configuration.printifyVariantId
+  );
+  if (!variant) {
+    throw new Error(
+      `Unknown variant ${input.configuration.printifyVariantId} for ${input.product.id}.`
+    );
+  }
+
+  return finalizeConfigurationSnapshot({
+    schemaVersion: 2,
     id: input.id,
     configuration: input.configuration,
     designTitle: input.design.title,
-    productName: input.product.name,
+    productTitle: input.product.name,
+    variantTitle: variant.title,
+    productCost: variant.unitCost ?? null,
     quantity: 1,
-    addedAt: input.addedAt,
+    createdAt: input.createdAt,
   });
 }
 

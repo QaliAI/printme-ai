@@ -16,6 +16,16 @@ interface SelectedProduct {
   quantity: number;
 }
 
+interface GuestCartItem {
+  productId: string;
+  variantId: string;
+  quantity: number;
+  designId: string;
+  designUrl?: string;
+  originalImageUrl?: string;
+  styleId?: string;
+}
+
 interface RecommendedProduct extends Product {
   recommendation_reason?: string;
   recommendation_score?: number;
@@ -216,7 +226,9 @@ function ProductsContent() {
       if (!user) {
         // Guest mode: save items to localStorage guest cart
         const guestCartStr = localStorage.getItem('printme_guest_cart');
-        let guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        const guestCart = guestCartStr
+          ? (JSON.parse(guestCartStr) as GuestCartItem[])
+          : [];
 
         // For each selected product
         for (const sel of selectedProducts) {
@@ -225,7 +237,7 @@ function ProductsContent() {
 
           // Check if variant already exists in guest cart
           const existingIdx = guestCart.findIndex(
-            (item: any) => item.variantId === sel.variantId && item.designId === design.id
+            (item) => item.variantId === sel.variantId && item.designId === design.id
           );
 
           if (existingIdx > -1) {

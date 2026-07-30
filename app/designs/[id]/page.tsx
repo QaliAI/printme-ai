@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { Container } from '@/components/Container';
 import { Card, CardBody } from '@/components/Card';
 import { Button } from '@/components/Button';
+import { DesignDetail } from '@/components/commerce/DesignCatalog';
 import { PRODUCT_PHOTOS } from '@/lib/assets';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -25,9 +27,16 @@ export default async function PublicDesignPage({ params, searchParams }: PagePro
   const { id } = await params;
   const query = await searchParams;
 
+  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === 'true') {
+    const curatedDesign =
+      await getDesignCatalogService().findPublishedBySlug(id);
+    if (!curatedDesign) notFound();
+    return <DesignDetail design={curatedDesign} />;
+  }
+
   let designUrl = '';
   let styleName = 'AI Original';
-  let designId = id;
+  const designId = id;
   let styleId = '';
   let imageUrl = '';
 
@@ -94,7 +103,7 @@ export default async function PublicDesignPage({ params, searchParams }: PagePro
 
   // Routing for checkout selection
   const buyUrl = id === 'guest'
-    ? `/app/create/products?design=guest-design-${Date.now()}&designUrl=${encodeURIComponent(designUrl)}&style=${styleId}&imageUrl=${encodeURIComponent(imageUrl)}`
+    ? `/app/create/products?design=guest-design-${encodeURIComponent(styleId || 'custom')}&designUrl=${encodeURIComponent(designUrl)}&style=${styleId}&imageUrl=${encodeURIComponent(imageUrl)}`
     : `/app/create/products?design=${designId}`;
 
   return (

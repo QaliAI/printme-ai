@@ -242,6 +242,7 @@ export function createProductConfiguration(input: {
     designId: input.designId,
     designVersion: input.design.version,
     designAssetUrl: input.design.url,
+    productionAssetUrl: input.design.productionUrl ?? input.design.url,
     merchProductId: input.product.id,
     printifyBlueprintId: input.product.printifyBlueprintId,
     printifyProviderId: input.product.provider.printifyProviderId,

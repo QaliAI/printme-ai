@@ -4,7 +4,7 @@ export interface TrackEventParams {
   userId?: string | null;
   anonymousId?: string | null;
   eventName: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
 }
 
 export async function trackEvent({

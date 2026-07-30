@@ -20,7 +20,15 @@ export const supabase: SupabaseClient = createClient(SAFE_URL, SAFE_KEY, {
 // Server client (full access, use only on backend)
 export const supabaseAdmin: SupabaseClient = createClient(
   SAFE_URL,
-  supabaseServiceKey || SAFE_KEY
+  supabaseServiceKey || SAFE_KEY,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      storageKey: 'printme-server-admin',
+    },
+  }
 );
 
 // Validation helper - call this from runtime code paths that need real Supabase

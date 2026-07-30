@@ -45,6 +45,16 @@ interface CartData {
   cart_items: CartItemWithRelations[];
 }
 
+interface GuestCartItem {
+  productId: string;
+  variantId: string;
+  quantity: number;
+  designId: string;
+  designUrl?: string;
+  originalImageUrl?: string;
+  styleId?: string;
+}
+
 export default function CartPage() {
   const router = useRouter();
   const [cart, setCart] = useState<CartData | null>(null);
@@ -91,7 +101,9 @@ export default function CartPage() {
       if (!user) {
         // Guest mode: load cart from localStorage
         const guestCartStr = localStorage.getItem('printme_guest_cart');
-        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        const guestCart = guestCartStr
+          ? (JSON.parse(guestCartStr) as GuestCartItem[])
+          : [];
 
         if (guestCart.length === 0) {
           setCart(null);
@@ -99,13 +111,13 @@ export default function CartPage() {
           return;
         }
 
-        const productIds = guestCart.map((item: any) => item.productId);
-        const variantIds = guestCart.map((item: any) => item.variantId);
+        const productIds = guestCart.map((item) => item.productId);
+        const variantIds = guestCart.map((item) => item.variantId);
 
         const { data: products } = await supabase.from('products').select('*').in('id', productIds);
         const { data: variants } = await supabase.from('product_variants').select('*').in('id', variantIds);
 
-        const itemsMapped = guestCart.map((guestItem: any) => {
+        const itemsMapped = guestCart.map((guestItem) => {
           const variant = variants?.find(v => v.id === guestItem.variantId);
           const product = products?.find(p => p.id === guestItem.productId);
 
@@ -238,6 +250,8 @@ export default function CartPage() {
   };
 
   useEffect(() => {
+    // Fetching the initial browser-backed cart is the purpose of this effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCart();
   }, []);
 
@@ -250,9 +264,11 @@ export default function CartPage() {
       if (!user) {
         // Guest mode: update quantity in localStorage
         const guestCartStr = localStorage.getItem('printme_guest_cart');
-        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        const guestCart = guestCartStr
+          ? (JSON.parse(guestCartStr) as GuestCartItem[])
+          : [];
 
-        const updatedCart = guestCart.map((item: any) => {
+        const updatedCart = guestCart.map((item) => {
           const tempId = `${item.variantId}-${item.designId}`;
           if (tempId === itemId) {
             return { ...item, quantity };
@@ -298,9 +314,11 @@ export default function CartPage() {
       if (!user) {
         // Guest mode: remove item from localStorage
         const guestCartStr = localStorage.getItem('printme_guest_cart');
-        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        const guestCart = guestCartStr
+          ? (JSON.parse(guestCartStr) as GuestCartItem[])
+          : [];
 
-        const updatedCart = guestCart.filter((item: any) => {
+        const updatedCart = guestCart.filter((item) => {
           const tempId = `${item.variantId}-${item.designId}`;
           return tempId !== itemId;
         });
@@ -339,12 +357,14 @@ export default function CartPage() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let body: any;
+      let body: { guestItems: GuestCartItem[] } | { cartId: string };
 
       if (!user) {
         // Guest mode: pass guestItems
         const guestCartStr = localStorage.getItem('printme_guest_cart');
-        const guestCart = guestCartStr ? JSON.parse(guestCartStr) : [];
+        const guestCart = guestCartStr
+          ? (JSON.parse(guestCartStr) as GuestCartItem[])
+          : [];
         body = { guestItems: guestCart };
       } else {
         body = { cartId: cart.id };
