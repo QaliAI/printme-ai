@@ -10,6 +10,7 @@ import {
   DesignGrid,
 } from '@/components/commerce/DesignCatalog';
 import type { DesignFilter } from '@/lib/commerce/designs/models';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import styles from './designs.module.css';
@@ -103,7 +104,7 @@ interface GalleryPageProps {
 export default async function FeaturedDesignsGalleryPage({ searchParams }: GalleryPageProps) {
   const query = await searchParams;
 
-  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === 'true') {
+  if (isReviewFeatureEnabled('commerce')) {
     const validFilters = new Set<DesignFilter>([
       'new',
       'trending',

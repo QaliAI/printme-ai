@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { getStudioActor } from '@/lib/studio/auth';
 import { sanitizeStudioSvg } from '@/lib/studio/types';
+import {
+  isStudioE2ERequest,
+  storeStudioE2EAsset,
+} from '@/lib/studio/testing/e2e-harness';
 
 const MAX_STUDIO_ASSET_BYTES = 20 * 1024 * 1024;
 const acceptedTypes = new Set([
@@ -74,6 +78,24 @@ export async function POST(request: NextRequest) {
         : file.type.split('/')[1];
   const id = `studio-asset-${randomUUID()}`;
   const storagePath = `${new Date().getUTCFullYear()}/${id}-${role}.${extension}`;
+  if (isStudioE2ERequest(request)) {
+    const stored = storeStudioE2EAsset({
+      bytes,
+      contentType: file.type,
+    });
+    return NextResponse.json({
+      asset: {
+        ...stored,
+        role,
+        altText,
+        width,
+        height,
+        mimeType: file.type,
+        fileSizeBytes: file.size,
+        hasTransparency,
+      },
+    });
+  }
   const bucket = getSupabaseAdminClient().storage.from(
     'studio-design-assets',
   );

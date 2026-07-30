@@ -1,7 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { PersistedInstantPreview } from '@/components/commerce/PersistedInstantPreview';
 import { trackCommerceEvent } from '@/lib/commerce/analytics-events';
 import {
@@ -13,6 +19,7 @@ import {
 import {
   changeProductVariantConfiguration,
   createProductConfiguration,
+  refreshConfigurationPreview,
 } from '@/lib/commerce/placement';
 import {
   readPersistentCart,
@@ -120,9 +127,23 @@ export function ShopV2Experience({
   products,
   initialDesignSlug,
 }: ShopV2ExperienceProps) {
-  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
+  const initialDesign = designs.find(
+    (design) => design.slug === initialDesignSlug,
+  );
+  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(
+    () => initialDesign?.id ?? null,
+  );
   const [configuration, setConfiguration] =
-    useState<ProductConfiguration | null>(null);
+    useState<ProductConfiguration | null>(() => {
+      if (!initialDesign) return null;
+      const product = getRecommendedProduct(initialDesign, products);
+      return createProductConfiguration({
+        designId: initialDesign.id,
+        design: initialDesign.asset,
+        product,
+        template: getPreviewTemplate(product.previewTemplateId),
+      });
+    });
   const [cartItems, setCartItems] = useState<CartConfigurationSnapshot[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -132,21 +153,30 @@ export function ShopV2Experience({
   );
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const deepLinkOpened = useRef(false);
   const viewedUpsellsRef = useRef(new Set<string>());
   const configuratorRef = useRef<HTMLElement>(null);
   const cartDialogRef = useRef<HTMLElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    if (deepLinkOpened.current) return;
-    const design = designs.find(
-      (candidate) => candidate.slug === initialDesignSlug,
-    );
-    if (!design) return;
-    deepLinkOpened.current = true;
-    openDesign(design);
-  }, [designs, initialDesignSlug]);
+  const openDesign = useCallback(
+    (design: CuratedDesignRecord) => {
+      const product = getRecommendedProduct(design, products);
+      const template = getPreviewTemplate(product.previewTemplateId);
+      setSelectedDesignId(design.id);
+      setConfiguration(
+        createProductConfiguration({
+          designId: design.id,
+          design: design.asset,
+          product,
+          template,
+        }),
+      );
+      setEditingItemId(null);
+      trackCommerceEvent('design_view', { designId: design.id });
+      trackCommerceEvent('design_selected', { designId: design.id });
+    },
+    [products],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -287,23 +317,6 @@ export function ShopV2Experience({
     }
   }, [cartUpsells]);
 
-  function openDesign(design: CuratedDesignRecord) {
-    const product = getRecommendedProduct(design, products);
-    const template = getPreviewTemplate(product.previewTemplateId);
-    setSelectedDesignId(design.id);
-    setConfiguration(
-      createProductConfiguration({
-        designId: design.id,
-        design: design.asset,
-        product,
-        template,
-      })
-    );
-    setEditingItemId(null);
-    trackCommerceEvent('design_view', { designId: design.id });
-    trackCommerceEvent('design_selected', { designId: design.id });
-  }
-
   function switchProduct(product: MerchProduct) {
     if (!selectedDesign || !configuration) return;
     assertDesignProductCompatible(selectedDesign, product.id);
@@ -336,6 +349,23 @@ export function ShopV2Experience({
     trackCommerceEvent('variant_changed', {
       productId: selectedProduct.id,
       variantId: variant.id,
+    });
+  }
+
+  function changePlacementScale(scale: number) {
+    if (!configuration || !selectedDesign) return;
+    setConfiguration(
+      refreshConfigurationPreview(
+        {
+          ...configuration,
+          normalizedScale: Math.min(2, Math.max(0.25, scale)),
+        },
+        selectedDesign.asset,
+      ),
+    );
+    trackCommerceEvent('placement_changed', {
+      productId: configuration.merchProductId,
+      input: 'scale',
     });
   }
 
@@ -676,6 +706,20 @@ export function ShopV2Experience({
                     {configuration.angle}°
                   </small>
                 </div>
+                <label className={styles.placementScale}>
+                  <span>Artwork scale</span>
+                  <input
+                    type="range"
+                    min="0.25"
+                    max="2"
+                    step="0.01"
+                    value={configuration.normalizedScale}
+                    onChange={(event) =>
+                      changePlacementScale(Number(event.target.value))
+                    }
+                    data-testid="shop-placement-scale"
+                  />
+                </label>
               </div>
 
               <footer className={styles.configFooter}>

@@ -16,6 +16,9 @@ const navigation = [
 export function HomepageV2Header() {
   const pathname = usePathname();
 
+  if (pathname.startsWith('/studio')) {
+    return null;
+  }
   if (pathname !== '/') {
     return <Navbar />;
   }

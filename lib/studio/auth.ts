@@ -3,6 +3,7 @@ import 'server-only';
 import { timingSafeEqual } from 'node:crypto';
 import type { NextRequest } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { isStudioE2ERequest } from './testing/e2e-harness';
 
 export interface StudioActor {
   userId: string;
@@ -24,6 +25,12 @@ function matchesOperationsSecret(request: NextRequest) {
 export async function getStudioActor(
   request: NextRequest,
 ): Promise<StudioActor | null> {
+  if (isStudioE2ERequest(request)) {
+    return {
+      userId: 'studio-e2e-admin',
+      email: 'studio-admin@example.test',
+    };
+  }
   if (matchesOperationsSecret(request)) {
     return { userId: 'studio-operations', email: null };
   }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { HomepageV2Header } from "@/components/home-v2/HomepageV2Header";
+import { isReviewFeatureEnabled } from "@/lib/feature-flags";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,10 +19,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const commercePreviewEnabled =
-    process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === "true";
-  const homepageV2Enabled =
-    process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED === "true";
+  const commercePreviewEnabled = isReviewFeatureEnabled("commerce");
+  const homepageV2Enabled = isReviewFeatureEnabled("homepage");
 
   return (
     <html lang="en" className="h-full">

@@ -64,6 +64,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   );
   await page.getByRole('button', { name: 'White / L' }).click();
   await expect(page.getByText(/front.*dtg/i)).toBeVisible();
+  await page.getByTestId('shop-placement-scale').fill('0.9');
   const teeRenderKey = await preview.getAttribute('data-render-key');
 
   await page.getByTestId('add-to-cart').click();
@@ -75,7 +76,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await expect(item).toContainText('Everyday Tee');
   await expect(item).toContainText('White');
   await expect(item).toContainText('L');
-  await expect(item).toContainText('scale 0.82');
+  await expect(item).toContainText('scale 0.90');
   await expect(item).toContainText('$34.00');
 
   await page.evaluate(() => window.localStorage.clear());

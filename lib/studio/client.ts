@@ -6,7 +6,11 @@ import type {
   StudioProductCompatibility,
 } from './types';
 
-async function authorizationHeaders() {
+async function authorizationHeaders(): Promise<Record<string, string>> {
+  const e2eSession = await fetch('/api/studio/session', {
+    credentials: 'same-origin',
+  });
+  if (e2eSession.ok) return {};
   const {
     data: { session },
   } = await supabase.auth.getSession();

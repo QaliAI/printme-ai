@@ -5,13 +5,14 @@ import {
 } from '@/components/commerce/DesignCatalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import styles from '@/app/designs/designs.module.css';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default async function DropPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED !== 'true') notFound();
+  if (!isReviewFeatureEnabled('commerce')) notFound();
   const { slug } = await params;
   const service = getDesignCatalogService();
   const drop = await service.findDropBySlug(slug);

@@ -5,11 +5,22 @@ import {
   StudioPublishingError,
   studioDesignRepository,
 } from '@/lib/studio/repository';
+import { studioDesignDraftSchema } from '@/lib/studio/types';
+import {
+  isStudioE2ERequest,
+  listPublishedStudioE2EDesigns,
+  saveStudioE2EDesign,
+} from '@/lib/studio/testing/e2e-harness';
 
 export async function GET(request: NextRequest) {
   const actor = await getStudioActor(request);
   if (!actor) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
+  }
+  if (isStudioE2ERequest(request)) {
+    return NextResponse.json({
+      designs: listPublishedStudioE2EDesigns(),
+    });
   }
   try {
     return NextResponse.json({
@@ -29,6 +40,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
   }
   try {
+    if (isStudioE2ERequest(request)) {
+      const draft = studioDesignDraftSchema.parse(await request.json());
+      return NextResponse.json(
+        { design: saveStudioE2EDesign(draft) },
+        { status: 201 },
+      );
+    }
     const design = await studioDesignRepository.create(
       await request.json(),
       actor.userId,

@@ -83,6 +83,9 @@ export function DesignGrid({
                 fill
                 sizes="(max-width: 700px) 92vw, 30vw"
                 priority={index === 0}
+                unoptimized={design.asset.url.startsWith(
+                  '/api/studio/e2e/',
+                )}
               />
             </span>
             <span className={styles.cardCopy}>
@@ -113,6 +116,7 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
             fill
             sizes="(max-width: 800px) 92vw, 50vw"
             priority
+            unoptimized={design.asset.url.startsWith('/api/studio/e2e/')}
           />
         </div>
         <div className={styles.detailCopy}>

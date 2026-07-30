@@ -618,6 +618,22 @@
   font-size: 0.8rem;
 }
 
+.placementScale {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.placementScale input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 .quantityControl {
   display: flex;
   align-items: center;

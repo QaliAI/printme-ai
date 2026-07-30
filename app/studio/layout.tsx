@@ -1,13 +1,14 @@
 import { redirect } from 'next/navigation';
 import { StudioShell } from './StudioShell';
 import './studio.css';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default function StudioLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  if (process.env.NEXT_PUBLIC_STUDIO_ENABLED !== 'true') {
+  if (!isReviewFeatureEnabled('studio')) {
     redirect('/admin/designs');
   }
   return <StudioShell>{children}</StudioShell>;

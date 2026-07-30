@@ -5,9 +5,10 @@ import { StylePresets } from '@/components/landing/StylePresets';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTASection } from '@/components/landing/CTASection';
 import { HomepageV2 } from '@/components/home-v2/HomepageV2';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default function Home() {
-  if (process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED === 'true') {
+  if (isReviewFeatureEnabled('homepage')) {
     return <HomepageV2 />;
   }
 

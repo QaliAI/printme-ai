@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 
 const uploadFixture = path.resolve(
@@ -6,8 +7,27 @@ const uploadFixture = path.resolve(
 );
 
 test('guest upload, preparation, customization, and cart survive refresh', async ({
+  context,
   page,
 }) => {
+  await context.addCookies([
+    {
+      name: 'printme-e2e-secret',
+      value: 'printme-local-e2e-secret',
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Strict',
+    },
+    {
+      name: 'printme-e2e-session',
+      value: randomUUID(),
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Strict',
+    },
+  ]);
   await page.goto('/create');
   await page.evaluate(async () => {
     window.localStorage.clear();
@@ -71,12 +91,16 @@ test('guest upload, preparation, customization, and cart survive refresh', async
   await expect(item).toContainText('Your design');
   await expect(item).toContainText('Everyday Tee');
   await expect(item.getByTestId('instant-preview')).toBeVisible();
+  await expect(page.getByTestId('same-design-upsells')).toBeVisible();
+  await page.getByTestId('add-upsell-gallery-poster').click();
+  await expect(page.getByTestId('cart-item')).toHaveCount(2);
 
   await page.reload();
   await page.getByTestId('open-cart').click();
-  await expect(page.getByTestId('cart-item')).toContainText('Your design');
+  await expect(page.getByTestId('cart-item')).toHaveCount(2);
+  await expect(page.getByTestId('cart-drawer')).toContainText('Your design');
   await expect(
-    page.getByTestId('cart-item').getByTestId('instant-preview'),
+    page.getByTestId('cart-item').first().getByTestId('instant-preview'),
   ).toBeVisible();
 });
 

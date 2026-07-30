@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { DesignDetail } from '@/components/commerce/DesignCatalog';
 import { PRODUCT_PHOTOS } from '@/lib/assets';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 // Initialize Supabase admin client
 const supabaseAdmin = createClient(
@@ -27,7 +28,7 @@ export default async function PublicDesignPage({ params, searchParams }: PagePro
   const { id } = await params;
   const query = await searchParams;
 
-  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED === 'true') {
+  if (isReviewFeatureEnabled('commerce')) {
     const curatedDesign =
       await getDesignCatalogService().findPublishedBySlug(id);
     if (!curatedDesign) notFound();

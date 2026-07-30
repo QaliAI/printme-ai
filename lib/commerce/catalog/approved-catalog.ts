@@ -409,21 +409,7 @@ const approvedProducts: MerchProduct[] = [
 ];
 
 export function getApprovedMerchProducts(): MerchProduct[] {
-  const products = structuredClone(approvedProducts);
-  if (
-    process.env.NODE_ENV !== 'production' &&
-    process.env.COMMERCE_E2E_TEST_MODE === 'true'
-  ) {
-    for (const product of products) {
-      if (product.merchandising) {
-        product.merchandising.shippingCost = 500;
-      }
-      for (const variant of product.variants) {
-        variant.unitCost = 700;
-      }
-    }
-  }
-  return products;
+  return structuredClone(approvedProducts);
 }
 
 export function getApprovedMerchProduct(productId: string): MerchProduct {

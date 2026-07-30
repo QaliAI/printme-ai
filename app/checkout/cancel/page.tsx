@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default function CheckoutCancelPage() {
-  if (process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED !== 'true') notFound();
+  if (!isReviewFeatureEnabled('commerce')) notFound();
   return (
     <main className="min-h-screen bg-amber-50 px-6 py-20 text-stone-950">
       <div className="mx-auto max-w-xl border border-stone-300 bg-white p-8">

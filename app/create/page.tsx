@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { UnifiedCreateExperience } from './UnifiedCreateExperience';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
+import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
 
 export const metadata = {
   title: 'Create a custom print | PrintMe',
@@ -13,12 +16,16 @@ export default async function CreatePage({
 }: {
   searchParams: Promise<{ product?: string }>;
 }) {
-  if (process.env.NEXT_PUBLIC_UNIFIED_CREATE_ENABLED !== 'true') {
+  if (!isReviewFeatureEnabled('unified-create')) {
     redirect('/app/create/upload');
   }
 
   const requestedProduct = (await searchParams).product;
-  const products = getApprovedMerchProducts();
+  const cookieStore = await cookies();
+  const products = applyCommerceE2EReviewEconomics(
+    getApprovedMerchProducts(),
+    cookieStore.get('printme-e2e-secret')?.value,
+  );
   const requestedIndex = products.findIndex(
     (product) => product.id === requestedProduct,
   );

@@ -182,22 +182,25 @@ export function StudioDesignEditor({
         variant.printifyVariantId ===
         previewCompatibility.defaultVariantId,
     ) ?? previewProduct.variants[0];
-  const previewAsset: DesignAsset | null =
-    fileUrl && fileInfo
-      ? {
-          id: `preview-${designId}`,
-          version: versionId,
-          url: fileUrl,
-          productionUrl: fileUrl,
-          alt: metadata.altText || 'Studio design preview',
-          width: fileInfo.width,
-          height: fileInfo.height,
-          mimeType: fileInfo.mimeType,
-          hasTransparency: fileInfo.hasTransparency,
-          sourceType: 'curated',
-          role: 'preview',
-        }
-      : null;
+  const previewAsset = useMemo<DesignAsset | null>(
+    () =>
+      fileUrl && fileInfo
+        ? {
+            id: `preview-${designId}`,
+            version: versionId,
+            url: fileUrl,
+            productionUrl: fileUrl,
+            alt: metadata.altText || 'Studio design preview',
+            width: fileInfo.width,
+            height: fileInfo.height,
+            mimeType: fileInfo.mimeType,
+            hasTransparency: fileInfo.hasTransparency,
+            sourceType: 'curated',
+            role: 'preview',
+          }
+        : null,
+    [designId, fileInfo, fileUrl, metadata.altText, versionId],
+  );
   const previewConfiguration = useMemo(() => {
     if (!previewAsset) return null;
     const base = createProductConfiguration({

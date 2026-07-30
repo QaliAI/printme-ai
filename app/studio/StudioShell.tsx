@@ -21,7 +21,11 @@ export function StudioShell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    void getCurrentProfile()
+    void fetch('/api/studio/session', { credentials: 'same-origin' })
+      .then(async (response) => {
+        if (response.ok) return { is_admin: true };
+        return getCurrentProfile();
+      })
       .then((profile) => {
         if (cancelled) return;
         if (!profile?.is_admin) {

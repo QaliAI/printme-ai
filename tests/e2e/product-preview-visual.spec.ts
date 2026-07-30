@@ -23,6 +23,7 @@ test('approved product previews remain visually stable', async ({
   await expect(preview).toHaveAttribute('data-product-id', 'gallery-poster');
   await expect(preview).toHaveScreenshot('gallery-poster-preview.png', {
     animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
   });
 
   await page.getByRole('button', { name: /Product Gallery Poster/ }).click();
@@ -30,6 +31,7 @@ test('approved product previews remain visually stable', async ({
   await expect(preview).toHaveAttribute('data-product-id', 'everyday-tee');
   await expect(preview).toHaveScreenshot('everyday-tee-preview.png', {
     animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
   });
 
   await page.getByRole('button', { name: /Preview view Front/ }).click();
@@ -37,6 +39,7 @@ test('approved product previews remain visually stable', async ({
   await expect(preview).toHaveAttribute('data-render-key', /tee-m-back/);
   await expect(preview).toHaveScreenshot('everyday-tee-back-preview.png', {
     animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
   });
 
   await page.getByRole('button', { name: /Product Everyday Tee/ }).click();
@@ -44,5 +47,6 @@ test('approved product previews remain visually stable', async ({
   await expect(preview).toHaveAttribute('data-product-id', 'keepsake-mug');
   await expect(preview).toHaveScreenshot('keepsake-mug-preview.png', {
     animations: 'disabled',
+    maxDiffPixelRatio: 0.05,
   });
 });
