@@ -247,6 +247,20 @@ export class CuratedCatalogService implements CatalogAvailability {
           });
           continue;
         }
+
+        const liveVariant = all.variants.find(
+          (candidate) => candidate.id === variant.printifyVariantId,
+        );
+        const liveCost = liveVariant?.cost ?? liveVariant?.price ?? null;
+        if (liveCost !== null && liveCost !== variant.unitCost) {
+          report.changedCosts.push({
+            productId: product.id,
+            variantId: variant.printifyVariantId,
+            previousCost: variant.unitCost ?? null,
+            currentCost: liveCost,
+          });
+        }
+
         const liveAvailability = availableIds.has(variant.printifyVariantId);
         if (liveAvailability !== variant.available) {
           report.changedAvailability.push({

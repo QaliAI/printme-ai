@@ -9,8 +9,15 @@ import { Navbar } from '@/components/Navbar';
 const navigation = [
   { href: '/designs', label: 'Shop Designs' },
   { href: '/create', label: 'Create Yours' },
-  { href: '/#products', label: 'Products' },
+  { href: '/products', label: 'Products' },
   { href: '/#gifts', label: 'Gifts' },
+];
+
+const legacyApplicationPrefixes = [
+  '/app',
+  '/admin',
+  '/auth',
+  '/checkout',
 ];
 
 export function HomepageV2Header() {
@@ -19,7 +26,7 @@ export function HomepageV2Header() {
   if (pathname.startsWith('/studio')) {
     return null;
   }
-  if (pathname !== '/') {
+  if (legacyApplicationPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return <Navbar />;
   }
 
@@ -42,9 +49,9 @@ export function HomepageV2Header() {
             <Search aria-hidden="true" size={18} strokeWidth={1.8} />
             <span>Search</span>
           </Link>
-          <Link href="/shop-v2" aria-label="Open cart">
+          <Link href="/shop-v2" aria-label="Open bag">
             <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
-            <span>Cart</span>
+            <span>Bag</span>
           </Link>
         </div>
       </div>

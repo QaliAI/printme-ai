@@ -5,12 +5,44 @@ import type {
   CheckoutGateway,
 } from './service';
 
-function getStripeTestSecret() {
+export function getStripeSecretKey() {
+  const mode = process.env.STRIPE_MODE || 'test';
   const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret?.startsWith('sk_test_')) {
-    throw new Error('Secure checkout requires a Stripe test-mode secret key.');
+
+  if (!secret) {
+    throw new Error('STRIPE_SECRET_KEY is required.');
   }
-  return secret;
+
+  const vercelEnv = process.env.VERCEL_ENV;
+  const nodeEnv = process.env.NODE_ENV;
+  const isDevelopmentOrPreview =
+    vercelEnv === 'preview' || vercelEnv === 'development' || nodeEnv === 'development';
+
+  if (mode === 'test') {
+    if (!secret.startsWith('sk_test_')) {
+      throw new Error('STRIPE_MODE is test, but STRIPE_SECRET_KEY does not start with sk_test_.');
+    }
+    return secret;
+  }
+
+  if (mode === 'live') {
+    if (!secret.startsWith('sk_live_')) {
+      throw new Error('STRIPE_MODE is live, but STRIPE_SECRET_KEY does not start with sk_live_.');
+    }
+    if (isDevelopmentOrPreview) {
+      throw new Error('Live Stripe keys are prohibited in development and preview environments.');
+    }
+    if (process.env.STRIPE_LIVE_RELEASE_APPROVED !== 'true') {
+      throw new Error('Live Stripe mode requires explicit release flag STRIPE_LIVE_RELEASE_APPROVED=true.');
+    }
+    return secret;
+  }
+
+  throw new Error(`Invalid STRIPE_MODE: ${mode}. Must be 'test' or 'live'.`);
+}
+
+function getStripeTestSecret() {
+  return getStripeSecretKey();
 }
 
 export function assertCheckoutEnabled() {
@@ -21,6 +53,7 @@ export function assertCheckoutEnabled() {
     throw new Error('Secure checkout is disabled until migrations are enabled.');
   }
 }
+
 export class StripeTestCheckoutGateway implements CheckoutGateway {
   async createSession(
     input: Parameters<CheckoutGateway['createSession']>[0],
@@ -37,14 +70,17 @@ export class StripeTestCheckoutGateway implements CheckoutGateway {
         mode: 'payment',
         client_reference_id: input.orderId,
         customer_email: input.customerEmail,
+        automatic_tax: { enabled: true },
         line_items: input.items.map((item) => ({
           quantity: item.quantity,
           price_data: {
             currency: item.configuration.currency.toLowerCase(),
             unit_amount: item.configuration.unitPrice,
+            tax_behavior: 'exclusive',
             product_data: {
               name: `${item.designTitle} — ${item.productTitle}`,
               description: item.variantTitle,
+              tax_code: 'txcd_99999999',
               metadata: {
                 configuration_hash: item.configurationHash,
               },
@@ -52,7 +88,7 @@ export class StripeTestCheckoutGateway implements CheckoutGateway {
           },
         })),
         shipping_address_collection: {
-          allowed_countries: ['US', 'CA'],
+          allowed_countries: ['US'],
         },
         phone_number_collection: { enabled: true },
         billing_address_collection: 'auto',
