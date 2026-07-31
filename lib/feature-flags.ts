@@ -6,8 +6,10 @@ export type ReviewFeature =
 
 const sprint3ReviewBranch =
   'feature/unified-commerce-studio-sprint-3';
-const launchReleaseBranch =
-  'release/launch-safe-homepage-v2-2026-07-31';
+const launchReleaseBranches = new Set([
+  'release/launch-safe-homepage-v2-2026-07-31',
+  'master',
+]);
 
 const environmentKeys: Record<ReviewFeature, string> = {
   commerce: 'NEXT_PUBLIC_COMMERCE_V2_ENABLED',
@@ -17,7 +19,8 @@ const environmentKeys: Record<ReviewFeature, string> = {
 };
 
 export function isLaunchRelease() {
-  return process.env.VERCEL_GIT_COMMIT_REF === launchReleaseBranch;
+  const branch = process.env.VERCEL_GIT_COMMIT_REF;
+  return Boolean(branch && launchReleaseBranches.has(branch));
 }
 
 export function isReviewFeatureEnabled(feature: ReviewFeature) {
@@ -28,7 +31,8 @@ export function isReviewFeatureEnabled(feature: ReviewFeature) {
     process.env.VERCEL_GIT_COMMIT_REF === sprint3ReviewBranch;
   if (sprint3Preview) return true;
 
-  // The release branch deliberately enables customer-facing launch surfaces.
-  // Studio remains explicit-only because it requires real admin authorization.
+  // The launch release and its canonical master deployment deliberately enable
+  // customer-facing surfaces. Studio remains explicit-only because it requires
+  // real admin authorization and production storage policies.
   return feature !== 'studio' && isLaunchRelease();
 }
