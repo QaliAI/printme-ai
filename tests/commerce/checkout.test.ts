@@ -106,6 +106,28 @@ const identity = {
 };
 
 describe('secure Stripe test checkout', () => {
+  it('enforces Stripe key mode rules correctly', async () => {
+    const { getStripeSecretKey } = await import('@/lib/commerce/checkout/stripe-gateway');
+    
+    // Test mode requires sk_test_
+    process.env.STRIPE_MODE = 'test';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_valid_key';
+    expect(getStripeSecretKey()).toBe('sk_test_valid_key');
+
+    process.env.STRIPE_SECRET_KEY = 'sk_live_invalid_for_test_mode';
+    expect(() => getStripeSecretKey()).toThrow(/STRIPE_MODE is test/);
+
+    // Live mode rejects live keys in development/preview
+    process.env.STRIPE_MODE = 'live';
+    process.env.STRIPE_SECRET_KEY = 'sk_live_valid_key';
+    process.env.NODE_ENV = 'development';
+    expect(() => getStripeSecretKey()).toThrow(/Live Stripe keys are prohibited/);
+
+    // Reset env vars to safe test defaults
+    process.env.STRIPE_MODE = 'test';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_local_e2e_only';
+    process.env.NODE_ENV = 'test';
+  });
   it('rejects client price tampering even with a recomputed hash', async () => {
     const store = new MemoryCheckoutStore();
     const original = snapshot();
