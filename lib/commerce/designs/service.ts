@@ -7,6 +7,7 @@ import {
   type DesignRepository,
 } from './repository';
 import { listPublishedStudioE2EDesigns } from '@/lib/studio/testing/e2e-harness';
+import { isLaunchRelease } from '@/lib/feature-flags';
 
 export class DesignCatalogService {
   constructor(
@@ -24,9 +25,7 @@ export class DesignCatalogService {
   }
 
   async listPublished(filter?: DesignFilter) {
-    return this.read((repository) =>
-      repository.listPublished(filter),
-    );
+    return this.read((repository) => repository.listPublished(filter));
   }
 
   async findPublishedBySlug(slug: string) {
@@ -62,12 +61,14 @@ export function getDesignCatalogService() {
     const databaseEnabled =
       process.env.COMMERCE_DESIGNS_DATABASE_ENABLED === 'true';
     const allowFixtureFallback =
-      process.env.VERCEL_ENV !== 'production';
+      process.env.VERCEL_ENV !== 'production' || isLaunchRelease();
+
     if (!databaseEnabled && !allowFixtureFallback) {
       throw new Error(
         'Curated design database access is required in production.',
       );
     }
+
     designCatalogService = databaseEnabled
       ? new DesignCatalogService(
           new SupabaseDesignRepository(),
