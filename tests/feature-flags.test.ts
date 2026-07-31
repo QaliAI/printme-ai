@@ -2,24 +2,30 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 const original = {
-  explicit: process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED,
+  commerce: process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED,
+  homepage: process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED,
+  create: process.env.NEXT_PUBLIC_UNIFIED_CREATE_ENABLED,
+  studio: process.env.NEXT_PUBLIC_STUDIO_ENABLED,
   vercelEnvironment: process.env.VERCEL_ENV,
   branch: process.env.VERCEL_GIT_COMMIT_REF,
 };
 
 afterEach(() => {
-  process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED = original.explicit;
+  process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED = original.commerce;
+  process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED = original.homepage;
+  process.env.NEXT_PUBLIC_UNIFIED_CREATE_ENABLED = original.create;
+  process.env.NEXT_PUBLIC_STUDIO_ENABLED = original.studio;
   process.env.VERCEL_ENV = original.vercelEnvironment;
   process.env.VERCEL_GIT_COMMIT_REF = original.branch;
 });
 
-describe('Sprint 3 review feature flags', () => {
+describe('PrintMe feature flags', () => {
   it('supports explicit local and staging enablement', () => {
     process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED = 'true';
     expect(isReviewFeatureEnabled('commerce')).toBe(true);
   });
 
-  it('enables only the dedicated Sprint 3 Vercel preview branch', () => {
+  it('enables the dedicated Sprint 3 preview branch', () => {
     delete process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED;
     process.env.VERCEL_ENV = 'preview';
     process.env.VERCEL_GIT_COMMIT_REF =
@@ -31,7 +37,22 @@ describe('Sprint 3 review feature flags', () => {
     expect(isReviewFeatureEnabled('commerce')).toBe(false);
   });
 
-  it('never implicitly enables production', () => {
+  it('enables only customer-facing features on the launch release branch', () => {
+    delete process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED;
+    delete process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED;
+    delete process.env.NEXT_PUBLIC_UNIFIED_CREATE_ENABLED;
+    delete process.env.NEXT_PUBLIC_STUDIO_ENABLED;
+    process.env.VERCEL_ENV = 'production';
+    process.env.VERCEL_GIT_COMMIT_REF =
+      'release/launch-safe-homepage-v2-2026-07-31';
+
+    expect(isReviewFeatureEnabled('commerce')).toBe(true);
+    expect(isReviewFeatureEnabled('homepage')).toBe(true);
+    expect(isReviewFeatureEnabled('unified-create')).toBe(true);
+    expect(isReviewFeatureEnabled('studio')).toBe(false);
+  });
+
+  it('does not enable Sprint 3 features on unrelated production branches', () => {
     delete process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED;
     process.env.VERCEL_ENV = 'production';
     process.env.VERCEL_GIT_COMMIT_REF =
