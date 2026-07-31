@@ -14,7 +14,7 @@ function createMockCartItem(productId: 'gallery-poster' | 'everyday-tee' | 'keep
   const design = curatedDesigns[0];
   const products = getApprovedMerchProducts();
   const product = products.find((p) => p.id === productId)!;
-  return createCartSnapshot({
+  const snapshot = createCartSnapshot({
     id: `item-${productId}`,
     design,
     product,
@@ -24,9 +24,9 @@ function createMockCartItem(productId: 'gallery-poster' | 'everyday-tee' | 'keep
       product,
       template: getPreviewTemplate(product.previewTemplateId),
     }),
-    quantity,
     createdAt: new Date('2026-07-31T12:00:00.000Z').toISOString(),
   });
+  return { ...snapshot, quantity };
 }
 
 describe('Shipping Quote Flow', () => {

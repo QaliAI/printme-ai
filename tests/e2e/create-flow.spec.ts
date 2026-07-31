@@ -96,6 +96,7 @@ test('guest upload, preparation, customization, and cart survive refresh', async
   await expect(page.getByTestId('cart-item')).toHaveCount(2);
 
   await page.reload();
+  await page.waitForLoadState('domcontentloaded');
   await page.getByTestId('open-cart').click();
   await expect(page.getByTestId('cart-item')).toHaveCount(2);
   await expect(page.getByTestId('cart-drawer')).toContainText('Your design');

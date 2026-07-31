@@ -175,6 +175,7 @@ describe('idempotent Printify fulfillment', () => {
     const result = await new PrintifyFulfillmentService(
       store,
       gateway,
+      undefined,
       () => 'worker-test',
     ).prepare(store.job.orderId);
 

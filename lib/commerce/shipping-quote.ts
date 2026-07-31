@@ -42,11 +42,14 @@ export const US_SHIPPING_RATES_BY_BLUEPRINT: Record<
 };
 
 export function computeCartHash(items: CartConfigurationSnapshot[]): string {
-  const normalized = items
-    .map((item) => `${item.configuration.merchProductId}:${item.configuration.variantId}:${item.quantity}`)
-    .sort()
+  const sorted = [...items].sort((a, b) => a.id.localeCompare(b.id));
+  const payload = sorted
+    .map(
+      (item) =>
+        `${item.configuration.merchProductId}:${item.configuration.printifyVariantId}:${item.quantity}`,
+    )
     .join('|');
-  return createHash('sha256').update(normalized).digest('hex').slice(0, 16);
+  return createHash('sha256').update(payload).digest('hex').slice(0, 16);
 }
 
 export function calculateShippingQuote(input: {

@@ -120,13 +120,13 @@ describe('secure Stripe test checkout', () => {
     // Live mode rejects live keys in development/preview
     process.env.STRIPE_MODE = 'live';
     process.env.STRIPE_SECRET_KEY = 'sk_live_valid_key';
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
     expect(() => getStripeSecretKey()).toThrow(/Live Stripe keys are prohibited/);
 
     // Reset env vars to safe test defaults
     process.env.STRIPE_MODE = 'test';
     process.env.STRIPE_SECRET_KEY = 'sk_test_local_e2e_only';
-    process.env.NODE_ENV = 'test';
+    vi.stubEnv('NODE_ENV', 'test');
   });
   it('rejects client price tampering even with a recomputed hash', async () => {
     const store = new MemoryCheckoutStore();
