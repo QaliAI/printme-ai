@@ -13,13 +13,19 @@ const productImages: Record<
     src: '/home-v2/hero-print-products.webp',
     width: 1536,
     height: 1024,
-    alt: 'A framed dog portrait, printed tee, and mug in a product studio',
+    alt: 'A framed pet portrait, printed tee, and mug in a product studio',
   },
   'everyday-tee': {
     src: '/landing/mockups/product-tshirt.webp',
     width: 960,
     height: 960,
     alt: 'A finished personalized t-shirt photographed on a neutral background',
+  },
+  'keepsake-mug': {
+    src: '/landing/mockups/product-mug.webp',
+    width: 960,
+    height: 960,
+    alt: 'A personalized ceramic mug photographed on a neutral background',
   },
 };
 
@@ -62,7 +68,7 @@ export function HeroProductSwitcher({
       </div>
       <div className={styles.heroProductControls}>
         <div>
-          <span>Now showing</span>
+          <span>Preview a product</span>
           <strong>
             {selected.name} from {formatPrice(startingPrice)}
           </strong>
