@@ -37,14 +37,16 @@ describe('PrintMe feature flags', () => {
     expect(isReviewFeatureEnabled('commerce')).toBe(false);
   });
 
-  it('enables only customer-facing features on the launch release branch', () => {
+  it.each([
+    'release/launch-safe-homepage-v2-2026-07-31',
+    'master',
+  ])('enables only customer-facing features on %s', (branch) => {
     delete process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED;
     delete process.env.NEXT_PUBLIC_HOMEPAGE_V2_ENABLED;
     delete process.env.NEXT_PUBLIC_UNIFIED_CREATE_ENABLED;
     delete process.env.NEXT_PUBLIC_STUDIO_ENABLED;
     process.env.VERCEL_ENV = 'production';
-    process.env.VERCEL_GIT_COMMIT_REF =
-      'release/launch-safe-homepage-v2-2026-07-31';
+    process.env.VERCEL_GIT_COMMIT_REF = branch;
 
     expect(isReviewFeatureEnabled('commerce')).toBe(true);
     expect(isReviewFeatureEnabled('homepage')).toBe(true);
