@@ -18,7 +18,26 @@ function formatPrice(cents: number) {
 const productImages: Record<string, string> = {
   'gallery-poster': '/landing/mockups/product-poster.webp',
   'everyday-tee': '/landing/mockups/product-tshirt.webp',
+  'keepsake-mug': '/landing/mockups/product-mug.webp',
 };
+
+const studioSamples = [
+  {
+    src: '/landing/transformations/pet-cartoon.webp',
+    alt: 'Colorful illustrated pet portrait prepared for printing',
+    label: 'Pet portrait',
+  },
+  {
+    src: '/landing/transformations/family-oil-painting.webp',
+    alt: 'Family photograph transformed into painterly artwork',
+    label: 'Family keepsake',
+  },
+  {
+    src: '/landing/transformations/travel-watercolor.webp',
+    alt: 'Travel photograph transformed into watercolor artwork',
+    label: 'Travel memory',
+  },
+];
 
 export async function HomepageV2() {
   const products = getApprovedMerchProducts();
@@ -35,18 +54,18 @@ export async function HomepageV2() {
     <div className={styles.homeV2}>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Photos become finished pieces</p>
-          <h1>Turn photos into keepsakes.</h1>
+          <p className={styles.eyebrow}>Upload once. Make it yours.</p>
+          <h1>Turn a favorite photo into something worth keeping.</h1>
           <p>
-            Create original artwork from a photo, then preview it on a poster
-            or tee before you buy.
+            Upload from your phone, prepare the artwork, and preview it on a
+            poster, tee, or mug before you add it to your bag.
           </p>
           <div className={styles.heroActions}>
             <Link href="/create">Create Yours</Link>
             <Link href="/designs">Shop Designs</Link>
           </div>
           <span className={styles.startingPrice}>
-            Approved products start at {formatPrice(startingPrice)}
+            Custom products start at {formatPrice(startingPrice)}
           </span>
         </div>
         <HeroProductSwitcher products={products} />
@@ -54,10 +73,10 @@ export async function HomepageV2() {
 
       <section className={styles.featuredSection}>
         <div className={styles.sectionHeading}>
-          <h2>Start with art you already like.</h2>
+          <h2>Or start with a design you already love.</h2>
           <p>
-            Pick a curated design, switch products, and open the full
-            configurator when the pairing feels right.
+            Choose the artwork first, compare compatible products, and fine-tune
+            the placement before adding it to your bag.
           </p>
         </div>
         <HomeCommerceShowcase
@@ -68,8 +87,8 @@ export async function HomepageV2() {
 
       <section className={styles.productsSection} id="products">
         <div className={styles.sectionHeading}>
-          <h2>Shop by product.</h2>
-          <p>Every option below comes from the approved PrintMe catalog.</p>
+          <h2>Choose what you want to make.</h2>
+          <p>A focused collection of products selected for reliable printing.</p>
         </div>
         <div className={styles.productGrid}>
           {products.map((product, index) => {
@@ -78,10 +97,11 @@ export async function HomepageV2() {
                 .filter((variant) => variant.available)
                 .map((variant) => variant.unitPrice),
             );
+            const productSlug = product.merchandising?.slug ?? product.id;
             return (
               <Link
                 className={index === 0 ? styles.productPrimary : ''}
-                href={`/shop-v2?product=${encodeURIComponent(product.id)}`}
+                href={`/products/${encodeURIComponent(productSlug)}`}
                 key={product.id}
               >
                 <Image
@@ -108,17 +128,17 @@ export async function HomepageV2() {
       <section className={styles.photoSection} id="gifts">
         <div className={styles.photoCopy}>
           <Camera aria-hidden="true" size={28} strokeWidth={1.6} />
-          <h2>Create a gift from one good photo.</h2>
+          <h2>Create a personal gift from one good photo.</h2>
           <p>
-            Upload a clear image, choose a treatment, then compare the result
-            before selecting a product.
+            Keep the original, remove the background, or turn it into artwork.
+            Then position it directly on the product from any phone or computer.
           </p>
           <div className={styles.photoActions}>
-              <Link href="/create">
-              Create Yours
+            <Link href="/create">
+              Upload a Photo
               <ArrowRight aria-hidden="true" size={18} strokeWidth={1.8} />
             </Link>
-            <Link href="/designs">Browse gift-ready designs</Link>
+            <Link href="/designs">Browse ready-to-print designs</Link>
           </div>
         </div>
         <div className={styles.photoPair}>
@@ -149,10 +169,10 @@ export async function HomepageV2() {
         <div>
           <h2>One design. More than one product.</h2>
           <p>
-            Keep the artwork consistent while you compare its scale and
-            placement on each approved format.
+            Keep the artwork consistent while PrintMe adapts its scale and
+            placement for each approved format.
           </p>
-          <Link href="/shop-v2">Compare in Shop V2</Link>
+          <Link href="/create">Make a matching set</Link>
         </div>
         <div className={styles.sameDesignProducts}>
           <Image
@@ -174,39 +194,42 @@ export async function HomepageV2() {
 
       <section className={styles.customerSection}>
         <div className={styles.sectionHeading}>
-          <h2>Customer work, once it is approved.</h2>
+          <h2>Made in the PrintMe studio.</h2>
           <p>
-            This gallery stays empty until real customers give permission to
-            show their finished pieces.
+            A few examples of the kinds of photos and memories you can prepare
+            for printing. Your own artwork stays yours.
           </p>
         </div>
         <div className={styles.customerPlaceholders}>
-          <div>
-            <span>Reserved for verified customer work</span>
-          </div>
-          <div>
-            <span>No fabricated reviews or proof</span>
-          </div>
-          <div>
-            <span>Permission required before publishing</span>
-          </div>
+          {studioSamples.map((sample) => (
+            <figure key={sample.src}>
+              <Image
+                src={sample.src}
+                alt={sample.alt}
+                width={1200}
+                height={1200}
+                sizes="(max-width: 767px) 100vw, 30vw"
+              />
+              <figcaption>{sample.label}</figcaption>
+            </figure>
+          ))}
         </div>
       </section>
 
       <section className={styles.assuranceSection}>
         <article id="shipping">
-          <h2>Shipping information</h2>
+          <h2>Clear production and delivery estimates</h2>
           <p>
-            Production and delivery estimates depend on product and
-            destination. Final timing will appear before payment.
+            Production time and carrier transit are shown separately whenever
+            live provider data is available, so the timing is easier to understand.
           </p>
-          <Link href="/shop-v2">Review products</Link>
+          <Link href="/products">Review products</Link>
         </article>
         <article id="guarantee">
-          <h2>Guarantee information</h2>
+          <h2>Support for damaged or misprinted orders</h2>
           <p>
-            Checkout stays disabled until PrintMe&apos;s return and replacement
-            policy is approved for customer use.
+            Every item is made to order. Verified damage or production defects
+            are reviewed for replacement or reprint support.
           </p>
           <Link href="mailto:support@printme.ai">Ask a question</Link>
         </article>
@@ -216,9 +239,9 @@ export async function HomepageV2() {
         <strong>PrintMe</strong>
         <nav aria-label="Footer">
           <Link href="/#shipping">Shipping</Link>
-          <Link href="/#guarantee">Guarantee</Link>
+          <Link href="/#guarantee">Order Support</Link>
           <Link href="/designs">Designs</Link>
-          <Link href="/shop-v2">Products</Link>
+          <Link href="/products">Products</Link>
         </nav>
       </footer>
 
@@ -230,7 +253,7 @@ export async function HomepageV2() {
         <Link href="/create">Create Yours</Link>
         <Link href="/shop-v2">
           <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
-          Cart
+          Bag
         </Link>
       </nav>
     </div>
