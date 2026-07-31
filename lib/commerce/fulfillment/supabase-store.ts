@@ -14,7 +14,7 @@ const jobRowSchema = z.object({
   id: z.string().uuid(),
   order_id: z.string().uuid(),
   state: z.string(),
-  mode: z.enum(['disabled', 'dry-run', 'live']),
+  mode: z.enum(['disabled', 'dry-run', 'draft', 'live']),
   printify_order_id: z.string().nullable(),
   production_submitted_at: z.string().nullable().optional(),
 });
@@ -152,28 +152,43 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       orderId: string;
       payloadHash: string;
       redactedPayload: unknown;
+      printifyOrderId?: string | null;
+      printifyProductId?: string | null;
     },
     jobState: string,
     orderState: string,
   ) {
+    const jobUpdate: Record<string, unknown> = {
+      state: jobState,
+      payload_hash: input.payloadHash,
+      redacted_payload: input.redactedPayload,
+      locked_at: null,
+      locked_by: null,
+      completed_at:
+        jobState === 'dry_run_complete' ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString(),
+    };
+    if (input.printifyOrderId) {
+      jobUpdate.printify_order_id = input.printifyOrderId;
+    }
+
     const { error: jobError } = await this.client
       .from('fulfillment_jobs')
-      .update({
-        state: jobState,
-        payload_hash: input.payloadHash,
-        redacted_payload: input.redactedPayload,
-        locked_at: null,
-        locked_by: null,
-        completed_at:
-          jobState === 'dry_run_complete' ? new Date().toISOString() : null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(jobUpdate)
       .eq('id', input.jobId)
       .eq('order_id', input.orderId);
     if (jobError) throw jobError;
+
+    const orderUpdate: Record<string, unknown> = {
+      fulfillment_status: orderState,
+    };
+    if (input.printifyOrderId) {
+      orderUpdate.printify_order_id = input.printifyOrderId;
+    }
+
     const { error: orderError } = await this.client
       .from('orders')
-      .update({ fulfillment_status: orderState })
+      .update(orderUpdate)
       .eq('id', input.orderId);
     if (orderError) throw orderError;
   }

@@ -187,6 +187,32 @@ describe('idempotent Printify fulfillment', () => {
     expect(JSON.stringify(store.redactedPayload)).not.toContain('1 Test Way');
   });
 
+  it('creates a Printify draft order without sending to production', async () => {
+    process.env.PRINTIFY_FULFILLMENT_MODE = 'draft';
+    const store = new MemoryFulfillmentStore();
+    const draftGateway = {
+      createDraftOrder: vi.fn(async () => ({
+        printifyProductId: 'printify-prod-123',
+        printifyOrderId: 'printify-draft-order-456',
+      })),
+    };
+    const productionGateway = {
+      sendOrderToProduction: vi.fn(async () => undefined),
+    };
+
+    const service = new PrintifyFulfillmentService(
+      store,
+      productionGateway,
+      draftGateway,
+    );
+    const result = await service.prepare(store.job.orderId);
+
+    expect(result.state).toBe('manual_review_ready');
+    expect(result.printifyOrderId).toBe('printify-draft-order-456');
+    expect(draftGateway.createDraftOrder).toHaveBeenCalledTimes(1);
+    expect(productionGateway.sendOrderToProduction).not.toHaveBeenCalled();
+  });
+
   it('deduplicates completed jobs', async () => {
     const store = new MemoryFulfillmentStore();
     const service = new PrintifyFulfillmentService(store);
