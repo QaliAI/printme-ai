@@ -94,13 +94,13 @@ export function CTASection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/auth/signup">
+            <Link href="/app/create/style">
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button
                   size="lg"
                   className="bg-white text-slate-900 hover:bg-slate-100 shadow-2xl transition-all px-8 py-4 text-base font-semibold"
                 >
-                  Start Creating Free
+                  ✨ Start Creating
                 </Button>
               </motion.div>
             </Link>

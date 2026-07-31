@@ -65,6 +65,12 @@ export function Navbar() {
 
           <div className="flex items-center gap-6">
             <Link
+              href="/designs"
+              className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Featured Designs
+            </Link>
+            <Link
               href="/#how-it-works"
               className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
@@ -103,7 +109,7 @@ export function Navbar() {
                         Sign In
                       </Button>
                     </Link>
-                    <Link href="/auth/signup">
+                    <Link href="/app/create/style">
                       <Button
                         size="sm"
                         className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-md"

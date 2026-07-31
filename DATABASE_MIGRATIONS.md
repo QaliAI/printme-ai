@@ -45,9 +45,11 @@ CREATE INDEX idx_checkout_sessions_cart_id ON checkout_sessions(cart_id);
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  order_number TEXT DEFAULT 'PM-' || floor(random() * 899999 + 100000)::text UNIQUE,
   total_amount INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending_fulfillment' CHECK (status IN ('pending_fulfillment', 'processing', 'shipped', 'delivered', 'cancelled')),
+  status TEXT NOT NULL DEFAULT 'pending_fulfillment' CHECK (status IN ('pending_fulfillment', 'processing', 'shipped', 'delivered', 'cancelled', 'needs_review', 'fulfillment_blocked')),
   stripe_session_id TEXT REFERENCES checkout_sessions(stripe_session_id),
+  error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -153,6 +155,139 @@ CREATE INDEX IF NOT EXISTS idx_generated_designs_has_mockups
 
 The cache fails open: if these columns don't exist yet, the mockup endpoint
 still works — it just regenerates on every request.
+
+## 7. Enable RLS Policies for cart_items
+
+Run the following SQL to enable users to view, add, update, and delete items from their own cart:
+
+```sql
+-- Enable RLS
+ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
+
+-- SELECT Policy
+DROP POLICY IF EXISTS "Users can view own cart items" ON cart_items;
+CREATE POLICY "Users can view own cart items" ON cart_items
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- INSERT Policy
+DROP POLICY IF EXISTS "Users can insert own cart items" ON cart_items;
+CREATE POLICY "Users can insert own cart items" ON cart_items
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- UPDATE Policy
+DROP POLICY IF EXISTS "Users can update own cart items" ON cart_items;
+CREATE POLICY "Users can update own cart items" ON cart_items
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+
+-- DELETE Policy
+DROP POLICY IF EXISTS "Users can delete own cart items" ON cart_items;
+CREATE POLICY "Users can delete own cart items" ON cart_items
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM carts WHERE carts.id = cart_items.cart_id AND carts.user_id = auth.uid()
+    )
+  );
+```
+
+## 8. Add Unique Index on orders.stripe_session_id
+
+To prevent duplicate order processing from Stripe webhook retries, add a unique index constraint:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_stripe_session_id_unique
+ON orders(stripe_session_id)
+WHERE stripe_session_id IS NOT NULL;
+```
+
+## 9. Adjust Orders Status Constraints and Add Columns
+
+This ensures that the status field in the `orders` table supports all required e-commerce statuses and the `error_message` and `order_number` columns exist:
+
+```sql
+-- 1. Ensure error_message and order_number columns exist
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number TEXT DEFAULT 'PM-' || floor(random() * 899999 + 100000)::text UNIQUE;
+
+-- 2. Drop existing status check constraint if it exists and add the updated one
+DO $$
+DECLARE
+    constraint_name_val text;
+BEGIN
+    SELECT con.conname INTO constraint_name_val
+    FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+    WHERE nsp.nspname = 'public'
+      AND rel.relname = 'orders'
+      AND con.contype = 'c'
+      AND pg_get_constraintdef(con.oid) LIKE '%status%';
+
+    IF constraint_name_val IS NOT NULL THEN
+        EXECUTE 'ALTER TABLE orders DROP CONSTRAINT ' || quote_ident(constraint_name_val);
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END $$;
+
+ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN (
+  'pending_fulfillment',
+  'submitted_to_printify',
+  'needs_review',
+  'fulfillment_blocked',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'fulfilled',
+  'failed'
+));
+```
+
+## 10. Create analytics_events table
+
+Create the `analytics_events` table to track marketing/analytics funnel events:
+
+```sql
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  anonymous_id TEXT,
+  event_name TEXT NOT NULL,
+  properties JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Enable RLS
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+
+-- Service role policy
+DROP POLICY IF EXISTS "Service role can manage analytics_events" ON analytics_events;
+CREATE POLICY "Service role can manage analytics_events" ON analytics_events
+  USING (true)
+  WITH CHECK (true);
+
+-- User select policy
+DROP POLICY IF EXISTS "Users can view own analytics events" ON analytics_events;
+CREATE POLICY "Users can view own analytics events" ON analytics_events
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_name ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+```
 
 ## Steps to Apply Migrations
 

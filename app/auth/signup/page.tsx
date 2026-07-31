@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Card, CardBody, CardHeader, CardFooter } from '@/components/Card';
 import { signUp } from '@/lib/auth';
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/app';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', fullName: '' });
@@ -26,13 +28,15 @@ export default function SignUpPage() {
     try {
       setLoading(true);
       await signUp(formData.email, formData.password, formData.fullName);
-      router.push('/auth/verify-email');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+      router.push(`/auth/verify-email${redirect ? `?redirect=${encodeURIComponent(redirect)}` : ''}`);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
       setLoading(false);
     }
   };
+
+  const redirectParam = searchParams.get('redirect');
 
   return (
     <Card className="w-full max-w-md">
@@ -97,11 +101,28 @@ export default function SignUpPage() {
       <CardFooter className="text-center">
         <p className="text-sm text-gray-600">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-700">
+          <Link
+            href={`/auth/signin${redirectParam ? `?redirect=${encodeURIComponent(redirectParam)}` : ''}`}
+            className="font-medium text-blue-600 hover:text-blue-700"
+          >
             Sign in
           </Link>
         </p>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md p-8 text-center bg-white rounded-2xl shadow-lg">
+          <div className="text-4xl animate-pulse">✨</div>
+        </div>
+      }
+    >
+      <SignUpContent />
+    </Suspense>
   );
 }

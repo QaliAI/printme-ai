@@ -10,7 +10,7 @@ export default function VerifyEmailPage() {
       </CardHeader>
       <CardBody className="space-y-4">
         <p className="text-gray-600">Check your email for a verification link. Click the link to activate your account.</p>
-        <p className="text-sm text-gray-500">Didn't receive an email? Check your spam folder or contact support.</p>
+        <p className="text-sm text-gray-500">Didn&apos;t receive an email? Check your spam folder or contact support.</p>
         <Link href="/auth/signin">
           <Button variant="outline" className="w-full">
             Back to Sign In

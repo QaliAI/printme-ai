@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import {
+  getPrintifyClient,
+  type PrintifyProduct,
+} from '@/lib/printify/client';
 
 /**
  * Printify Mockup Generator API with Supabase caching.
@@ -25,25 +29,12 @@ import { z } from 'zod';
 
 const mockupsRequestSchema = z.object({
   imageUrl: z.string().url(),
-  designId: z.string().uuid().optional(),
+  designId: z.string().optional(),
   blueprintIds: z.array(z.number()).optional(),
   forceRefresh: z.boolean().optional().default(false),
 });
 
 const DEFAULT_BLUEPRINTS = [12, 68, 937, 282, 77, 268, 553, 400];
-
-interface PrintifyMockup {
-  src: string;
-  position: string;
-  is_default: boolean;
-  variant_ids?: number[];
-}
-
-interface PrintifyDraftProductResponse {
-  id: string;
-  title: string;
-  images?: PrintifyMockup[];
-}
 
 interface CachedMockup {
   blueprintId: number;
@@ -53,37 +44,10 @@ interface CachedMockup {
   error?: string;
 }
 
-async function printifyRequest<T>(
-  path: string,
-  options: { method?: string; body?: unknown } = {}
-): Promise<T> {
-  const token = process.env.PRINTIFY_API_TOKEN;
-  if (!token) throw new Error('PRINTIFY_API_TOKEN not configured');
-
-  const res = await fetch(`https://api.printify.com/v1${path}`, {
-    method: options.method || 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Printify API ${res.status}: ${errText}`);
-  }
-
-  return res.json() as Promise<T>;
-}
-
 async function uploadImageToPrintify(imageUrl: string): Promise<string> {
-  const result = await printifyRequest<{ id: string }>('/uploads/images.json', {
-    method: 'POST',
-    body: {
-      file_name: `design-${Date.now()}.png`,
-      url: imageUrl,
-    },
+  const result = await getPrintifyClient().uploadImage({
+    fileName: `design-${Date.now()}.png`,
+    url: imageUrl,
   });
   return result.id;
 }
@@ -91,72 +55,75 @@ async function uploadImageToPrintify(imageUrl: string): Promise<string> {
 async function getFirstPrintProvider(blueprintId: number): Promise<{
   providerId: number;
   variantId: number;
+  position: string;
+  decorationMethod?: string;
 }> {
-  const providers = await printifyRequest<Array<{ id: number }>>(
-    `/catalog/blueprints/${blueprintId}/print_providers.json`
-  );
+  const client = getPrintifyClient();
+  const providers = await client.listPrintProviders(blueprintId);
   if (!providers.length) throw new Error(`No print providers for blueprint ${blueprintId}`);
 
   const providerId = providers[0].id;
-  const variantsData = await printifyRequest<{
-    variants: Array<{ id: number }>;
-  }>(`/catalog/blueprints/${blueprintId}/print_providers/${providerId}/variants.json`);
+  const variantsData = await client.getProviderVariants(blueprintId, providerId);
 
   if (!variantsData.variants.length) {
     throw new Error(`No variants for blueprint ${blueprintId} provider ${providerId}`);
   }
 
+  const frontVariant = variantsData.variants.find((variant) =>
+    variant.placeholders.some((placeholder) => placeholder.position === 'front')
+  );
+  const variant = frontVariant ?? variantsData.variants[0];
+  const placeholder =
+    variant.placeholders.find((candidate) => candidate.position === 'front') ??
+    variant.placeholders[0];
+  if (!placeholder) {
+    throw new Error(
+      `No printable placeholders for blueprint ${blueprintId} provider ${providerId}`
+    );
+  }
+
   return {
     providerId,
-    variantId: variantsData.variants[0].id,
+    variantId: variant.id,
+    position: placeholder.position,
+    decorationMethod: placeholder.decoration_method,
   };
 }
 
 async function createDraftProductWithDesign(
-  shopId: string,
   blueprintId: number,
   imageId: string
-): Promise<PrintifyDraftProductResponse> {
-  const { providerId, variantId } = await getFirstPrintProvider(blueprintId);
+): Promise<PrintifyProduct> {
+  const { providerId, variantId, position, decorationMethod } =
+    await getFirstPrintProvider(blueprintId);
 
-  return printifyRequest<PrintifyDraftProductResponse>(
-    `/shops/${shopId}/products.json`,
-    {
-      method: 'POST',
-      body: {
-        title: `Preview ${Date.now()}`,
-        description: 'Auto-generated mockup preview',
-        blueprint_id: blueprintId,
-        print_provider_id: providerId,
-        variants: [
+  return getPrintifyClient().createProduct({
+    title: `Preview ${Date.now()}`,
+    description: 'Auto-generated mockup preview',
+    blueprint_id: blueprintId,
+    print_provider_id: providerId,
+    variants: [{ id: variantId, price: 2000, is_enabled: true }],
+    print_areas: [
+      {
+        variant_ids: [variantId],
+        placeholders: [
           {
-            id: variantId,
-            price: 2000,
-            is_enabled: true,
-          },
-        ],
-        print_areas: [
-          {
-            variant_ids: [variantId],
-            placeholders: [
+            position,
+            decoration_method: decorationMethod,
+            images: [
               {
-                position: 'front',
-                images: [
-                  {
-                    id: imageId,
-                    x: 0.5,
-                    y: 0.5,
-                    scale: 1,
-                    angle: 0,
-                  },
-                ],
+                id: imageId,
+                x: 0.5,
+                y: 0.5,
+                scale: 1,
+                angle: 0,
               },
             ],
           },
         ],
       },
-    }
-  );
+    ],
+  });
 }
 
 /**
@@ -184,6 +151,7 @@ async function loadCachedMockups(
   mockups: CachedMockup[] | null;
   imageId: string | null;
 } | null> {
+  if (designId.startsWith('guest-design-')) return null;
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
@@ -221,6 +189,7 @@ async function saveCachedMockups(
   imageId: string,
   mockups: CachedMockup[]
 ): Promise<void> {
+  if (designId.startsWith('guest-design-')) return;
   const supabase = getSupabaseAdmin();
   if (!supabase) return;
 
@@ -245,8 +214,7 @@ export async function POST(req: NextRequest) {
     const { imageUrl, designId, blueprintIds = DEFAULT_BLUEPRINTS, forceRefresh } =
       mockupsRequestSchema.parse(body);
 
-    const shopId = process.env.NEXT_PUBLIC_PRINTIFY_SHOP_ID || process.env.PRINTIFY_SHOP_ID;
-    if (!shopId) {
+    if (!process.env.PRINTIFY_SHOP_ID) {
       return NextResponse.json(
         { error: 'PRINTIFY_SHOP_ID not configured' },
         { status: 500 }
@@ -270,7 +238,7 @@ export async function POST(req: NextRequest) {
 
     // ── Step 2: Create a draft product per blueprint in parallel ──
     const settledResults = await Promise.allSettled(
-      blueprintIds.map((id) => createDraftProductWithDesign(shopId, id, imageId))
+      blueprintIds.map((id) => createDraftProductWithDesign(id, imageId))
     );
 
     // ── Step 3: Shape the response ────────────────────────────────
@@ -309,9 +277,7 @@ export async function POST(req: NextRequest) {
     if (process.env.PRINTIFY_AUTO_CLEANUP === 'true' && productIdsToCleanup.length > 0) {
       void Promise.allSettled(
         productIdsToCleanup.map((productId) =>
-          printifyRequest(`/shops/${shopId}/products/${productId}.json`, {
-            method: 'DELETE',
-          }).catch((err) => {
+          getPrintifyClient().deleteProduct(productId).catch((err) => {
             console.warn(`Cleanup failed for product ${productId}:`, err);
           })
         )

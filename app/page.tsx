@@ -4,8 +4,14 @@ import { ProductShowcase } from '@/components/landing/ProductShowcase';
 import { StylePresets } from '@/components/landing/StylePresets';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTASection } from '@/components/landing/CTASection';
+import { HomepageV2 } from '@/components/home-v2/HomepageV2';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 export default function Home() {
+  if (isReviewFeatureEnabled('homepage')) {
+    return <HomepageV2 />;
+  }
+
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Hero Section with Animated Phone-to-Product Transformation */}

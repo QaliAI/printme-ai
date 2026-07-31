@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/Button';
@@ -29,7 +29,7 @@ const PARTICLES = Array.from({ length: 20 }, (_, i) => {
   };
 });
 
-export default function PreviewPage() {
+function PreviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const uploadId = searchParams.get('upload');
@@ -37,6 +37,7 @@ export default function PreviewPage() {
 
   const [upload, setUpload] = useState<UserUpload | null>(null);
   const [design, setDesign] = useState<GeneratedDesign | null>(null);
+  const [stylePreset, setStylePreset] = useState<{ slug: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,27 +80,55 @@ export default function PreviewPage() {
 
   const fetchData = async () => {
     try {
-      const { data: uploadData, error: uploadError } = await supabase
-        .from('user_uploads')
-        .select('*')
-        .eq('id', uploadId)
-        .single();
+      if (styleId) {
+        const { data: styleData } = await supabase
+          .from('style_presets')
+          .select('*')
+          .eq('id', styleId)
+          .single();
+        if (styleData) {
+          setStylePreset(styleData);
+        }
+      }
 
-      if (uploadError) throw uploadError;
-      setUpload(uploadData);
-
-      const { data: designData } = await supabase
-        .from('generated_designs')
-        .select('*')
-        .eq('upload_id', uploadId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (designData) {
-        setDesign(designData);
+      if (uploadId?.startsWith('guest-upload-')) {
+        const imageUrl = searchParams.get('imageUrl') || '';
+        const guestUpload: UserUpload = {
+          id: uploadId,
+          user_id: '',
+          style_id: styleId || '',
+          original_url: imageUrl,
+          file_size: 1000000,
+          created_at: new Date().toISOString(),
+          original_file_name: 'upload.png',
+          width: 1000,
+          height: 1000,
+        } as unknown as UserUpload;
+        setUpload(guestUpload);
+        await generateDesign(guestUpload);
       } else {
-        await generateDesign(uploadData);
+        const { data: uploadData, error: uploadError } = await supabase
+          .from('user_uploads')
+          .select('*')
+          .eq('id', uploadId)
+          .single();
+
+        if (uploadError) throw uploadError;
+        setUpload(uploadData);
+
+        const { data: designData } = await supabase
+          .from('generated_designs')
+          .select('*')
+          .eq('upload_id', uploadId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (designData) {
+          setDesign(designData);
+        } else {
+          await generateDesign(uploadData);
+        }
       }
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -114,7 +143,6 @@ export default function PreviewPage() {
       router.push('/app/create/style');
       return;
     }
-    // Data fetching pattern - intentionally triggers setState inside effect
     // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
     fetchData();
   }, [uploadId, styleId, router]);
@@ -212,19 +240,56 @@ export default function PreviewPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8 text-center"
         >
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 mb-4 rounded-full bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-700 uppercase tracking-wider">
+            <span>Step 3 of 3</span>
+            <span className="w-1 h-1 rounded-full bg-indigo-300" />
+            <span>AI Transformation</span>
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
             Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">AI Design</span>
           </h1>
-          <p className="text-lg text-gray-600">Slide to see the magic transformation</p>
+          <p className="text-lg text-gray-600">Slide to compare your original photo and the new masterpiece</p>
         </motion.div>
 
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg"
+            className="mb-8 p-6 bg-red-50 border border-red-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
           >
-            <p className="text-sm text-red-700">{error}</p>
+            <div>
+              <h3 className="font-bold text-red-800 mb-1">AI Generation Encountered an Issue</h3>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+            <div className="flex gap-3 w-full md:w-auto">
+              <Button onClick={() => generateDesign()} size="sm" className="flex-1 md:flex-none">
+                Retry Generation
+              </Button>
+              <Button onClick={() => router.push('/app/create/style')} variant="outline" size="sm" className="flex-1 md:flex-none">
+                Choose Another Style
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {stylePreset?.slug === 'clean-cutout' && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-6 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4"
+          >
+            <div className="flex-1">
+              <h3 className="font-bold text-emerald-800 mb-1 flex items-center gap-1.5 text-sm">
+                <span>✂️</span> Clean Cutout Preview
+              </h3>
+              <p className="text-xs text-emerald-700 leading-relaxed">
+                Best for stickers, shirts, mugs, and logos.
+                <strong className="block mt-1">Note:</strong> Final cleanup may be reviewed and manually perfected by our professional design team before print to guarantee crisp, clean edges on your physical products!
+              </p>
+            </div>
+            <div className="bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider text-center flex-shrink-0">
+              Designer Assisted
+            </div>
           </motion.div>
         )}
 
@@ -344,6 +409,20 @@ export default function PreviewPage() {
             transition={{ delay: 0.2 }}
             className="space-y-4"
           >
+            {/* What's next card */}
+            <Card className="backdrop-blur-xl bg-indigo-50/50 border-indigo-100 shadow-md">
+              <CardBody className="p-5">
+                <h3 className="font-bold text-indigo-900 mb-3 flex items-center gap-2 text-sm">
+                  <span>🚀</span> What&apos;s Next?
+                </h3>
+                <ol className="space-y-3.5 text-xs text-indigo-950/80 list-decimal pl-4 leading-relaxed font-medium">
+                  <li>Review the product mockups below</li>
+                  <li>Click &ldquo;Choose Products&rdquo; to select sizes, colors, and quantities</li>
+                  <li>Add them to your cart and complete your order securely</li>
+                </ol>
+              </CardBody>
+            </Card>
+
             {/* Info card */}
             <Card className="backdrop-blur-xl bg-white/70 border-white/40 shadow-lg">
               <CardBody>
@@ -439,7 +518,7 @@ export default function PreviewPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 mt-8"
+          className="flex flex-col sm:flex-row gap-4 mt-8 border-t border-slate-200 pt-6"
         >
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
@@ -451,13 +530,39 @@ export default function PreviewPage() {
               {regenerating ? '✨ Generating...' : '🔄 Try Different Style'}
             </Button>
           </motion.div>
+          {design?.design_url && (
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={() => {
+                  let shareUrl = '';
+                  if (design.id.startsWith('guest-design-')) {
+                    shareUrl = `${window.location.origin}/designs/guest?designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`;
+                  } else {
+                    shareUrl = `${window.location.origin}/designs/${design.id}`;
+                  }
+                  navigator.clipboard.writeText(shareUrl);
+                  alert('Share link copied to clipboard! 🚀');
+                }}
+                variant="outline"
+                className="w-full sm:w-auto border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+              >
+                🔗 Share Design
+              </Button>
+            </motion.div>
+          )}
           <div className="flex-1" />
           <motion.div
             whileHover={!regenerating && design?.design_url ? { scale: 1.02 } : {}}
             whileTap={!regenerating && design?.design_url ? { scale: 0.98 } : {}}
           >
             <Button
-              onClick={() => router.push(`/app/create/products?design=${design?.id}`)}
+              onClick={() => {
+                if (design?.id.startsWith('guest-design-')) {
+                  router.push(`/app/create/products?design=${design.id}&designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`);
+                } else {
+                  router.push(`/app/create/products?design=${design?.id}`);
+                }
+              }}
               disabled={!design?.design_url || regenerating}
               className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8"
             >
@@ -466,6 +571,49 @@ export default function PreviewPage() {
           </motion.div>
         </motion.div>
       </Container>
+
+      {/* Sticky Bottom CTA for Mobile */}
+      <AnimatePresence>
+        {design?.design_url && !regenerating && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200 p-4 md:hidden flex items-center justify-between shadow-2xl"
+          >
+            <div>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Design Ready</p>
+              <p className="text-sm font-black text-indigo-900">Choose Products</p>
+            </div>
+            <Button
+              onClick={() => {
+                if (design?.id.startsWith('guest-design-')) {
+                  router.push(`/app/create/products?design=${design.id}&designUrl=${encodeURIComponent(design.design_url || '')}&style=${styleId}&imageUrl=${encodeURIComponent(upload.original_url || '')}`);
+                } else {
+                  router.push(`/app/create/products?design=${design?.id}`);
+                }
+              }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-lg"
+            >
+              Select Products →
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+export default function PreviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+          <div className="text-6xl animate-pulse">✨</div>
+        </div>
+      }
+    >
+      <PreviewContent />
+    </Suspense>
   );
 }

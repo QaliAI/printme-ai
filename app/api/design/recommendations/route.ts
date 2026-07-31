@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { z } from 'zod';
 
 const recommendationsSchema = z.object({
-  designId: z.string().uuid(),
+  designId: z.string(),
   limit: z.number().min(1).max(10).optional().default(3),
 });
 
@@ -160,47 +160,48 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { designId, limit } = recommendationsSchema.parse(body);
 
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Fetch design with related upload + style
-    const { data: design, error: designError } = await supabase
-      .from('generated_designs')
-      .select(`
-        id,
-        design_url,
-        style_preset_id,
-        upload:user_uploads(
-          id,
-          width,
-          height
-        ),
-        style:style_presets(
-          id,
-          name,
-          description
-        )
-      `)
-      .eq('id', designId)
-      .single();
+    let aspect = 1.0;
+    let styleName = '';
 
-    if (designError || !design) {
-      return NextResponse.json({ error: 'Design not found' }, { status: 404 });
+    if (!designId.startsWith('guest-design-')) {
+      // Fetch design with related upload + style
+      const { data: design, error: designError } = await supabase
+        .from('generated_designs')
+        .select(`
+          id,
+          design_url,
+          style_preset_id,
+          upload:user_uploads(
+            id,
+            width,
+            height
+          ),
+          style:style_presets(
+            id,
+            name,
+            description
+          )
+        `)
+        .eq('id', designId)
+        .single();
+
+      if (designError || !design) {
+        return NextResponse.json({ error: 'Design not found' }, { status: 404 });
+      }
+
+      // Calculate aspect ratio
+      const upload = Array.isArray(design.upload) ? design.upload[0] : design.upload;
+      const style = Array.isArray(design.style) ? design.style[0] : design.style;
+      const width = upload?.width || 1000;
+      const height = upload?.height || 1000;
+      aspect = width / height;
+      styleName = style?.name || '';
     }
-
-    // Calculate aspect ratio
-    const upload = Array.isArray(design.upload) ? design.upload[0] : design.upload;
-    const style = Array.isArray(design.style) ? design.style[0] : design.style;
-    const width = upload?.width || 1000;
-    const height = upload?.height || 1000;
-    const aspect = width / height;
 
     // Fetch all active products
     const { data: products, error: productsError } = await supabase
@@ -213,13 +214,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Score and diversify
-    const scored = scoreProductsForDesign(products, aspect, style?.name || '');
+    const scored = scoreProductsForDesign(products, aspect, styleName);
     const recommended = diversify(scored, limit);
 
     return NextResponse.json({
       designId,
       aspect,
-      styleName: style?.name,
+      styleName: styleName,
       recommendations: recommended.map((r) => ({
         ...r.product,
         recommendation_reason: r.reason,

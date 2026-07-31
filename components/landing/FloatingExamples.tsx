@@ -4,6 +4,13 @@ import { motion } from 'framer-motion';
 import { Container } from '@/components/Container';
 import { BeforeAfterSlider } from '@/components/BeforeAfterSlider';
 import { TRANSFORMATION_EXAMPLES } from '@/lib/assets';
+import Link from 'next/link';
+
+const STYLE_NAME_TO_SLUG: Record<string, string> = {
+  'cartoon': 'cartoon-gift-style',
+  'oil painting': 'oil-painting-portrait',
+  'watercolor': 'watercolor-memory',
+};
 
 export function FloatingExamples() {
   return (
@@ -30,59 +37,65 @@ export function FloatingExamples() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {TRANSFORMATION_EXAMPLES.map((example, i) => (
-            <motion.div
-              key={example.label}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-50px' }}
-              transition={{ delay: i * 0.12 }}
-              className="group"
-            >
-              <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-500 ring-1 ring-slate-200">
-                {/* Interactive drag-to-compare slider */}
-                <BeforeAfterSlider
-                  beforeImage={example.photo}
-                  afterImage={example.afterPhoto}
-                  beforeLabel="Original"
-                  afterLabel={example.style}
-                  initialPosition={48}
-                  autoHint={i === 0}
-                  className="!rounded-none !shadow-none"
-                />
+          {TRANSFORMATION_EXAMPLES.map((example, i) => {
+            const dbSlug = STYLE_NAME_TO_SLUG[example.style.toLowerCase()] || 'cartoon-gift-style';
+            return (
+              <motion.div
+                key={example.label}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ delay: i * 0.12 }}
+                className="group"
+              >
+                <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-shadow duration-500 ring-1 ring-slate-200">
+                  {/* Interactive drag-to-compare slider */}
+                  <BeforeAfterSlider
+                    beforeImage={example.photo}
+                    afterImage={example.afterPhoto}
+                    beforeLabel="Original"
+                    afterLabel={example.style}
+                    initialPosition={48}
+                    autoHint={i === 0}
+                    className="!rounded-none !shadow-none"
+                  />
 
-                {/* Caption row */}
-                <div className="p-5 flex items-center justify-between bg-white border-t border-slate-100">
-                  <div>
-                    <h3 className="text-slate-900 font-semibold tracking-tight">
-                      {example.label}
-                    </h3>
-                    <p className="text-[10px] text-slate-500 mt-0.5 tracking-widest uppercase">
-                      {example.style}
-                    </p>
-                  </div>
-                  <motion.div
-                    className="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-gradient-to-br group-hover:from-rose-500 group-hover:to-purple-600 flex items-center justify-center transition-colors"
-                    whileHover={{ x: 2 }}
+                  {/* Caption row */}
+                  <Link
+                    href={`/app/create/style?select=${dbSlug}`}
+                    className="p-5 flex items-center justify-between bg-white border-t border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors block"
                   >
-                    <svg
-                      className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <div>
+                      <h3 className="text-slate-900 font-semibold tracking-tight">
+                        {example.label}
+                      </h3>
+                      <p className="text-[10px] text-slate-500 mt-0.5 tracking-widest uppercase">
+                        {example.style}
+                      </p>
+                    </div>
+                    <motion.div
+                      className="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-gradient-to-br group-hover:from-rose-500 group-hover:to-purple-600 flex items-center justify-center transition-colors"
+                      whileHover={{ x: 2 }}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </motion.div>
+                      <svg
+                        className="w-4 h-4 text-slate-600 group-hover:text-white transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </motion.div>
+                  </Link>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Helper text */}

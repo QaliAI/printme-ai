@@ -1,0 +1,80 @@
+import 'server-only';
+
+import type { DesignFilter } from './models';
+import {
+  SeedDesignRepository,
+  SupabaseDesignRepository,
+  type DesignRepository,
+} from './repository';
+import { listPublishedStudioE2EDesigns } from '@/lib/studio/testing/e2e-harness';
+import { isLaunchRelease } from '@/lib/feature-flags';
+
+export class DesignCatalogService {
+  constructor(
+    private readonly repository: DesignRepository,
+    private readonly developmentFallback?: DesignRepository,
+  ) {}
+
+  private async read<T>(operation: (repository: DesignRepository) => Promise<T>) {
+    try {
+      return await operation(this.repository);
+    } catch (error) {
+      if (!this.developmentFallback) throw error;
+      return operation(this.developmentFallback);
+    }
+  }
+
+  async listPublished(filter?: DesignFilter) {
+    return this.read((repository) => repository.listPublished(filter));
+  }
+
+  async findPublishedBySlug(slug: string) {
+    const studio = listPublishedStudioE2EDesigns().find(
+      (design) => design.slug === slug,
+    );
+    if (studio) return studio;
+    return this.read((repository) => repository.findPublishedBySlug(slug));
+  }
+
+  listCollections() {
+    return this.read((repository) => repository.listCollections());
+  }
+
+  findCollectionBySlug(slug: string) {
+    return this.read((repository) => repository.findCollectionBySlug(slug));
+  }
+
+  listDrops() {
+    return this.read((repository) => repository.listDrops());
+  }
+
+  findDropBySlug(slug: string) {
+    return this.read((repository) => repository.findDropBySlug(slug));
+  }
+}
+
+let designCatalogService: DesignCatalogService | null = null;
+
+export function getDesignCatalogService() {
+  if (!designCatalogService) {
+    const seed = new SeedDesignRepository();
+    const databaseEnabled =
+      process.env.COMMERCE_DESIGNS_DATABASE_ENABLED === 'true';
+    const allowFixtureFallback =
+      process.env.VERCEL_ENV !== 'production' || isLaunchRelease();
+
+    if (!databaseEnabled && !allowFixtureFallback) {
+      throw new Error(
+        'Curated design database access is required in production.',
+      );
+    }
+
+    designCatalogService = databaseEnabled
+      ? new DesignCatalogService(
+          new SupabaseDesignRepository(),
+          allowFixtureFallback ? seed : undefined,
+        )
+      : new DesignCatalogService(seed);
+  }
+  return designCatalogService;
+}

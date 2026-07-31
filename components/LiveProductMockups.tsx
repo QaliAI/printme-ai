@@ -273,7 +273,7 @@ function ProductMockupCard({
                 <img
                   src={designUrl}
                   alt="Your design"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover mix-blend-multiply"
                 />
               </div>
             </motion.div>

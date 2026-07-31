@@ -6,11 +6,25 @@ import { Container } from '@/components/Container';
 import { Card, CardBody, CardHeader } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { getFirstOrValue, type Json } from '@/lib/types';
+
+interface OrderProduct {
+  id: string;
+  name: string;
+  emoji?: string;
+}
+
+interface OrderProductVariant {
+  id: string;
+  size?: string;
+  color?: string;
+  product?: OrderProduct | OrderProduct[];
+}
 
 interface OrderItem {
   id: string;
   quantity: number;
-  product_variant?: any;
+  product_variant?: OrderProductVariant | OrderProductVariant[];
 }
 
 interface Order {
@@ -20,7 +34,7 @@ interface Order {
   total_amount: number;
   status: string;
   fulfillment_status?: string;
-  shipping_address?: any;
+  shipping_address?: Json;
   order_items: OrderItem[];
 }
 
@@ -29,11 +43,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     try {
       const { data, error: fetchError } = await supabase
         .from('orders')
@@ -65,40 +75,54 @@ export default function OrdersPage() {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setOrders(data || []);
+      setOrders((data as unknown as Order[]) || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
       setError('Failed to load orders');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    // Fetching the initial server-backed collection is the effect's purpose.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrders();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-50 border-yellow-200';
-      case 'completed':
+        return 'bg-amber-50/30 border-amber-200';
+      case 'paid':
+      case 'processing':
+        return 'bg-indigo-50/30 border-indigo-200';
       case 'shipped':
-        return 'bg-green-50 border-green-200';
+      case 'delivered':
+        return 'bg-emerald-50/30 border-emerald-200';
       case 'cancelled':
-        return 'bg-red-50 border-red-200';
+      case 'failed':
+        return 'bg-rose-50/30 border-rose-200';
       default:
-        return 'bg-gray-50 border-gray-200';
+        return 'bg-slate-50/30 border-slate-200';
     }
   };
 
   const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'text-yellow-700 bg-yellow-100';
-      case 'completed':
+        return 'text-amber-700 bg-amber-50 border-amber-200/50';
+      case 'paid':
+      case 'processing':
+        return 'text-indigo-700 bg-indigo-50 border-indigo-200/50';
       case 'shipped':
-        return 'text-green-700 bg-green-100';
+      case 'delivered':
+        return 'text-emerald-700 bg-emerald-50 border-emerald-200/50';
       case 'cancelled':
-        return 'text-red-700 bg-red-100';
+      case 'failed':
+        return 'text-rose-700 bg-rose-50 border-rose-200/50';
       default:
-        return 'text-gray-700 bg-gray-100';
+        return 'text-slate-700 bg-slate-50 border-slate-200/50';
     }
   };
 
@@ -130,7 +154,7 @@ export default function OrdersPage() {
       {orders.length === 0 ? (
         <Card>
           <CardBody className="text-center py-12">
-            <p className="text-gray-600 mb-6">You haven't placed any orders yet.</p>
+            <p className="text-gray-600 mb-6">You haven&apos;t placed any orders yet.</p>
             <Link href="/app">
               <Button>Start Creating</Button>
             </Link>
@@ -143,7 +167,7 @@ export default function OrdersPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Order {order.order_number}</h3>
+                    <h3 className="font-semibold text-gray-900">Order {order.order_number || order.id.slice(0, 8)}</h3>
                     <p className="text-sm text-gray-600 mt-1">
                       {new Date(order.created_at).toLocaleDateString()}
                     </p>
@@ -157,8 +181,8 @@ export default function OrdersPage() {
               <CardBody>
                 <div className="mb-4">
                   {order.order_items.map((item) => {
-                    const product = (item.product_variant as any)?.product;
-                    const variant = item.product_variant as any;
+                    const variant = getFirstOrValue(item.product_variant);
+                    const product = getFirstOrValue(variant?.product);
                     return (
                       <div key={item.id} className="flex justify-between text-sm py-2">
                         <div>

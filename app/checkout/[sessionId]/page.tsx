@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { Card, CardBody } from '@/components/Card';
 import { Container } from '@/components/Container';
@@ -23,7 +22,6 @@ interface Order {
 }
 
 export default function CheckoutPage({ params }: CheckoutPageProps) {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -111,33 +109,73 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
         ) : (
           <>
             <div className="text-center mb-8">
-              <div className="text-5xl mb-4">✅</div>
-              <h1 className="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
-              <p className="text-gray-600 mt-2">Thank you for your purchase</p>
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-500 border border-emerald-100 flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm animate-bounce">
+                ✓
+              </div>
+              <h1 className="text-3xl font-extrabold text-gray-900">Order Confirmed!</h1>
+              <p className="text-slate-600 mt-2 font-medium">Thank you for shopping with PrintMe.ai</p>
             </div>
 
-            <Card className="mb-8 bg-green-50 border-green-200">
-              <CardBody>
-                <p className="text-sm text-gray-600 mb-2">Order Number:</p>
-                <p className="font-mono font-semibold text-gray-900 mb-4">
-                  #{order.id.slice(0, 8).toUpperCase()}
-                </p>
-                <p className="text-sm text-gray-600 mb-2">Order Total:</p>
-                <p className="text-xl font-bold text-gray-900 mb-4">
-                  ${(order.total_amount / 100).toFixed(2)}
-                </p>
-                <p className="text-sm text-gray-600">
-                  You will receive an email confirmation with order details and shipping information.
-                </p>
+            <Card className="mb-8 border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-teal-50/50 shadow-md">
+              <CardBody className="p-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Order Number</p>
+                    <p className="font-mono font-bold text-slate-900 text-lg">
+                      {order.order_number || `PM-${order.id.slice(0, 8).toUpperCase()}`}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Amount Paid</p>
+                    <p className="font-extrabold text-slate-900 text-lg">
+                      ${(order.total_amount / 100).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="border-t border-emerald-200/50 mt-4 pt-4 text-xs text-slate-600 leading-relaxed font-medium">
+                  📧 A receipt and order confirmation email has been sent to your inbox. We will keep you updated as your order progresses.
+                </div>
+              </CardBody>
+            </Card>
+
+            {/* Next Steps Timeline */}
+            <Card className="mb-8 shadow-md border-white/40 bg-white/70 backdrop-blur-xl">
+              <CardBody className="p-6">
+                <h3 className="font-bold text-slate-800 text-sm mb-5">📦 What Happens Next?</h3>
+                <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                  <div className="flex gap-4 relative">
+                    <span className="w-6.5 h-6.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold ring-4 ring-white shrink-0">1</span>
+                    <div className="text-xs mt-0.5">
+                      <p className="font-bold text-slate-800">Design Quality Review</p>
+                      <p className="text-slate-500 mt-0.5">Our team does a final resolution and placement check on your AI design (takes 2-4 hours).</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 relative">
+                    <span className="w-6.5 h-6.5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold ring-4 ring-white shrink-0">2</span>
+                    <div className="text-xs mt-0.5">
+                      <p className="font-bold text-slate-800">Custom Printing & Packing</p>
+                      <p className="text-slate-500 mt-0.5">Your personalized items are individually handcrafted, printed, and packed (takes 2-3 business days).</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 relative">
+                    <span className="w-6.5 h-6.5 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xs font-bold ring-4 ring-white shrink-0">3</span>
+                    <div className="text-xs mt-0.5">
+                      <p className="font-bold text-slate-500">Tracked Shipping</p>
+                      <p className="text-slate-500 mt-0.5">We ship your package and email you a tracking number to follow it straight to your door.</p>
+                    </div>
+                  </div>
+                </div>
               </CardBody>
             </Card>
 
             <div className="space-y-3">
-              <Link href="/app/orders">
-                <Button className="w-full">View My Orders</Button>
+              <Link href="/app/orders" className="block w-full">
+                <Button className="w-full py-3 rounded-xl font-bold">Track Order Status</Button>
               </Link>
-              <Link href="/app">
-                <Button variant="outline" className="w-full">
+              <Link href="/app" className="block w-full">
+                <Button variant="outline" className="w-full py-3 rounded-xl font-bold">
                   Back to Dashboard
                 </Button>
               </Link>

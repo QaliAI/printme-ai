@@ -67,11 +67,11 @@ export function HeroAnimation() {
             </motion.div>
 
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-[1.05]">
-              Snap.<br />
+              Turn Photos Into<br />
               <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 bg-clip-text text-transparent">
-                Transform.
+                Ready-to-Gift
               </span><br />
-              Print.
+              Custom Prints.
             </h1>
 
             <motion.p
@@ -80,7 +80,7 @@ export function HeroAnimation() {
               transition={{ delay: 0.4 }}
               className="text-xl text-slate-600 max-w-lg leading-relaxed"
             >
-              Turn any photo into stunning custom prints on shirts, mugs, posters & more. AI does the magic in 90 seconds.
+              Transform any photo into gorgeous custom prints on stretched canvas, apparel, mugs & phone cases. AI does the art transformation in 90 seconds.
             </motion.p>
 
             <motion.div
@@ -89,13 +89,13 @@ export function HeroAnimation() {
               transition={{ delay: 0.5 }}
               className="flex flex-col sm:flex-row gap-3"
             >
-              <Link href="/auth/signup" className="w-full sm:w-auto">
+              <Link href="/app/create/style" className="w-full sm:w-auto">
                 <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                   <Button
                     size="lg"
                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 transition-shadow"
                   >
-                    Start Creating Free
+                    ✨ Start Creating
                   </Button>
                 </motion.div>
               </Link>
@@ -110,6 +110,20 @@ export function HeroAnimation() {
                   </Button>
                 </motion.div>
               </Link>
+            </motion.div>
+
+            {/* Trust signals below CTA */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium"
+            >
+              <span className="flex items-center gap-1">🔒 Stripe Secure Payment</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">✨ 100% Quality Guarantee</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">📦 Ships Worldwide with Tracking</span>
             </motion.div>
 
             <motion.div
