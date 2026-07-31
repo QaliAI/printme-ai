@@ -43,10 +43,9 @@ test('approved product pages expose pricing and readiness without false promises
   await expect(
     page.getByText('Returns and reprints', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Create Yours' })).toHaveAttribute(
-    'href',
-    '/create?product=everyday-tee',
-  );
+  await expect(
+    page.locator('section').getByRole('link', { name: 'Create Yours' }),
+  ).toHaveAttribute('href', '/create?product=everyday-tee');
 });
 
 test('shareable design URL opens the same configurator', async ({ page }) => {

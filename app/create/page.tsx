@@ -6,7 +6,7 @@ import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
 
 export const metadata = {
-  title: 'Create a custom print | PrintMe',
+  title: 'Create a custom print',
   description:
     'Upload once, prepare your artwork, and position it on an approved PrintMe product.',
 };
