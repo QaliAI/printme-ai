@@ -8,7 +8,7 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: 'Turn photos into keepsakes.',
+      name: 'Turn a favorite photo into something worth keeping.',
     }),
   ).toBeVisible();
   await expect(
@@ -17,11 +17,16 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   await expect(
     page.getByRole('link', { name: 'Shop Designs' }).first(),
   ).toBeVisible();
-  await expect(page.getByText('Approved products start at $26')).toBeVisible();
+  await expect(page.getByText('Custom products start at $26')).toBeVisible();
 
   const heroSwitcher = page.getByTestId('home-hero-switcher');
   await page.getByTestId('home-hero-product-everyday-tee').click();
   await expect(heroSwitcher).toContainText('Everyday Tee from $34');
+  await page.getByTestId('home-hero-product-keepsake-mug').click();
+  await expect(heroSwitcher).toContainText('Keepsake Mug from $26');
+  await expect(
+    heroSwitcher.getByRole('img', { name: /personalized ceramic mug/i }),
+  ).toBeVisible();
 
   const showcase = page.getByTestId('home-commerce-showcase');
   await expect(showcase).toContainText('Sunday Sidekick');
