@@ -6,6 +6,7 @@ export type ReviewFeature =
 
 const sprint3ReviewBranch =
   'feature/unified-commerce-studio-sprint-3';
+const textThreadReviewBranch = 'feature/text-thread-designer';
 const launchReleaseBranches = new Set([
   'release/launch-safe-homepage-v2-2026-07-31',
   'master',
@@ -30,6 +31,12 @@ export function isReviewFeatureEnabled(feature: ReviewFeature) {
     process.env.VERCEL_ENV === 'preview' &&
     process.env.VERCEL_GIT_COMMIT_REF === sprint3ReviewBranch;
   if (sprint3Preview) return true;
+
+  const textThreadPreview =
+    feature === 'unified-create' &&
+    process.env.VERCEL_ENV === 'preview' &&
+    process.env.VERCEL_GIT_COMMIT_REF === textThreadReviewBranch;
+  if (textThreadPreview) return true;
 
   // The launch release and its canonical master deployment deliberately enable
   // customer-facing surfaces. Studio remains explicit-only because it requires
