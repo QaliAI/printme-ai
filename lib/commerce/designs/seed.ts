@@ -87,6 +87,48 @@ const fall2026Metadata: Record<
     merchandisingPriority: 91,
     filters: ['new', 'bestsellers'],
   },
+  'design-haunted-household': {
+    slug: 'haunted-household',
+    keywords: ['haunted household', 'family ghost', 'halloween pet', 'custom halloween', 'spooky family', 'ghosts'],
+    compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
+    merchandisingPriority: 105,
+    filters: ['new', 'trending'],
+  },
+  'design-library-of-lost-hours': {
+    slug: 'library-of-lost-hours',
+    keywords: ['library of lost hours', 'book club', 'antique library card', 'halloween mug', 'dark academia', 'gothic'],
+    compatibleProductIds: ['keepsake-mug', 'gallery-poster', 'everyday-tee'],
+    merchandisingPriority: 104,
+    filters: ['new', 'trending'],
+  },
+  'design-midnight-hayride': {
+    slug: 'midnight-hayride',
+    keywords: ['midnight hayride', 'western halloween', 'cowboy ghost', 'country music', 'retro halloween', 'hayride'],
+    compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
+    merchandisingPriority: 103,
+    filters: ['new', 'trending'],
+  },
+  'design-night-garden-society': {
+    slug: 'night-garden-society',
+    keywords: ['night garden society', 'luna moth', 'dark romantic', 'botanical', 'autumn flora', 'celestial'],
+    compatibleProductIds: ['gallery-poster', 'everyday-tee', 'keepsake-mug'],
+    merchandisingPriority: 102,
+    filters: ['new', 'trending'],
+  },
+  'design-field-notes-after-dark': {
+    slug: 'field-notes-after-dark',
+    keywords: ['field notes after dark', 'naturalist study', 'barn owl', 'autumn wildlife', 'field journal', 'woodland'],
+    compatibleProductIds: ['gallery-poster', 'keepsake-mug', 'everyday-tee'],
+    merchandisingPriority: 101,
+    filters: ['new', 'trending'],
+  },
+  'design-leftovers-league': {
+    slug: 'leftovers-league',
+    keywords: ['leftovers league', 'thanksgiving shirts', 'family thanksgiving', 'feast', 'pie inspector', 'turkey'],
+    compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
+    merchandisingPriority: 100,
+    filters: ['new', 'trending'],
+  },
 };
 
 export const developmentDesignSeeds: CuratedDesignRecord[] =
@@ -186,6 +228,9 @@ export const developmentCollectionSeeds: DesignCollection[] = [
       'design-boo-crew',
       'design-here-for-the-boos',
       'design-little-pumpkin',
+      'design-haunted-household',
+      'design-library-of-lost-hours',
+      'design-midnight-hayride',
     ],
   },
   {
@@ -199,6 +244,8 @@ export const developmentCollectionSeeds: DesignCollection[] = [
       'design-autumn-state-of-mind',
       'design-powered-by-pumpkin-spice',
       'design-sweater-weather',
+      'design-night-garden-society',
+      'design-field-notes-after-dark',
     ],
   },
   {
@@ -212,6 +259,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
       'design-feast-mode',
       'design-thankful-grateful-caffeinated',
       'design-thanksgiving-social-club',
+      'design-leftovers-league',
     ],
   },
   {
@@ -245,7 +293,7 @@ export const developmentDropSeeds: DesignDrop[] = [
     slug: 'fall-2026',
     title: 'Fall 2026 Merchandise Collection',
     description:
-      'Official launch drop featuring 9 exclusive designs across Halloween, Fall, and Thanksgiving.',
+      'Official launch drop featuring seasonal designs across Halloween, Fall, and Thanksgiving.',
     publicationStatus: 'published',
     publicationDate: '2026-09-21T00:00:00.000Z',
     designIds: [
@@ -258,6 +306,12 @@ export const developmentDropSeeds: DesignDrop[] = [
       'design-feast-mode',
       'design-thankful-grateful-caffeinated',
       'design-thanksgiving-social-club',
+      'design-haunted-household',
+      'design-library-of-lost-hours',
+      'design-midnight-hayride',
+      'design-night-garden-society',
+      'design-field-notes-after-dark',
+      'design-leftovers-league',
     ],
   },
   {

@@ -38,6 +38,15 @@ export async function POST(request: NextRequest) {
       return commerceCartErrorResponse(error);
     }
   }
+
+  if (process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true') {
+    try {
+      const body = cartItemRequestSchema.parse(await request.json());
+      return NextResponse.json({ snapshot: body.snapshot }, { status: 200 });
+    } catch (error) {
+      return commerceCartErrorResponse(error);
+    }
+  }
   try {
     const identity = await resolveCartRequestIdentity(request);
     const body = cartItemRequestSchema.parse(await request.json());

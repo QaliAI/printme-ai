@@ -1,0 +1,468 @@
+.section {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  color: var(--home-ink, #171a19);
+}
+
+.sectionHeader {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto 48px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--home-accent, #d94727);
+  margin-bottom: 12px;
+}
+
+.heading {
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0 0 8px;
+  color: var(--home-ink, #171a19);
+}
+
+.subheading {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-style: italic;
+  font-family: var(--font-serif, 'Georgia', serif);
+  color: var(--home-muted, #5c625f);
+  margin: 0 0 16px;
+}
+
+.description {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--home-muted, #5c625f);
+  margin: 0 auto 32px;
+}
+
+/* Category Tabs */
+.tabNav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  background: var(--home-surface-strong, #dde1df);
+  padding: 6px;
+  border-radius: 9999px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.tabButton {
+  border: none;
+  background: transparent;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--home-muted, #5c625f);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabButton:hover {
+  color: var(--home-ink, #171a19);
+}
+
+.tabButtonActive {
+  background: #ffffff;
+  color: var(--home-ink, #171a19);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Cards Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 28px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Card */
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--home-surface, #f8f9f7);
+  border: 1px solid var(--home-line, #c5cbc7);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
+}
+
+.cardImageContainer {
+  position: relative;
+  aspect-ratio: 1;
+  background: #f1f3f2;
+  overflow: hidden;
+}
+
+.cardImage {
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.card:hover .cardImage {
+  transform: scale(1.03);
+}
+
+.categoryBadge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(23, 26, 25, 0.82);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  backdrop-filter: blur(8px);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 22px;
+}
+
+.cardHeader {
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+  color: var(--home-ink, #171a19);
+}
+
+.productPricePill {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--home-accent-dark, #a92e16);
+}
+
+.cardDescription {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--home-muted, #5c625f);
+  margin: 0 0 20px;
+  flex-grow: 1;
+}
+
+.cardActions {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.shopDesignButton,
+.makeItMineButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopDesignButton {
+  flex: 1;
+  background: var(--home-ink, #171a19);
+  color: #ffffff;
+  border: 1px solid var(--home-ink, #171a19);
+}
+
+.shopDesignButton:hover {
+  background: #2b312f;
+}
+
+.makeItMineButton {
+  background: #ffffff;
+  color: var(--home-accent, #d94727);
+  border: 1.5px solid var(--home-accent, #d94727);
+}
+
+.makeItMineButton:hover {
+  background: #fff5f2;
+}
+
+/* Personalization Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.modalContent {
+  position: relative;
+  background: #ffffff;
+  border-radius: 24px;
+  max-width: 880px;
+  width: 100%;
+  padding: 32px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  margin: auto;
+}
+
+.modalCloseButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f1f3f2;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--home-ink, #171a19);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalCloseButton:hover {
+  background: #e2e6e4;
+}
+
+.modalHeader {
+  margin-bottom: 24px;
+  padding-right: 40px;
+}
+
+.modalCategoryBadge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--home-accent, #d94727);
+  margin-bottom: 6px;
+}
+
+.modalHeader h2 {
+  font-size: 1.65rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+
+.modalHeader p {
+  font-size: 0.92rem;
+  color: var(--home-muted, #5c625f);
+  margin: 0;
+}
+
+.modalBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+@media (min-width: 768px) {
+  .modalBody {
+    grid-template-columns: 1fr 1.15fr;
+  }
+}
+
+.modalPreviewCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modalPreviewFrame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: #f8f9f7;
+  border: 1px solid var(--home-line, #c5cbc7);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.modalBaseImage {
+  object-fit: contain;
+}
+
+.liveOverlayPill {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(23, 26, 25, 0.85);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  backdrop-filter: blur(6px);
+}
+
+.modalPreviewCaption {
+  font-size: 0.82rem;
+  color: var(--home-muted, #5c625f);
+  margin-top: 10px;
+  text-align: center;
+}
+
+.modalFormCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.formGroupList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formField label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--home-ink, #171a19);
+}
+
+.formField input,
+.formField select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--home-line, #c5cbc7);
+  font-size: 0.92rem;
+  background: #ffffff;
+  color: var(--home-ink, #171a19);
+  transition: border-color 0.2s ease;
+}
+
+.formField input:focus,
+.formField select:focus {
+  outline: none;
+  border-color: var(--home-accent, #d94727);
+}
+
+.formField small {
+  font-size: 0.76rem;
+  color: var(--home-muted, #5c625f);
+}
+
+.modalActionRow {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primaryActionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--home-accent, #d94727);
+  color: #ffffff;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 0.94rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.primaryActionButton:hover:not(:disabled) {
+  background: var(--home-accent-dark, #a92e16);
+}
+
+.primaryActionButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.secondaryActionButton {
+  background: transparent;
+  border: none;
+  color: var(--home-muted, #5c625f);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px;
+}
+
+.secondaryActionButton:hover {
+  color: var(--home-ink, #171a19);
+}
+
+.addedSuccessBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #ecfdf5;
+  border: 1.5px solid #a7f3d0;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.successCheck {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: #065f46;
+}
+
+.successLinks {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

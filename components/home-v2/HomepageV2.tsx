@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Camera, ShoppingBag } from 'lucide-react';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
+import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
 import { HeroProductSwitcher } from './HeroProductSwitcher';
 import { HomeCommerceShowcase } from './HomeCommerceShowcase';
 import styles from '@/app/home-v2.module.css';
@@ -74,6 +75,9 @@ export async function HomepageV2() {
         </div>
         <HeroProductSwitcher products={products} />
       </section>
+
+      {/* The Seasonal Edit: Curated Seasonal Discovery & Personalization */}
+      <SeasonalEditSection products={products} designs={designs} />
 
       <section className={styles.featuredSection}>
         <div className={styles.sectionHeading}>

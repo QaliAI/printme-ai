@@ -98,16 +98,18 @@ export async function validateSnapshotAgainstApprovedCatalog(
   assertEqual(snapshot.variantTitle, variant.title, 'VARIANT_TITLE_MISMATCH');
 
   if (design) {
-    assertEqual(snapshot.designTitle, design.title, 'DESIGN_TITLE_MISMATCH');
+    if (configuration.designSourceType !== 'text-personalized') {
+      assertEqual(snapshot.designTitle, design.title, 'DESIGN_TITLE_MISMATCH');
+      assertEqual(
+        configuration.designAssetUrl,
+        design.asset.url,
+        'DESIGN_ASSET_MISMATCH',
+      );
+    }
     assertEqual(
       configuration.designVersion,
       design.asset.version,
       'DESIGN_VERSION_MISMATCH',
-    );
-    assertEqual(
-      configuration.designAssetUrl,
-      design.asset.url,
-      'DESIGN_ASSET_MISMATCH',
     );
     assertEqual(
       configuration.productionAssetUrl,

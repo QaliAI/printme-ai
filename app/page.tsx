@@ -7,15 +7,25 @@ import { CTASection } from '@/components/landing/CTASection';
 import { HomepageV2 } from '@/components/home-v2/HomepageV2';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
-export default function Home() {
+import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
+import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
+
+export default async function Home() {
   if (isReviewFeatureEnabled('homepage')) {
     return <HomepageV2 />;
   }
+
+  const products = getApprovedMerchProducts();
+  const designs = await getDesignCatalogService().listPublished();
 
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Hero Section with Animated Phone-to-Product Transformation */}
       <HeroAnimation />
+
+      {/* The Seasonal Edit: Curated Trends & Personalization */}
+      <SeasonalEditSection products={products} designs={designs} />
 
       {/* How It Works - 3 steps with smooth scroll reveals */}
       <HowItWorks />

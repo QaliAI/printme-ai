@@ -76,7 +76,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(14);
+    await expect(service.listPublished()).resolves.toHaveLength(20);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -84,7 +84,7 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(14);
+    expect(designs).toHaveLength(20);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
@@ -103,16 +103,22 @@ describe('curated design catalog', () => {
       'design-boo-crew',
       'design-here-for-the-boos',
       'design-little-pumpkin',
+      'design-haunted-household',
+      'design-library-of-lost-hours',
+      'design-midnight-hayride',
     ]);
     expect(fall?.designIds).toEqual([
       'design-autumn-state-of-mind',
       'design-powered-by-pumpkin-spice',
       'design-sweater-weather',
+      'design-night-garden-society',
+      'design-field-notes-after-dark',
     ]);
     expect(thanksgiving?.designIds).toEqual([
       'design-feast-mode',
       'design-thankful-grateful-caffeinated',
       'design-thanksgiving-social-club',
+      'design-leftovers-league',
     ]);
 
     const booCrew = await repository.findPublishedBySlug('boo-crew');
