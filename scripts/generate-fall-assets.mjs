@@ -7,17 +7,29 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-// 9 Fall 2026 Designs
+// 9 Fall 2026 Designs with Product-Specific Print Areas
+// Tees: 3951x4800 (Bella+Canvas 3001)
+// Mugs: 1275x1155 (11oz Ceramic Mug)
+// Posters: 5400x7200 (18x24 Archival Matte Poster @ 300 DPI)
 const designs = [
-  // 1. Halloween: Boo Crew
+  // ==========================================
+  // TEES: 3951 x 4800 px
+  // ==========================================
+
+  // 1. Halloween: Boo Crew (Tee)
   {
     slug: 'boo-crew',
     title: 'Boo Crew',
+    category: 'tee',
+    width: 3951,
+    height: 4800,
+    previewWidth: 988,
+    previewHeight: 1200,
     svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="shadow-boo" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#2e1065" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#2e1065" flood-opacity="0.3"/>
     </filter>
     <linearGradient id="pumpkin-grad-1" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FF9233"/>
@@ -29,483 +41,171 @@ const designs = [
     </linearGradient>
   </defs>
 
-  <!-- Decorative Stars & Bats -->
-  <g fill="#FBBF24" opacity="0.9">
-    <path d="M 600,800 L 630,880 L 710,910 L 630,940 L 600,1020 L 570,940 L 490,910 L 570,880 Z" />
-    <path d="M 3000,850 L 3025,910 L 3090,935 L 3025,960 L 3000,1025 L 2975,960 L 2910,935 L 2975,910 Z" />
-    <path d="M 1800,450 L 1820,500 L 1870,520 L 1820,540 L 1800,590 L 1780,540 L 1730,520 L 1780,500 Z" />
-    <circle cx="800" cy="1150" r="18" />
-    <circle cx="2800" cy="1200" r="22" />
-    <circle cx="1000" cy="650" r="14" />
-    <circle cx="2600" cy="680" r="16" />
+  <!-- Stars & Bats -->
+  <g fill="#FBBF24" opacity="0.95">
+    <path d="M 650,900 L 685,995 L 780,1030 L 685,1065 L 650,1160 L 615,1065 L 520,1030 L 615,995 Z" />
+    <path d="M 3300,950 L 3330,1020 L 3410,1050 L 3330,1080 L 3300,1150 L 3270,1080 L 3190,1050 L 3270,1020 Z" />
+    <path d="M 1975,420 L 1995,480 L 2055,500 L 1995,520 L 1975,580 L 1955,520 L 1895,500 L 1955,480 Z" />
+    <circle cx="880" cy="1300" r="22" />
+    <circle cx="3080" cy="1350" r="26" />
+    <circle cx="1100" cy="720" r="18" />
+    <circle cx="2850" cy="750" r="20" />
   </g>
 
-  <!-- Bats -->
+  <!-- Flying Bats -->
   <g fill="#4338CA">
-    <path d="M 750,550 Q 820,500 890,560 Q 850,580 820,570 Q 790,580 750,550 Z" />
-    <path d="M 2700,500 Q 2780,440 2860,510 Q 2820,530 2780,520 Q 2740,530 2700,500 Z" />
+    <path d="M 820,620 Q 900,560 980,630 Q 940,655 900,645 Q 865,655 820,620 Z" />
+    <path d="M 2970,570 Q 3060,500 3150,580 Q 3105,605 3060,595 Q 3015,605 2970,570 Z" />
   </g>
 
-  <!-- Main "BOO CREW" arched typography -->
+  <!-- Main "BOO CREW" Typography -->
   <g filter="url(#shadow-boo)">
-    <!-- Outline / Drop layer -->
-    <text x="1800" y="850" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#3B0764" text-anchor="middle" letter-spacing="15">BOO CREW</text>
-    <text x="1800" y="835" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="15">BOO CREW</text>
-    <text x="1800" y="820" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="url(#text-grad-boo)" text-anchor="middle" letter-spacing="15" stroke="#431407" stroke-width="12">BOO CREW</text>
+    <text x="1975" y="980" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="#3B0764" text-anchor="middle" letter-spacing="18">BOO CREW</text>
+    <text x="1975" y="960" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="18">BOO CREW</text>
+    <text x="1975" y="940" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="url(#text-grad-boo)" text-anchor="middle" letter-spacing="18" stroke="#431407" stroke-width="14">BOO CREW</text>
   </g>
 
-  <!-- Ghost 1 (Left Friendly Ghost) -->
-  <g transform="translate(650, 1050) rotate(-10)" filter="url(#shadow-boo)">
-    <path d="M 300,100 C 150,100 100,300 100,550 C 100,750 150,850 200,800 C 250,750 280,850 340,800 C 400,750 450,850 500,800 C 550,750 580,650 580,550 C 580,300 450,100 300,100 Z" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="10" />
-    <!-- Eyes -->
-    <ellipse cx="280" cy="400" rx="28" ry="42" fill="#1E293B" />
-    <ellipse cx="400" cy="400" rx="28" ry="42" fill="#1E293B" />
-    <circle cx="270" cy="385" r="10" fill="#FFFFFF" />
-    <circle cx="390" cy="385" r="10" fill="#FFFFFF" />
-    <!-- Cheeks -->
-    <ellipse cx="240" cy="450" rx="24" ry="14" fill="#FDA4AF" opacity="0.8" />
-    <ellipse cx="440" cy="450" rx="24" ry="14" fill="#FDA4AF" opacity="0.8" />
-    <!-- Smile -->
-    <path d="M 315,450 Q 340,490 365,450" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+  <!-- Ghost Trio -->
+  <!-- Ghost 1 (Left) -->
+  <g transform="translate(680, 1300) rotate(-10)" filter="url(#shadow-boo)">
+    <path d="M 330,110 C 160,110 110,330 110,600 C 110,820 160,930 220,880 C 270,830 300,940 370,880 C 440,830 490,940 550,880 C 600,830 640,710 640,600 C 640,330 500,110 330,110 Z" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="12" />
+    <ellipse cx="310" cy="440" rx="30" ry="46" fill="#1E293B" />
+    <ellipse cx="440" cy="440" rx="30" ry="46" fill="#1E293B" />
+    <circle cx="300" cy="425" r="11" fill="#FFFFFF" />
+    <circle cx="430" cy="425" r="11" fill="#FFFFFF" />
+    <ellipse cx="270" cy="495" rx="26" ry="16" fill="#FDA4AF" opacity="0.85" />
+    <ellipse cx="485" cy="495" rx="26" ry="16" fill="#FDA4AF" opacity="0.85" />
+    <path d="M 350,495 Q 375,540 400,495" fill="none" stroke="#1E293B" stroke-width="14" stroke-linecap="round" />
   </g>
 
   <!-- Ghost 2 (Center Hero Ghost) -->
-  <g transform="translate(1450, 950)" filter="url(#shadow-boo)">
-    <path d="M 350,80 C 180,80 120,320 120,620 C 120,850 180,950 240,900 C 300,850 350,960 410,900 C 470,840 520,960 580,900 C 640,840 680,750 680,620 C 680,320 520,80 350,80 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="12" />
-    <!-- Eyes -->
-    <ellipse cx="310" cy="420" rx="34" ry="50" fill="#0F172A" />
-    <ellipse cx="460" cy="420" rx="34" ry="50" fill="#0F172A" />
-    <circle cx="298" cy="400" r="12" fill="#FFFFFF" />
-    <circle cx="448" cy="400" r="12" fill="#FFFFFF" />
-    <!-- Cheeks -->
-    <ellipse cx="260" cy="480" rx="30" ry="16" fill="#FDA4AF" opacity="0.85" />
-    <ellipse cx="510" cy="480" rx="30" ry="16" fill="#FDA4AF" opacity="0.85" />
-    <!-- Big Open Smile -->
-    <path d="M 340,480 Q 385,550 430,480 Z" fill="#0F172A" />
+  <g transform="translate(1580, 1200)" filter="url(#shadow-boo)">
+    <path d="M 390,90 C 200,90 130,360 130,690 C 130,950 200,1060 270,1000 C 340,950 390,1070 460,1000 C 530,940 580,1070 650,1000 C 715,940 760,840 760,690 C 760,360 580,90 390,90 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="14" />
+    <ellipse cx="350" cy="470" rx="38" ry="56" fill="#0F172A" />
+    <ellipse cx="510" cy="470" rx="38" ry="56" fill="#0F172A" />
+    <circle cx="336" cy="448" r="13" fill="#FFFFFF" />
+    <circle cx="496" cy="448" r="13" fill="#FFFFFF" />
+    <ellipse cx="295" cy="540" rx="34" ry="18" fill="#FDA4AF" opacity="0.9" />
+    <ellipse cx="570" cy="540" rx="34" ry="18" fill="#FDA4AF" opacity="0.9" />
+    <path d="M 380,540 Q 430,620 480,540 Z" fill="#0F172A" />
   </g>
 
-  <!-- Ghost 3 (Right Friendly Ghost) -->
-  <g transform="translate(2250, 1080) rotate(12)" filter="url(#shadow-boo)">
-    <path d="M 300,100 C 150,100 100,300 100,550 C 100,750 150,850 200,800 C 250,750 280,850 340,800 C 400,750 450,850 500,800 C 550,750 580,650 580,550 C 580,300 450,100 300,100 Z" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="10" />
-    <!-- Eyes -->
-    <ellipse cx="270" cy="400" rx="28" ry="42" fill="#1E293B" />
-    <ellipse cx="390" cy="400" rx="28" ry="42" fill="#1E293B" />
-    <circle cx="260" cy="385" r="10" fill="#FFFFFF" />
-    <circle cx="380" cy="385" r="10" fill="#FFFFFF" />
-    <!-- Cheeks -->
-    <ellipse cx="230" cy="450" rx="24" ry="14" fill="#FDA4AF" opacity="0.8" />
-    <ellipse cx="430" cy="450" rx="24" ry="14" fill="#FDA4AF" opacity="0.8" />
-    <!-- Wink Eye -->
-    <path d="M 250,400 Q 270,370 290,400" fill="none" stroke="#1E293B" stroke-width="14" stroke-linecap="round" />
-    <!-- Smile -->
-    <path d="M 315,450 Q 340,490 365,450" fill="none" stroke="#1E293B" stroke-width="12" stroke-linecap="round" />
+  <!-- Ghost 3 (Right) -->
+  <g transform="translate(2470, 1340) rotate(12)" filter="url(#shadow-boo)">
+    <path d="M 330,110 C 160,110 110,330 110,600 C 110,820 160,930 220,880 C 270,830 300,940 370,880 C 440,830 490,940 550,880 C 600,830 640,710 640,600 C 640,330 500,110 330,110 Z" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="12" />
+    <ellipse cx="300" cy="440" rx="30" ry="46" fill="#1E293B" />
+    <ellipse cx="430" cy="440" rx="30" ry="46" fill="#1E293B" />
+    <circle cx="290" cy="425" r="11" fill="#FFFFFF" />
+    <circle cx="420" cy="425" r="11" fill="#FFFFFF" />
+    <ellipse cx="255" cy="495" rx="26" ry="16" fill="#FDA4AF" opacity="0.85" />
+    <ellipse cx="475" cy="495" rx="26" ry="16" fill="#FDA4AF" opacity="0.85" />
+    <path d="M 280,440 Q 300,410 320,440" fill="none" stroke="#1E293B" stroke-width="16" stroke-linecap="round" />
+    <path d="M 350,495 Q 375,540 400,495" fill="none" stroke="#1E293B" stroke-width="14" stroke-linecap="round" />
   </g>
 
-  <!-- Big Jack-o-Lantern in Foreground Center -->
-  <g transform="translate(1350, 2050)" filter="url(#shadow-boo)">
-    <!-- Pumpkin stem -->
-    <path d="M 420,150 Q 400,40 480,20 Q 470,120 450,150 Z" fill="#15803D" stroke="#14532D" stroke-width="8" />
-    <!-- Pumpkin Body Lobes -->
-    <ellipse cx="450" cy="480" rx="420" ry="340" fill="url(#pumpkin-grad-1)" stroke="#9A3412" stroke-width="14" />
-    <ellipse cx="320" cy="480" rx="260" ry="320" fill="url(#pumpkin-grad-1)" opacity="0.7" />
-    <ellipse cx="580" cy="480" rx="260" ry="320" fill="url(#pumpkin-grad-1)" opacity="0.7" />
-    <!-- Carved Face Glowing Yellow -->
-    <!-- Eyes -->
-    <polygon points="280,410 350,330 380,420" fill="#FEF08A" stroke="#B45309" stroke-width="6" />
-    <polygon points="520,420 550,330 620,410" fill="#FEF08A" stroke="#B45309" stroke-width="6" />
-    <!-- Nose -->
-    <polygon points="450,450 420,500 480,500" fill="#FEF08A" />
-    <!-- Tooth Smile -->
-    <path d="M 250,570 Q 450,720 650,570 Q 580,660 550,600 L 530,640 L 480,590 L 420,640 L 370,590 L 340,640 Z" fill="#FEF08A" stroke="#B45309" stroke-width="8" />
+  <!-- Big Jack-o-Lantern Center Foreground -->
+  <g transform="translate(1480, 2450)" filter="url(#shadow-boo)">
+    <path d="M 460,165 Q 440,45 530,22 Q 520,135 495,165 Z" fill="#15803D" stroke="#14532D" stroke-width="9" />
+    <ellipse cx="495" cy="530" rx="465" ry="375" fill="url(#pumpkin-grad-1)" stroke="#9A3412" stroke-width="16" />
+    <ellipse cx="350" cy="530" rx="285" ry="355" fill="url(#pumpkin-grad-1)" opacity="0.7" />
+    <ellipse cx="640" cy="530" rx="285" ry="355" fill="url(#pumpkin-grad-1)" opacity="0.7" />
+    <polygon points="310,455 385,365 420,465" fill="#FEF08A" stroke="#B45309" stroke-width="7" />
+    <polygon points="575,465 610,365 685,455" fill="#FEF08A" stroke="#B45309" stroke-width="7" />
+    <polygon points="495,495 460,550 530,550" fill="#FEF08A" />
+    <path d="M 275,630 Q 495,795 715,630 Q 640,730 605,665 L 585,710 L 530,655 L 465,710 L 410,655 L 375,710 Z" fill="#FEF08A" stroke="#B45309" stroke-width="9" />
   </g>
 
   <!-- Banner at Bottom: "SPOOKY SEASON • 2026" -->
-  <g transform="translate(1800, 3150)">
-    <rect x="-700" y="-80" width="1400" height="160" rx="80" fill="#3B0764" stroke="#FBBF24" stroke-width="8" filter="url(#shadow-boo)" />
-    <text x="0" y="24" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="75" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="8">SPOOKY SEASON • 2026</text>
+  <g transform="translate(1975, 4100)">
+    <rect x="-800" y="-90" width="1600" height="180" rx="90" fill="#3B0764" stroke="#FBBF24" stroke-width="10" filter="url(#shadow-boo)" />
+    <text x="0" y="28" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="88" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="10">SPOOKY SEASON • 2026</text>
   </g>
 </svg>
 `
   },
 
-  // 2. Halloween: Here for the Boos
-  {
-    slug: 'here-for-the-boos',
-    title: 'Here for the Boos',
-    svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow-boos" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#1e1b4b" flood-opacity="0.3"/>
-    </filter>
-    <linearGradient id="cocktail-grad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#A855F7"/>
-      <stop offset="50%" stop-color="#EC4899"/>
-      <stop offset="100%" stop-color="#EAB308"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Stars and sparkles -->
-  <g fill="#FDE047" opacity="0.9">
-    <path d="M 500,900 L 525,970 L 595,995 L 525,1020 L 500,1090 L 475,1020 L 405,995 L 475,970 Z" />
-    <path d="M 3100,1100 L 3125,1160 L 3185,1185 L 3125,1210 L 3100,1270 L 3075,1210 L 3015,1185 L 3075,1160 Z" />
-    <circle cx="850" cy="1400" r="16" />
-    <circle cx="2750" cy="900" r="20" />
-    <circle cx="700" cy="650" r="14" />
-  </g>
-
-  <!-- Top Curved / Script Header: "I'M JUST" -->
-  <text x="1800" y="550" font-family="'Georgia', serif" font-style="italic" font-size="120" font-weight="700" fill="#A855F7" text-anchor="middle" letter-spacing="12">I'M JUST</text>
-
-  <!-- Main "HERE FOR THE" -->
-  <g filter="url(#shadow-boos)">
-    <text x="1800" y="850" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#1E1B4B" text-anchor="middle" letter-spacing="14">HERE FOR THE</text>
-    <text x="1800" y="840" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="14">HERE FOR THE</text>
-  </g>
-
-  <!-- Central Martini / Potion Glass with Ghost Inside -->
-  <g transform="translate(1800, 1900)" filter="url(#shadow-boos)">
-    <!-- Little Ghost Floating above Glass -->
-    <g transform="translate(-180, -780)">
-      <path d="M 180,50 C 90,50 60,180 60,320 C 60,450 90,500 120,470 C 150,440 180,510 210,470 C 240,430 270,510 300,470 C 330,430 350,380 350,320 C 350,180 270,50 180,50 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="8" />
-      <ellipse cx="140" cy="200" rx="16" ry="24" fill="#1E1B4B" />
-      <ellipse cx="220" cy="200" rx="16" ry="24" fill="#1E1B4B" />
-      <ellipse cx="115" cy="230" rx="16" ry="8" fill="#FDA4AF" />
-      <ellipse cx="245" cy="230" rx="16" ry="8" fill="#FDA4AF" />
-      <path d="M 165,225 Q 180,250 195,225" fill="none" stroke="#1E1B4B" stroke-width="8" stroke-linecap="round" />
-      <!-- Ghost arms cheering with cocktail pick -->
-      <path d="M 70,250 Q 0,220 30,160" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" />
-      <path d="M 290,250 Q 360,220 330,160" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" />
-    </g>
-
-    <!-- Cocktail Coupe / Martini Glass -->
-    <!-- Liquid in bowl -->
-    <polygon points="0,0 -480,-450 480,-450" fill="url(#cocktail-grad)" opacity="0.9" />
-    <!-- Glass bowl outline -->
-    <polygon points="0,0 -520,-480 520,-480" fill="none" stroke="#CBD5E1" stroke-width="18" stroke-linejoin="round" />
-    <!-- Cocktail Stem -->
-    <rect x="-14" y="0" width="28" height="420" fill="#CBD5E1" />
-    <!-- Glass Base -->
-    <ellipse cx="0" cy="430" rx="300" ry="36" fill="#CBD5E1" />
-
-    <!-- Cocktail Garnish: Eyeball on a pick! -->
-    <line x1="-380" y1="-560" x2="100" y2="-280" stroke="#78350F" stroke-width="12" stroke-linecap="round" />
-    <circle cx="-160" cy="-440" r="65" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="6" />
-    <circle cx="-160" cy="-440" r="30" fill="#10B981" />
-    <circle cx="-160" cy="-440" r="14" fill="#000000" />
-
-    <!-- Bubbles rising -->
-    <circle cx="-120" cy="-350" r="18" fill="#FDE047" opacity="0.8" />
-    <circle cx="80" cy="-390" r="24" fill="#FDE047" opacity="0.8" />
-    <circle cx="200" cy="-360" r="14" fill="#FDE047" opacity="0.8" />
-  </g>
-
-  <!-- Big "BOOS" Callout -->
-  <g filter="url(#shadow-boos)">
-    <text x="1800" y="2780" font-family="'Impact', 'Arial Black', sans-serif" font-size="460" font-weight="900" fill="#3B0764" text-anchor="middle" letter-spacing="20">BOOS</text>
-    <text x="1800" y="2760" font-family="'Impact', 'Arial Black', sans-serif" font-size="460" font-weight="900" fill="#A855F7" text-anchor="middle" letter-spacing="20">BOOS</text>
-    <text x="1800" y="2740" font-family="'Impact', 'Arial Black', sans-serif" font-size="460" font-weight="900" fill="#FDE047" text-anchor="middle" letter-spacing="20" stroke="#451A03" stroke-width="12">BOOS</text>
-  </g>
-
-  <!-- Bottom Subtitle: "HALLOWEEN SPIRITS CO." -->
-  <text x="1800" y="3150" font-family="'Trebuchet MS', sans-serif" font-size="75" font-weight="900" fill="#CBD5E1" text-anchor="middle" letter-spacing="16">HALLOWEEN SPIRITS CO. • EST. 2026</text>
-</svg>
-`
-  },
-
-  // 3. Halloween: Little Pumpkin
-  {
-    slug: 'little-pumpkin',
-    title: 'Little Pumpkin',
-    svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow-lp" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#431407" flood-opacity="0.2"/>
-    </filter>
-    <linearGradient id="grad-lp-pumpkin" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FB923C"/>
-      <stop offset="100%" stop-color="#C2410C"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Botanical Wreath / Foliage behind -->
-  <g filter="url(#shadow-lp)">
-    <!-- Autumn Leaves Wreath -->
-    <path d="M 600,1800 C 600,1050 1100,600 1800,600 C 2500,600 3000,1050 3000,1800 C 3000,2550 2500,3000 1800,3000 C 1100,3000 600,2550 600,1800 Z" fill="none" stroke="#FED7AA" stroke-width="24" stroke-dasharray="20 40" opacity="0.6" />
-
-    <!-- Oak Leaves Left -->
-    <g transform="translate(680, 1400) rotate(-35)" fill="#B45309">
-      <path d="M 0,0 C -50,50 -80,150 0,220 C -40,280 0,360 80,380 C 120,440 200,420 220,360 C 280,360 300,280 260,220 C 320,150 260,60 180,60 Z" />
-    </g>
-    <!-- Oak Leaves Right -->
-    <g transform="translate(2650, 1400) rotate(35)" fill="#B45309">
-      <path d="M 0,0 C -50,50 -80,150 0,220 C -40,280 0,360 80,380 C 120,440 200,420 220,360 C 280,360 300,280 260,220 C 320,150 260,60 180,60 Z" />
-    </g>
-
-    <!-- Sunflowers -->
-    <g transform="translate(900, 950)">
-      <circle cx="0" cy="0" r="140" fill="#EAB308" />
-      <circle cx="0" cy="0" r="70" fill="#78350F" />
-    </g>
-    <g transform="translate(2700, 950)">
-      <circle cx="0" cy="0" r="140" fill="#EAB308" />
-      <circle cx="0" cy="0" r="70" fill="#78350F" />
-    </g>
-  </g>
-
-  <!-- Top Title: "OUR" -->
-  <text x="1800" y="700" font-family="'Georgia', serif" font-style="italic" font-size="140" font-weight="700" fill="#9A3412" text-anchor="middle" letter-spacing="16">OUR</text>
-
-  <!-- Main Title: "LITTLE PUMPKIN" -->
-  <g filter="url(#shadow-lp)">
-    <text x="1800" y="1050" font-family="'Impact', 'Arial Black', sans-serif" font-size="320" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="12">LITTLE</text>
-    <text x="1800" y="1035" font-family="'Impact', 'Arial Black', sans-serif" font-size="320" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="12">LITTLE</text>
-    <text x="1800" y="1020" font-family="'Impact', 'Arial Black', sans-serif" font-size="320" font-weight="900" fill="#FED7AA" text-anchor="middle" letter-spacing="12" stroke="#431407" stroke-width="10">LITTLE</text>
-  </g>
-
-  <!-- The Baby Pumpkin Illustration Center -->
-  <g transform="translate(1800, 1950)" filter="url(#shadow-lp)">
-    <!-- Curly Stem -->
-    <path d="M -30,-420 Q 30,-580 140,-540 Q 80,-440 20,-400 Z" fill="#15803D" stroke="#14532D" stroke-width="8" />
-    <path d="M 30,-480 Q 120,-480 180,-420 Q 140,-380 200,-350" fill="none" stroke="#15803D" stroke-width="12" stroke-linecap="round" />
-
-    <!-- Pumpkin Lobes -->
-    <ellipse cx="0" cy="0" rx="550" ry="440" fill="url(#grad-lp-pumpkin)" stroke="#7C2D12" stroke-width="16" />
-    <ellipse cx="-240" cy="0" rx="380" ry="410" fill="url(#grad-lp-pumpkin)" opacity="0.6" />
-    <ellipse cx="240" cy="0" rx="380" ry="410" fill="url(#grad-lp-pumpkin)" opacity="0.6" />
-
-    <!-- Cute Eyes -->
-    <ellipse cx="-160" cy="-30" rx="34" ry="48" fill="#1E293B" />
-    <ellipse cx="160" cy="-30" rx="34" ry="48" fill="#1E293B" />
-    <circle cx="-145" cy="-45" r="14" fill="#FFFFFF" />
-    <circle cx="175" cy="-45" r="14" fill="#FFFFFF" />
-
-    <!-- Rosy Cheeks -->
-    <ellipse cx="-230" cy="40" rx="44" ry="24" fill="#FDA4AF" opacity="0.85" />
-    <ellipse cx="230" cy="40" rx="44" ry="24" fill="#FDA4AF" opacity="0.85" />
-
-    <!-- Gentle Baby Smile -->
-    <path d="M -70,30 Q 0,90 70,30" fill="none" stroke="#1E293B" stroke-width="16" stroke-linecap="round" />
-  </g>
-
-  <!-- Bottom Ribbon: "SWEETEST IN THE PATCH" -->
-  <g transform="translate(1800, 2850)" filter="url(#shadow-lp)">
-    <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="14">PUMPKIN</text>
-    <text x="0" y="-12" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#F97316" text-anchor="middle" letter-spacing="14">PUMPKIN</text>
-    <text x="0" y="-24" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#FFF7ED" text-anchor="middle" letter-spacing="14" stroke="#431407" stroke-width="8">PUMPKIN</text>
-  </g>
-
-  <text x="1800" y="3180" font-family="'Georgia', serif" font-style="italic" font-size="80" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="8">SWEETEST IN THE PATCH • AUTUMN HARVEST</text>
-</svg>
-`
-  },
-
-  // 4. Fall: Autumn State of Mind
-  {
-    slug: 'autumn-state-of-mind',
-    title: 'Autumn State of Mind',
-    svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow-autumn" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#431407" flood-opacity="0.25"/>
-    </filter>
-    <linearGradient id="foliage-grad-1" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#EA580C"/>
-      <stop offset="50%" stop-color="#D97706"/>
-      <stop offset="100%" stop-color="#B45309"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Cascading Maple & Oak Leaves Graphic -->
-  <g filter="url(#shadow-autumn)">
-    <!-- Big Maple Leaf Center-Left -->
-    <g transform="translate(1800, 1750) scale(1.6)" fill="url(#foliage-grad-1)" opacity="0.95">
-      <path d="M 0,-400 Q 80,-300 120,-320 Q 200,-150 150,-100 Q 320,-80 340,50 Q 250,150 180,120 Q 150,260 80,240 L 40,400 L -40,400 L -80,240 Q -150,260 -180,120 Q -250,150 -340,50 Q -320,-80 -150,-100 Q -200,-150 -120,-320 Q -80,-300 0,-400 Z" stroke="#7C2D12" stroke-width="8" />
-    </g>
-
-    <!-- Floating Acorns & Oak Leaves -->
-    <g transform="translate(850, 1100) rotate(-25)" fill="#B45309">
-      <path d="M 0,0 C -60,60 -90,160 0,240 C -50,300 0,380 90,400 C 130,460 210,440 230,380 C 290,380 310,300 270,240 C 330,160 270,70 190,70 Z" />
-    </g>
-    <g transform="translate(2750, 1100) rotate(25)" fill="#D97706">
-      <path d="M 0,0 C -60,60 -90,160 0,240 C -50,300 0,380 90,400 C 130,460 210,440 230,380 C 290,380 310,300 270,240 C 330,160 270,70 190,70 Z" />
-    </g>
-  </g>
-
-  <!-- Large Flourish Script: "Autumn" -->
-  <g filter="url(#shadow-autumn)">
-    <text x="1800" y="850" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#7C2D12" text-anchor="middle">Autumn</text>
-    <text x="1800" y="830" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#F97316" text-anchor="middle">Autumn</text>
-    <text x="1800" y="815" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">Autumn</text>
-  </g>
-
-  <!-- Serif Block: "STATE OF MIND" -->
-  <g filter="url(#shadow-autumn)" transform="translate(1800, 2750)">
-    <!-- Decorative Frame Lines -->
-    <line x1="-950" y1="-80" x2="-600" y2="-80" stroke="#CA8A04" stroke-width="10" />
-    <circle cx="-570" cy="-80" r="14" fill="#CA8A04" />
-    <line x1="600" y1="-80" x2="950" y2="-80" stroke="#CA8A04" stroke-width="10" />
-    <circle cx="570" cy="-80" r="14" fill="#CA8A04" />
-
-    <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="24">STATE OF MIND</text>
-    <text x="0" y="-14" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="24">STATE OF MIND</text>
-    <text x="0" y="-28" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="24" stroke="#431407" stroke-width="6">STATE OF MIND</text>
-
-    <!-- Subtext -->
-    <text x="0" y="240" font-family="'Georgia', serif" font-size="75" font-style="italic" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="12">GOLDEN LEAVES &amp; CRISP BREEZES • 2026</text>
-  </g>
-</svg>
-`
-  },
-
-  // 5. Fall: Powered by Pumpkin Spice
-  {
-    slug: 'powered-by-pumpkin-spice',
-    title: 'Powered by Pumpkin Spice',
-    svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="shadow-pps" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#451A03" flood-opacity="0.3"/>
-    </filter>
-    <linearGradient id="cup-sleeve" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#D97706"/>
-      <stop offset="50%" stop-color="#B45309"/>
-      <stop offset="100%" stop-color="#92400E"/>
-    </linearGradient>
-  </defs>
-
-  <!-- Header Banner: "POWERED BY" -->
-  <g filter="url(#shadow-pps)">
-    <text x="1800" y="650" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="20">POWERED BY</text>
-    <text x="1800" y="635" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="20">POWERED BY</text>
-    <text x="1800" y="620" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="20" stroke="#451A03" stroke-width="8">POWERED BY</text>
-  </g>
-
-  <!-- Big Latte Coffee Cup Center -->
-  <g transform="translate(1800, 1850)" filter="url(#shadow-pps)">
-    <!-- Steam Swirls & Hearts -->
-    <path d="M -120,-800 C -200,-950 -80,-1080 -140,-1200" fill="none" stroke="#FED7AA" stroke-width="16" stroke-linecap="round" opacity="0.8" />
-    <path d="M 0,-850 C 60,-1000 -40,-1120 20,-1250" fill="none" stroke="#FED7AA" stroke-width="20" stroke-linecap="round" opacity="0.9" />
-    <path d="M 120,-800 C 200,-950 80,-1080 140,-1200" fill="none" stroke="#FED7AA" stroke-width="16" stroke-linecap="round" opacity="0.8" />
-
-    <!-- Whipped Cream Mountain -->
-    <path d="M -380,-450 C -420,-600 -300,-750 -150,-780 C -50,-850 80,-850 160,-780 C 300,-750 420,-600 380,-450 Z" fill="#FFFBEB" stroke="#D97706" stroke-width="12" />
-    <!-- Cinnamon Stick poking out -->
-    <rect x="80" y="-880" width="60" height="380" rx="30" transform="rotate(25 80 -880)" fill="#78350F" stroke="#451A03" stroke-width="8" />
-    <!-- Star Anise / Cinnamon sprinkle dots -->
-    <circle cx="-80" cy="-620" r="12" fill="#78350F" />
-    <circle cx="20" cy="-660" r="16" fill="#78350F" />
-    <circle cx="-160" cy="-560" r="10" fill="#78350F" />
-    <circle cx="100" cy="-590" r="14" fill="#78350F" />
-
-    <!-- Cup Body -->
-    <polygon points="-420,-450 -320,550 320,550 420,-450" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="14" />
-
-    <!-- Kraft Corrugated Sleeve -->
-    <polygon points="-395,-180 -340,320 340,320 395,-180" fill="url(#cup-sleeve)" stroke="#78350F" stroke-width="10" />
-    <!-- Little Pumpkin Icon on Sleeve -->
-    <ellipse cx="0" cy="70" rx="140" ry="110" fill="#EA580C" stroke="#7C2D12" stroke-width="6" />
-    <path d="M -10,-40 Q 10,-80 30,-60" fill="none" stroke="#15803D" stroke-width="10" stroke-linecap="round" />
-  </g>
-
-  <!-- Big "PUMPKIN SPICE" Footer -->
-  <g filter="url(#shadow-pps)">
-    <text x="1800" y="2850" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="14">PUMPKIN SPICE</text>
-    <text x="1800" y="2830" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="14">PUMPKIN SPICE</text>
-    <text x="1800" y="2810" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="14" stroke="#451A03" stroke-width="10">PUMPKIN SPICE</text>
-  </g>
-
-  <!-- Subtext Pill -->
-  <g transform="translate(1800, 3180)">
-    <rect x="-650" y="-70" width="1300" height="140" rx="70" fill="#78350F" />
-    <text x="0" y="20" font-family="'Trebuchet MS', sans-serif" font-size="65" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="10">EXTRA WHIP &amp; DOUBLE SHOT • 2026</text>
-  </g>
-</svg>
-`
-  },
-
-  // 6. Fall: Sweater Weather
+  // 2. Fall: Sweater Weather (Tee)
   {
     slug: 'sweater-weather',
     title: 'Sweater Weather',
+    category: 'tee',
+    width: 3951,
+    height: 4800,
+    previewWidth: 988,
+    previewHeight: 1200,
     svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="shadow-sw" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#064e3b" flood-opacity="0.25"/>
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#064e3b" flood-opacity="0.3"/>
     </filter>
   </defs>
 
   <!-- Cable-knit Border Ring -->
   <g filter="url(#shadow-sw)">
-    <circle cx="1800" cy="1800" r="1450" fill="none" stroke="#E2E8F0" stroke-width="40" stroke-dasharray="30 20" opacity="0.8" />
-    <circle cx="1800" cy="1800" r="1380" fill="none" stroke="#047857" stroke-width="16" />
+    <circle cx="1975" cy="2250" r="1550" fill="none" stroke="#E2E8F0" stroke-width="45" stroke-dasharray="32 22" opacity="0.8" />
+    <circle cx="1975" cy="2250" r="1470" fill="none" stroke="#047857" stroke-width="18" />
   </g>
 
   <!-- Cozy Mittens Illustration Center -->
-  <g transform="translate(1800, 1650)" filter="url(#shadow-sw)">
+  <g transform="translate(1975, 2100)" filter="url(#shadow-sw)">
     <!-- Left Mitten -->
-    <g transform="translate(-240, 0) rotate(-18)" fill="#D97706" stroke="#92400E" stroke-width="12">
-      <!-- Cuff with ribbing -->
-      <rect x="-140" y="220" width="280" height="140" rx="30" fill="#B45309" />
-      <line x1="-90" y1="220" x2="-90" y2="360" stroke="#78350F" stroke-width="8" />
-      <line x1="0" y1="220" x2="0" y2="360" stroke="#78350F" stroke-width="8" />
-      <line x1="90" y1="220" x2="90" y2="360" stroke="#78350F" stroke-width="8" />
-      <!-- Hand body -->
-      <path d="M -130,220 C -150,50 -100,-250 0,-280 C 100,-250 150,50 130,220 Z" />
-      <!-- Thumb -->
-      <path d="M -110,80 C -220,50 -240,-80 -180,-120 C -120,-150 -90, -40 -90,80 Z" />
-      <!-- Knit heart detail on mitten -->
-      <path d="M 0,-60 Q -50,-130 -100,-60 Q -50,50 0,100 Q 50,50 100,-60 Q 50,-130 0,-60 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="6" />
+    <g transform="translate(-260, 0) rotate(-18)" fill="#D97706" stroke="#92400E" stroke-width="14">
+      <rect x="-150" y="240" width="300" height="150" rx="32" fill="#B45309" />
+      <line x1="-100" y1="240" x2="-100" y2="390" stroke="#78350F" stroke-width="9" />
+      <line x1="0" y1="240" x2="0" y2="390" stroke="#78350F" stroke-width="9" />
+      <line x1="100" y1="240" x2="100" y2="390" stroke="#78350F" stroke-width="9" />
+      <path d="M -140,240 C -160,55 -110,-270 0,-300 C 110,-270 160,55 140,240 Z" />
+      <path d="M -120,85 C -240,55 -260,-90 -200,-130 C -130,-160 -100,-45 -100,85 Z" />
+      <path d="M 0,-65 Q -55,-140 -110,-65 Q -55,55 0,110 Q 55,55 110,-65 Q 55,-140 0,-65 Z" fill="#FFFBEB" stroke="#B45309" stroke-width="7" />
     </g>
 
     <!-- Right Mitten -->
-    <g transform="translate(240, 0) rotate(18)" fill="#059669" stroke="#064E3B" stroke-width="12">
-      <!-- Cuff with ribbing -->
-      <rect x="-140" y="220" width="280" height="140" rx="30" fill="#047857" />
-      <line x1="-90" y1="220" x2="-90" y2="360" stroke="#064E3B" stroke-width="8" />
-      <line x1="0" y1="220" x2="0" y2="360" stroke="#064E3B" stroke-width="8" />
-      <line x1="90" y1="220" x2="90" y2="360" stroke="#064E3B" stroke-width="8" />
-      <!-- Hand body -->
-      <path d="M -130,220 C -150,50 -100,-250 0,-280 C 100,-250 150,50 130,220 Z" />
-      <!-- Thumb -->
-      <path d="M 110,80 C 220,50 240,-80 180,-120 C 120,-150 90, -40 90,80 Z" />
-      <!-- Knit snowflake/heart detail on mitten -->
-      <path d="M 0,-60 Q -50,-130 -100,-60 Q -50,50 0,100 Q 50,50 100,-60 Q 50,-130 0,-60 Z" fill="#FFFBEB" stroke="#064E3B" stroke-width="6" />
+    <g transform="translate(260, 0) rotate(18)" fill="#059669" stroke="#064E3B" stroke-width="14">
+      <rect x="-150" y="240" width="300" height="150" rx="32" fill="#047857" />
+      <line x1="-100" y1="240" x2="-100" y2="390" stroke="#064E3B" stroke-width="9" />
+      <line x1="0" y1="240" x2="0" y2="390" stroke="#064E3B" stroke-width="9" />
+      <line x1="100" y1="240" x2="100" y2="390" stroke="#064E3B" stroke-width="9" />
+      <path d="M -140,240 C -160,55 -110,-270 0,-300 C 110,-270 160,55 140,240 Z" />
+      <path d="M 120,85 C 240,55 260,-90 200,-130 C 130,-160 100,-45 100,85 Z" />
+      <path d="M 0,-65 Q -55,-140 -110,-65 Q -55,55 0,110 Q 55,55 110,-65 Q 55,-140 0,-65 Z" fill="#FFFBEB" stroke="#064E3B" stroke-width="7" />
     </g>
   </g>
 
   <!-- Curved / Script Top "SWEATER" -->
   <g filter="url(#shadow-sw)">
-    <text x="1800" y="850" font-family="'Impact', 'Arial Black', sans-serif" font-size="360" font-weight="900" fill="#064E3B" text-anchor="middle" letter-spacing="20">SWEATER</text>
-    <text x="1800" y="830" font-family="'Impact', 'Arial Black', sans-serif" font-size="360" font-weight="900" fill="#059669" text-anchor="middle" letter-spacing="20">SWEATER</text>
-    <text x="1800" y="810" font-family="'Impact', 'Arial Black', sans-serif" font-size="360" font-weight="900" fill="#ECFDF5" text-anchor="middle" letter-spacing="20" stroke="#064E3B" stroke-width="10">SWEATER</text>
+    <text x="1975" y="980" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="#064E3B" text-anchor="middle" letter-spacing="22">SWEATER</text>
+    <text x="1975" y="960" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="#059669" text-anchor="middle" letter-spacing="22">SWEATER</text>
+    <text x="1975" y="940" font-family="'Impact', 'Arial Black', sans-serif" font-size="390" font-weight="900" fill="#ECFDF5" text-anchor="middle" letter-spacing="22" stroke="#064E3B" stroke-width="12">SWEATER</text>
   </g>
 
-  <!-- Big Cursive Bottom "WEATHER" -->
+  <!-- Big Cursive Bottom "Weather" -->
   <g filter="url(#shadow-sw)">
-    <text x="1800" y="2750" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#78350F" text-anchor="middle">Weather</text>
-    <text x="1800" y="2730" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#D97706" text-anchor="middle">Weather</text>
-    <text x="1800" y="2710" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">Weather</text>
+    <text x="1975" y="3550" font-family="'Brush Script MT', 'Palatino', cursive" font-size="490" font-style="italic" font-weight="bold" fill="#78350F" text-anchor="middle">Weather</text>
+    <text x="1975" y="3530" font-family="'Brush Script MT', 'Palatino', cursive" font-size="490" font-style="italic" font-weight="bold" fill="#D97706" text-anchor="middle">Weather</text>
+    <text x="1975" y="3510" font-family="'Brush Script MT', 'Palatino', cursive" font-size="490" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">Weather</text>
   </g>
 
-  <text x="1800" y="3150" font-family="'Trebuchet MS', sans-serif" font-size="80" font-weight="900" fill="#047857" text-anchor="middle" letter-spacing="14">COZY UP &amp; STAY WARM • AUTUMN 2026</text>
+  <!-- Subtitle -->
+  <text x="1975" y="4150" font-family="'Trebuchet MS', sans-serif" font-size="90" font-weight="900" fill="#047857" text-anchor="middle" letter-spacing="16">COZY UP &amp; STAY WARM • AUTUMN 2026</text>
 </svg>
 `
   },
 
-  // 7. Thanksgiving: Feast Mode
+  // 3. Thanksgiving: Feast Mode (Tee)
   {
     slug: 'feast-mode',
     title: 'Feast Mode',
+    category: 'tee',
+    width: 3951,
+    height: 4800,
+    previewWidth: 988,
+    previewHeight: 1200,
     svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <filter id="shadow-fm" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#451A03" flood-opacity="0.3"/>
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#451A03" flood-opacity="0.35"/>
     </filter>
     <linearGradient id="turkey-grad" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#D97706"/>
@@ -513,209 +213,511 @@ const designs = [
     </linearGradient>
   </defs>
 
-  <!-- Top Banner: "THANKSGIVING DAY" -->
-  <g transform="translate(1800, 550)">
-    <rect x="-750" y="-70" width="1500" height="140" rx="70" fill="#991B1B" />
-    <text x="0" y="20" font-family="'Impact', 'Arial Black', sans-serif" font-size="80" font-weight="900" fill="#FEF2F2" text-anchor="middle" letter-spacing="12">THANKSGIVING DAY CHAMPIONSHIP</text>
+  <!-- Top Banner: "THANKSGIVING DAY CHAMPIONSHIP" -->
+  <g transform="translate(1975, 620)">
+    <rect x="-820" y="-80" width="1640" height="160" rx="80" fill="#991B1B" />
+    <text x="0" y="24" font-family="'Impact', 'Arial Black', sans-serif" font-size="88" font-weight="900" fill="#FEF2F2" text-anchor="middle" letter-spacing="14">THANKSGIVING DAY CHAMPIONSHIP</text>
   </g>
 
   <!-- Giant Athletic "FEAST" -->
   <g filter="url(#shadow-fm)">
-    <text x="1800" y="980" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="25">FEAST</text>
-    <text x="1800" y="955" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#DC2626" text-anchor="middle" letter-spacing="25">FEAST</text>
-    <text x="1800" y="930" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="25" stroke="#450A0A" stroke-width="12">FEAST</text>
+    <text x="1975" y="1150" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="28">FEAST</text>
+    <text x="1975" y="1125" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#DC2626" text-anchor="middle" letter-spacing="28">FEAST</text>
+    <text x="1975" y="1100" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="28" stroke="#450A0A" stroke-width="14">FEAST</text>
   </g>
 
-  <!-- Central Roasted Turkey on Platter + Crossed Fork & Knife -->
-  <g transform="translate(1800, 1850)" filter="url(#shadow-fm)">
-    <!-- Crossed Fork & Carving Knife in background -->
-    <g stroke="#94A3B8" stroke-width="24" stroke-linecap="round">
-      <line x1="-500" y1="-450" x2="500" y2="450" />
-      <line x1="500" y1="-450" x2="-500" y2="450" />
+  <!-- Central Roasted Turkey Platter -->
+  <g transform="translate(1975, 2250)" filter="url(#shadow-fm)">
+    <g stroke="#94A3B8" stroke-width="26" stroke-linecap="round">
+      <line x1="-550" y1="-500" x2="550" y2="500" />
+      <line x1="550" y1="-500" x2="-550" y2="500" />
     </g>
 
-    <!-- Silver Platter -->
-    <ellipse cx="0" cy="220" rx="750" ry="240" fill="#E2E8F0" stroke="#94A3B8" stroke-width="16" />
-    <ellipse cx="0" cy="220" rx="660" ry="190" fill="#F8FAFC" />
+    <ellipse cx="0" cy="240" rx="820" ry="260" fill="#E2E8F0" stroke="#94A3B8" stroke-width="18" />
+    <ellipse cx="0" cy="240" rx="720" ry="210" fill="#F8FAFC" />
 
-    <!-- Golden Roast Turkey Body -->
-    <path d="M -320,180 C -420,50 -350,-180 -180,-250 C 0,-300 180,-250 320,50 C 350,180 200,240 0,240 C -200,240 -300,220 -320,180 Z" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="14" />
+    <path d="M -350,200 C -460,55 -380,-200 -200,-275 C 0,-330 200,-275 350,55 C 380,200 220,260 0,260 C -220,260 -330,240 -350,200 Z" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="16" />
 
-    <!-- Drumsticks -->
-    <!-- Left Drumstick -->
-    <g transform="translate(-250, -50) rotate(-35)">
-      <ellipse cx="0" cy="0" rx="140" ry="220" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="10" />
-      <!-- Bone & Chef Frill -->
-      <rect x="-24" y="-300" width="48" height="150" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
-      <circle cx="-16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
-      <circle cx="16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+    <g transform="translate(-275, -55) rotate(-35)">
+      <ellipse cx="0" cy="0" rx="150" ry="240" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="11" />
+      <rect x="-26" y="-330" width="52" height="165" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
+      <circle cx="-18" cy="-340" r="30" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
+      <circle cx="18" cy="-340" r="30" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
     </g>
 
-    <!-- Right Drumstick -->
-    <g transform="translate(250, -50) rotate(35)">
-      <ellipse cx="0" cy="0" rx="140" ry="220" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="10" />
-      <!-- Bone & Chef Frill -->
-      <rect x="-24" y="-300" width="48" height="150" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
-      <circle cx="-16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
-      <circle cx="16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+    <g transform="translate(275, -55) rotate(35)">
+      <ellipse cx="0" cy="0" rx="150" ry="240" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="11" />
+      <rect x="-26" y="-330" width="52" height="165" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
+      <circle cx="-18" cy="-340" r="30" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
+      <circle cx="18" cy="-340" r="30" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="7" />
     </g>
 
-    <!-- Rosemary Garnish Sprigs on Platter -->
-    <path d="M -450,220 Q -380,160 -300,240" fill="none" stroke="#15803D" stroke-width="14" stroke-linecap="round" />
-    <path d="M 450,220 Q 380,160 300,240" fill="none" stroke="#15803D" stroke-width="14" stroke-linecap="round" />
+    <path d="M -490,240 Q -415,175 -330,260" fill="none" stroke="#15803D" stroke-width="16" stroke-linecap="round" />
+    <path d="M 490,240 Q 415,175 330,260" fill="none" stroke="#15803D" stroke-width="16" stroke-linecap="round" />
   </g>
 
   <!-- Giant Athletic "MODE" -->
   <g filter="url(#shadow-fm)">
-    <text x="1800" y="2780" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="25">MODE</text>
-    <text x="1800" y="2755" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="25">MODE</text>
-    <text x="1800" y="2730" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="25" stroke="#450A0A" stroke-width="12">MODE</text>
+    <text x="1975" y="3400" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="28">MODE</text>
+    <text x="1975" y="3375" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="28">MODE</text>
+    <text x="1975" y="3350" font-family="'Impact', 'Arial Black', sans-serif" font-size="480" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="28" stroke="#450A0A" stroke-width="14">MODE</text>
   </g>
 
-  <text x="1800" y="3150" font-family="'Trebuchet MS', sans-serif" font-size="80" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="14">UNBUTTON THE PANTS • IT'S GAME TIME</text>
+  <text x="1975" y="4150" font-family="'Trebuchet MS', sans-serif" font-size="90" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="16">UNBUTTON THE PANTS • IT'S GAME TIME</text>
 </svg>
 `
   },
 
-  // 8. Thanksgiving: Thankful, Grateful, Caffeinated
+  // ==========================================
+  // MUGS: 1275 x 1155 px
+  // ==========================================
+
+  // 4. Halloween: Here for the Boos (Mug)
+  {
+    slug: 'here-for-the-boos',
+    title: 'Here for the Boos',
+    category: 'mug',
+    width: 1275,
+    height: 1155,
+    previewWidth: 1275,
+    previewHeight: 1155,
+    svg: `
+<svg width="1275" height="1155" viewBox="0 0 1275 1155" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-boos-mug" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1e1b4b" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="cocktail-grad-mug" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#EAB308"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Stars -->
+  <g fill="#FDE047" opacity="0.9">
+    <circle cx="200" cy="200" r="8" />
+    <circle cx="1080" cy="220" r="10" />
+    <circle cx="280" cy="480" r="7" />
+    <circle cx="980" cy="490" r="9" />
+  </g>
+
+  <!-- Top Script: "I'M JUST" -->
+  <text x="637.5" y="160" font-family="'Georgia', serif" font-style="italic" font-size="52" font-weight="700" fill="#A855F7" text-anchor="middle" letter-spacing="6">I'M JUST</text>
+
+  <!-- Main "HERE FOR THE" -->
+  <g filter="url(#shadow-boos-mug)">
+    <text x="637.5" y="270" font-family="'Impact', 'Arial Black', sans-serif" font-size="105" font-weight="900" fill="#1E1B4B" text-anchor="middle" letter-spacing="6">HERE FOR THE</text>
+    <text x="637.5" y="265" font-family="'Impact', 'Arial Black', sans-serif" font-size="105" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="6">HERE FOR THE</text>
+  </g>
+
+  <!-- Cocktail Coupe + Friendly Floating Ghost -->
+  <g transform="translate(637.5, 600)" filter="url(#shadow-boos-mug)">
+    <!-- Little Ghost Floating above Glass -->
+    <g transform="translate(-65, -280)">
+      <path d="M 65,18 C 32,18 22,65 22,115 C 22,160 32,180 43,170 C 54,160 65,185 76,170 C 87,155 98,185 109,170 C 120,155 127,137 127,115 C 127,65 98,18 65,18 Z" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="4" />
+      <ellipse cx="50" cy="72" rx="6" ry="9" fill="#1E1B4B" />
+      <ellipse cx="80" cy="72" rx="6" ry="9" fill="#1E1B4B" />
+      <ellipse cx="42" cy="83" rx="6" ry="3" fill="#FDA4AF" />
+      <ellipse cx="88" cy="83" rx="6" ry="3" fill="#FDA4AF" />
+      <path d="M 60,81 Q 65,90 70,81" fill="none" stroke="#1E1B4B" stroke-width="3" stroke-linecap="round" />
+    </g>
+
+    <!-- Glass Bowl Liquid -->
+    <polygon points="0,0 -180,-170 180,-170" fill="url(#cocktail-grad-mug)" opacity="0.9" />
+    <!-- Glass Outline -->
+    <polygon points="0,0 -195,-180 195,-180" fill="none" stroke="#CBD5E1" stroke-width="7" stroke-linejoin="round" />
+    <!-- Stem -->
+    <rect x="-5" y="0" width="10" height="150" fill="#CBD5E1" />
+    <!-- Base -->
+    <ellipse cx="0" cy="155" rx="110" ry="14" fill="#CBD5E1" />
+
+    <!-- Eyeball Garnish -->
+    <line x1="-140" y1="-210" x2="40" y2="-100" stroke="#78350F" stroke-width="5" stroke-linecap="round" />
+    <circle cx="-60" cy="-165" r="24" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="3" />
+    <circle cx="-60" cy="-165" r="11" fill="#10B981" />
+    <circle cx="-60" cy="-165" r="5" fill="#000000" />
+
+    <!-- Bubbles -->
+    <circle cx="-45" cy="-130" r="7" fill="#FDE047" opacity="0.8" />
+    <circle cx="30" cy="-145" r="9" fill="#FDE047" opacity="0.8" />
+    <circle cx="75" cy="-135" r="5" fill="#FDE047" opacity="0.8" />
+  </g>
+
+  <!-- Big "BOOS" Callout -->
+  <g filter="url(#shadow-boos-mug)">
+    <text x="637.5" y="930" font-family="'Impact', 'Arial Black', sans-serif" font-size="170" font-weight="900" fill="#3B0764" text-anchor="middle" letter-spacing="8">BOOS</text>
+    <text x="637.5" y="922" font-family="'Impact', 'Arial Black', sans-serif" font-size="170" font-weight="900" fill="#A855F7" text-anchor="middle" letter-spacing="8">BOOS</text>
+    <text x="637.5" y="915" font-family="'Impact', 'Arial Black', sans-serif" font-size="170" font-weight="900" fill="#FDE047" text-anchor="middle" letter-spacing="8" stroke="#451A03" stroke-width="5">BOOS</text>
+  </g>
+
+  <!-- Bottom Subtitle -->
+  <text x="637.5" y="1040" font-family="'Trebuchet MS', sans-serif" font-size="34" font-weight="900" fill="#94A3B8" text-anchor="middle" letter-spacing="6">HALLOWEEN SPIRITS CO. • EST. 2026</text>
+</svg>
+`
+  },
+
+  // 5. Fall: Powered by Pumpkin Spice (Mug)
+  {
+    slug: 'powered-by-pumpkin-spice',
+    title: 'Powered by Pumpkin Spice',
+    category: 'mug',
+    width: 1275,
+    height: 1155,
+    previewWidth: 1275,
+    previewHeight: 1155,
+    svg: `
+<svg width="1275" height="1155" viewBox="0 0 1275 1155" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-pps-mug" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#451A03" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="cup-sleeve-mug" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="50%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Header: "POWERED BY" -->
+  <g filter="url(#shadow-pps-mug)">
+    <text x="637.5" y="210" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="8">POWERED BY</text>
+    <text x="637.5" y="204" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="8">POWERED BY</text>
+    <text x="637.5" y="198" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="8" stroke="#451A03" stroke-width="4">POWERED BY</text>
+  </g>
+
+  <!-- Big Latte Coffee Cup Center -->
+  <g transform="translate(637.5, 590)" filter="url(#shadow-pps-mug)">
+    <!-- Steam Swirls -->
+    <path d="M -40,-290 C -70,-350 -30,-390 -50,-430" fill="none" stroke="#FED7AA" stroke-width="6" stroke-linecap="round" opacity="0.85" />
+    <path d="M 0,-310 C 25,-370 -15,-410 10,-450" fill="none" stroke="#FED7AA" stroke-width="8" stroke-linecap="round" opacity="0.95" />
+    <path d="M 40,-290 C 70,-350 30,-390 50,-430" fill="none" stroke="#FED7AA" stroke-width="6" stroke-linecap="round" opacity="0.85" />
+
+    <!-- Whipped Cream Mountain -->
+    <path d="M -140,-160 C -155,-220 -110,-270 -55,-280 C -20,-310 30,-310 60,-280 C 110,-270 155,-220 140,-160 Z" fill="#FFFBEB" stroke="#D97706" stroke-width="5" />
+    <!-- Cinnamon Stick -->
+    <rect x="30" y="-320" width="22" height="140" rx="11" transform="rotate(25 30 -320)" fill="#78350F" stroke="#451A03" stroke-width="3" />
+    <circle cx="-30" cy="-225" r="5" fill="#78350F" />
+    <circle cx="10" cy="-240" r="6" fill="#78350F" />
+    <circle cx="-60" cy="-205" r="4" fill="#78350F" />
+    <circle cx="40" cy="-215" r="5" fill="#78350F" />
+
+    <!-- Cup Body -->
+    <polygon points="-155,-160 -120,200 120,200 155,-160" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="6" />
+
+    <!-- Sleeve -->
+    <polygon points="-145,-60 -125,120 125,120 145,-60" fill="url(#cup-sleeve-mug)" stroke="#78350F" stroke-width="4" />
+    <!-- Mini Pumpkin on Sleeve -->
+    <ellipse cx="0" cy="25" rx="52" ry="40" fill="#EA580C" stroke="#7C2D12" stroke-width="3" />
+    <path d="M -4,-15 Q 4,-30 11,-22" fill="none" stroke="#15803D" stroke-width="4" stroke-linecap="round" />
+  </g>
+
+  <!-- Big "PUMPKIN SPICE" Footer -->
+  <g filter="url(#shadow-pps-mug)">
+    <text x="637.5" y="930" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="6">PUMPKIN SPICE</text>
+    <text x="637.5" y="922" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="6">PUMPKIN SPICE</text>
+    <text x="637.5" y="915" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="6" stroke="#451A03" stroke-width="4">PUMPKIN SPICE</text>
+  </g>
+
+  <!-- Subtext Pill -->
+  <g transform="translate(637.5, 1030)">
+    <rect x="-280" y="-30" width="560" height="60" rx="30" fill="#78350F" />
+    <text x="0" y="9" font-family="'Trebuchet MS', sans-serif" font-size="28" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="4">EXTRA WHIP &amp; DOUBLE SHOT • 2026</text>
+  </g>
+</svg>
+`
+  },
+
+  // 6. Thanksgiving: Thankful, Grateful, Caffeinated (Mug)
   {
     slug: 'thankful-grateful-caffeinated',
     title: 'Thankful, Grateful, Caffeinated',
+    category: 'mug',
+    width: 1275,
+    height: 1155,
+    previewWidth: 1275,
+    previewHeight: 1155,
     svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="1275" height="1155" viewBox="0 0 1275 1155" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="shadow-tgc" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#3f2e23" flood-opacity="0.25"/>
+    <filter id="shadow-tgc-mug" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#3f2e23" flood-opacity="0.3"/>
     </filter>
   </defs>
 
-  <!-- Botanical Wheat & Laurel Stalks Framing Left & Right -->
-  <g filter="url(#shadow-tgc)" fill="#D97706" opacity="0.85">
-    <!-- Left Stalk -->
-    <path d="M 750,1800 C 650,1200 800,800 1050,600" fill="none" stroke="#D97706" stroke-width="14" stroke-linecap="round" />
-    <ellipse cx="880" cy="750" rx="30" ry="60" transform="rotate(-30 880 750)" />
-    <ellipse cx="800" cy="950" rx="30" ry="60" transform="rotate(-40 800 950)" />
-    <ellipse cx="750" cy="1200" rx="30" ry="60" transform="rotate(-45 750 1200)" />
-    <ellipse cx="740" cy="1450" rx="30" ry="60" transform="rotate(-50 740 1450)" />
-    <ellipse cx="760" cy="1700" rx="30" ry="60" transform="rotate(-55 760 1700)" />
+  <!-- Botanical Laurel / Wheat Stalks -->
+  <g filter="url(#shadow-tgc-mug)" fill="#D97706" opacity="0.85">
+    <path d="M 270,580 C 230,380 290,260 380,190" fill="none" stroke="#D97706" stroke-width="6" stroke-linecap="round" />
+    <ellipse cx="320" cy="240" rx="12" ry="24" transform="rotate(-30 320 240)" />
+    <ellipse cx="290" cy="310" rx="12" ry="24" transform="rotate(-40 290 310)" />
+    <ellipse cx="270" cy="390" rx="12" ry="24" transform="rotate(-45 270 390)" />
+    <ellipse cx="265" cy="470" rx="12" ry="24" transform="rotate(-50 265 470)" />
 
-    <!-- Right Stalk -->
-    <path d="M 2850,1800 C 2950,1200 2800,800 2550,600" fill="none" stroke="#D97706" stroke-width="14" stroke-linecap="round" />
-    <ellipse cx="2720" cy="750" rx="30" ry="60" transform="rotate(30 2720 750)" />
-    <ellipse cx="2800" cy="950" rx="30" ry="60" transform="rotate(40 2800 950)" />
-    <ellipse cx="2850" cy="1200" rx="30" ry="60" transform="rotate(45 2850 1200)" />
-    <ellipse cx="2860" cy="1450" rx="30" ry="60" transform="rotate(50 2860 1450)" />
-    <ellipse cx="2840" cy="1700" rx="30" ry="60" transform="rotate(55 2840 1700)" />
+    <path d="M 1005,580 C 1045,380 985,260 895,190" fill="none" stroke="#D97706" stroke-width="6" stroke-linecap="round" />
+    <ellipse cx="955" cy="240" rx="12" ry="24" transform="rotate(30 955 240)" />
+    <ellipse cx="985" cy="310" rx="12" ry="24" transform="rotate(40 985 310)" />
+    <ellipse cx="1005" cy="390" rx="12" ry="24" transform="rotate(45 1005 390)" />
+    <ellipse cx="1010" cy="470" rx="12" ry="24" transform="rotate(50 1010 470)" />
   </g>
 
-  <!-- Word 1: "thankful." (Italic Serif) -->
-  <g filter="url(#shadow-tgc)">
-    <text x="1800" y="800" font-family="'Georgia', serif" font-size="280" font-style="italic" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="8">thankful.</text>
-    <text x="1800" y="785" font-family="'Georgia', serif" font-size="280" font-style="italic" font-weight="700" fill="#FEF3C7" text-anchor="middle" letter-spacing="8" stroke="#78350F" stroke-width="6">thankful.</text>
+  <!-- Word 1: "thankful." -->
+  <g filter="url(#shadow-tgc-mug)">
+    <text x="637.5" y="230" font-family="'Georgia', serif" font-size="110" font-style="italic" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="4">thankful.</text>
+    <text x="637.5" y="225" font-family="'Georgia', serif" font-size="110" font-style="italic" font-weight="700" fill="#FEF3C7" text-anchor="middle" letter-spacing="4" stroke="#78350F" stroke-width="3">thankful.</text>
   </g>
 
-  <!-- Word 2: "GRATEFUL." (Wide Clean Sans) -->
-  <g filter="url(#shadow-tgc)">
-    <text x="1800" y="1250" font-family="'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#92400E" text-anchor="middle" letter-spacing="24">GRATEFUL.</text>
-    <text x="1800" y="1235" font-family="'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="24">GRATEFUL.</text>
-    <text x="1800" y="1220" font-family="'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="24" stroke="#78350F" stroke-width="6">GRATEFUL.</text>
+  <!-- Word 2: "GRATEFUL." -->
+  <g filter="url(#shadow-tgc-mug)">
+    <text x="637.5" y="380" font-family="'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#92400E" text-anchor="middle" letter-spacing="10">GRATEFUL.</text>
+    <text x="637.5" y="374" font-family="'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="10">GRATEFUL.</text>
+    <text x="637.5" y="368" font-family="'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="10" stroke="#78350F" stroke-width="3">GRATEFUL.</text>
   </g>
 
   <!-- Artisanal Coffee Mug Illustration Center -->
-  <g transform="translate(1800, 1850)" filter="url(#shadow-tgc)">
+  <g transform="translate(637.5, 590)" filter="url(#shadow-tgc-mug)">
     <!-- Steaming Hearts -->
-    <path d="M 0,-340 C 40,-420 -20,-500 20,-560" fill="none" stroke="#D97706" stroke-width="14" stroke-linecap="round" />
-    <path d="M -80,-300 C -40,-380 -100,-460 -60,-520" fill="none" stroke="#D97706" stroke-width="12" stroke-linecap="round" />
-    <path d="M 80,-300 C 120,-380 60,-460 100,-520" fill="none" stroke="#D97706" stroke-width="12" stroke-linecap="round" />
+    <path d="M 0,-130 C 15,-160 -8,-190 8,-215" fill="none" stroke="#D97706" stroke-width="6" stroke-linecap="round" />
+    <path d="M -30,-115 C -15,-145 -38,-175 -23,-200" fill="none" stroke="#D97706" stroke-width="5" stroke-linecap="round" />
+    <path d="M 30,-115 C 45,-145 22,-175 37,-200" fill="none" stroke="#D97706" stroke-width="5" stroke-linecap="round" />
 
-    <!-- Ceramic Mug Body -->
-    <rect x="-240" y="-240" width="480" height="420" rx="70" fill="#FFFBEB" stroke="#78350F" stroke-width="14" />
+    <!-- Mug Body -->
+    <rect x="-95" y="-95" width="190" height="165" rx="28" fill="#FFFBEB" stroke="#78350F" stroke-width="6" />
     <!-- Mug Handle -->
-    <path d="M 240,-120 C 420,-120 420,120 240,120" fill="none" stroke="#FFFBEB" stroke-width="55" stroke-linecap="round" />
-    <path d="M 240,-120 C 420,-120 420,120 240,120" fill="none" stroke="#78350F" stroke-width="14" stroke-linecap="round" />
+    <path d="M 95,-45 C 165,-45 165,45 95,45" fill="none" stroke="#FFFBEB" stroke-width="22" stroke-linecap="round" />
+    <path d="M 95,-45 C 165,-45 165,45 95,45" fill="none" stroke="#78350F" stroke-width="6" stroke-linecap="round" />
 
-    <!-- Coffee inside surface -->
-    <ellipse cx="0" cy="-220" rx="220" ry="50" fill="#451A03" />
-
-    <!-- Warm heart icon on mug body -->
-    <path d="M 0,-60 Q -50,-120 -90,-60 Q -50,30 0,80 Q 50,30 90,-60 Q 50,-120 0,-60 Z" fill="#D97706" />
+    <!-- Surface -->
+    <ellipse cx="0" cy="-85" rx="85" ry="20" fill="#451A03" />
+    <!-- Heart on mug -->
+    <path d="M 0,-25 Q -20,-48 -35,-25 Q -20,12 0,32 Q 20,12 35,-25 Q 20,-48 0,-25 Z" fill="#D97706" />
   </g>
 
-  <!-- Word 3: "caffeinated." (Flowing Modern Calligraphy) -->
-  <g filter="url(#shadow-tgc)">
-    <text x="1800" y="2750" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#451A03" text-anchor="middle">caffeinated.</text>
-    <text x="1800" y="2730" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#EA580C" text-anchor="middle">caffeinated.</text>
-    <text x="1800" y="2710" font-family="'Brush Script MT', 'Palatino', cursive" font-size="440" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">caffeinated.</text>
+  <!-- Word 3: "caffeinated." -->
+  <g filter="url(#shadow-tgc-mug)">
+    <text x="637.5" y="910" font-family="'Brush Script MT', 'Palatino', cursive" font-size="160" font-style="italic" font-weight="bold" fill="#451A03" text-anchor="middle">caffeinated.</text>
+    <text x="637.5" y="902" font-family="'Brush Script MT', 'Palatino', cursive" font-size="160" font-style="italic" font-weight="bold" fill="#EA580C" text-anchor="middle">caffeinated.</text>
+    <text x="637.5" y="895" font-family="'Brush Script MT', 'Palatino', cursive" font-size="160" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">caffeinated.</text>
   </g>
 
-  <text x="1800" y="3150" font-family="'Trebuchet MS', sans-serif" font-size="75" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="14">THE HOLIDAY MORNING SURVIVAL KIT</text>
+  <text x="637.5" y="1035" font-family="'Trebuchet MS', sans-serif" font-size="32" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="6">THE HOLIDAY MORNING SURVIVAL KIT</text>
 </svg>
 `
   },
 
-  // 9. Thanksgiving: Thanksgiving Social Club
+  // ==========================================
+  // POSTERS: 5400 x 7200 px (18x24" @ 300 DPI)
+  // ==========================================
+
+  // 7. Halloween: Little Pumpkin (Poster)
+  {
+    slug: 'little-pumpkin',
+    title: 'Little Pumpkin',
+    category: 'poster',
+    width: 5400,
+    height: 7200,
+    previewWidth: 900,
+    previewHeight: 1200,
+    svg: `
+<svg width="5400" height="7200" viewBox="0 0 5400 7200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-lp-poster" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#431407" flood-opacity="0.25"/>
+    </filter>
+    <linearGradient id="grad-lp-pumpkin-p" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Botanical Wreath Ring -->
+  <g filter="url(#shadow-lp-poster)">
+    <circle cx="2700" cy="3700" r="2100" fill="none" stroke="#FED7AA" stroke-width="36" stroke-dasharray="30 60" opacity="0.65" />
+
+    <!-- Oak Leaves Left -->
+    <g transform="translate(1000, 3100) rotate(-35) scale(1.6)" fill="#B45309">
+      <path d="M 0,0 C -50,50 -80,150 0,220 C -40,280 0,360 80,380 C 120,440 200,420 220,360 C 280,360 300,280 260,220 C 320,150 260,60 180,60 Z" />
+    </g>
+    <!-- Oak Leaves Right -->
+    <g transform="translate(4200, 3100) rotate(35) scale(1.6)" fill="#B45309">
+      <path d="M 0,0 C -50,50 -80,150 0,220 C -40,280 0,360 80,380 C 120,440 200,420 220,360 C 280,360 300,280 260,220 C 320,150 260,60 180,60 Z" />
+    </g>
+
+    <!-- Sunflowers -->
+    <g transform="translate(1350, 2400) scale(1.5)">
+      <circle cx="0" cy="0" r="140" fill="#EAB308" />
+      <circle cx="0" cy="0" r="70" fill="#78350F" />
+    </g>
+    <g transform="translate(4050, 2400) scale(1.5)">
+      <circle cx="0" cy="0" r="140" fill="#EAB308" />
+      <circle cx="0" cy="0" r="70" fill="#78350F" />
+    </g>
+  </g>
+
+  <!-- Top Title: "OUR" -->
+  <text x="2700" y="1500" font-family="'Georgia', serif" font-style="italic" font-size="220" font-weight="700" fill="#9A3412" text-anchor="middle" letter-spacing="24">OUR</text>
+
+  <!-- Main Title: "LITTLE" -->
+  <g filter="url(#shadow-lp-poster)">
+    <text x="2700" y="2100" font-family="'Impact', 'Arial Black', sans-serif" font-size="520" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="20">LITTLE</text>
+    <text x="2700" y="2075" font-family="'Impact', 'Arial Black', sans-serif" font-size="520" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="20">LITTLE</text>
+    <text x="2700" y="2050" font-family="'Impact', 'Arial Black', sans-serif" font-size="520" font-weight="900" fill="#FED7AA" text-anchor="middle" letter-spacing="20" stroke="#431407" stroke-width="16">LITTLE</text>
+  </g>
+
+  <!-- Cute Baby Pumpkin Illustration Center -->
+  <g transform="translate(2700, 3750) scale(1.3)" filter="url(#shadow-lp-poster)">
+    <path d="M -30,-420 Q 30,-580 140,-540 Q 80,-440 20,-400 Z" fill="#15803D" stroke="#14532D" stroke-width="10" />
+    <path d="M 30,-480 Q 120,-480 180,-420 Q 140,-380 200,-350" fill="none" stroke="#15803D" stroke-width="14" stroke-linecap="round" />
+
+    <ellipse cx="0" cy="0" rx="580" ry="460" fill="url(#grad-lp-pumpkin-p)" stroke="#7C2D12" stroke-width="18" />
+    <ellipse cx="-250" cy="0" rx="400" ry="430" fill="url(#grad-lp-pumpkin-p)" opacity="0.6" />
+    <ellipse cx="250" cy="0" rx="400" ry="430" fill="url(#grad-lp-pumpkin-p)" opacity="0.6" />
+
+    <!-- Cute Eyes -->
+    <ellipse cx="-170" cy="-30" rx="36" ry="52" fill="#1E293B" />
+    <ellipse cx="170" cy="-30" rx="36" ry="52" fill="#1E293B" />
+    <circle cx="-155" cy="-46" r="15" fill="#FFFFFF" />
+    <circle cx="185" cy="-46" r="15" fill="#FFFFFF" />
+
+    <!-- Cheeks -->
+    <ellipse cx="-240" cy="42" rx="46" ry="26" fill="#FDA4AF" opacity="0.85" />
+    <ellipse cx="240" cy="42" rx="46" ry="26" fill="#FDA4AF" opacity="0.85" />
+
+    <!-- Smile -->
+    <path d="M -75,32 Q 0,95 75,32" fill="none" stroke="#1E293B" stroke-width="18" stroke-linecap="round" />
+  </g>
+
+  <!-- Bottom Title: "PUMPKIN" -->
+  <g transform="translate(2700, 5350)" filter="url(#shadow-lp-poster)">
+    <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="22">PUMPKIN</text>
+    <text x="0" y="-18" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#F97316" text-anchor="middle" letter-spacing="22">PUMPKIN</text>
+    <text x="0" y="-36" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FFF7ED" text-anchor="middle" letter-spacing="22" stroke="#431407" stroke-width="12">PUMPKIN</text>
+  </g>
+
+  <text x="2700" y="6050" font-family="'Georgia', serif" font-style="italic" font-size="120" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="14">SWEETEST IN THE PATCH • AUTUMN HARVEST</text>
+</svg>
+`
+  },
+
+  // 8. Fall: Autumn State of Mind (Poster)
+  {
+    slug: 'autumn-state-of-mind',
+    title: 'Autumn State of Mind',
+    category: 'poster',
+    width: 5400,
+    height: 7200,
+    previewWidth: 900,
+    previewHeight: 1200,
+    svg: `
+<svg width="5400" height="7200" viewBox="0 0 5400 7200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-autumn-poster" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#431407" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="foliage-grad-p" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#EA580C"/>
+      <stop offset="50%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Cascading Maple & Oak Leaves Graphic -->
+  <g filter="url(#shadow-autumn-poster)">
+    <g transform="translate(2700, 3600) scale(2.4)" fill="url(#foliage-grad-p)" opacity="0.95">
+      <path d="M 0,-400 Q 80,-300 120,-320 Q 200,-150 150,-100 Q 320,-80 340,50 Q 250,150 180,120 Q 150,260 80,240 L 40,400 L -40,400 L -80,240 Q -150,260 -180,120 Q -250,150 -340,50 Q -320,-80 -150,-100 Q -200,-150 -120,-320 Q -80,-300 0,-400 Z" stroke="#7C2D12" stroke-width="9" />
+    </g>
+
+    <g transform="translate(1300, 2600) rotate(-25) scale(1.6)" fill="#B45309">
+      <path d="M 0,0 C -60,60 -90,160 0,240 C -50,300 0,380 90,400 C 130,460 210,440 230,380 C 290,380 310,300 270,240 C 330,160 270,70 190,70 Z" />
+    </g>
+    <g transform="translate(4100, 2600) rotate(25) scale(1.6)" fill="#D97706">
+      <path d="M 0,0 C -60,60 -90,160 0,240 C -50,300 0,380 90,400 C 130,460 210,440 230,380 C 290,380 310,300 270,240 C 330,160 270,70 190,70 Z" />
+    </g>
+  </g>
+
+  <!-- Large Flourish Script: "Autumn" -->
+  <g filter="url(#shadow-autumn-poster)">
+    <text x="2700" y="1750" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="640" font-style="italic" font-weight="bold" fill="#7C2D12" text-anchor="middle">Autumn</text>
+    <text x="2700" y="1720" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="640" font-style="italic" font-weight="bold" fill="#F97316" text-anchor="middle">Autumn</text>
+    <text x="2700" y="1700" font-family="'Brush Script MT', 'Palatino', 'Georgia', cursive" font-size="640" font-style="italic" font-weight="bold" fill="#FEF3C7" text-anchor="middle">Autumn</text>
+  </g>
+
+  <!-- Serif Block: "STATE OF MIND" -->
+  <g filter="url(#shadow-autumn-poster)" transform="translate(2700, 5450)">
+    <line x1="-1400" y1="-120" x2="-900" y2="-120" stroke="#CA8A04" stroke-width="14" />
+    <circle cx="-850" cy="-120" r="20" fill="#CA8A04" />
+    <line x1="900" y1="-120" x2="1400" y2="-120" stroke="#CA8A04" stroke-width="14" />
+    <circle cx="850" cy="-120" r="20" fill="#CA8A04" />
+
+    <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#431407" text-anchor="middle" letter-spacing="34">STATE OF MIND</text>
+    <text x="0" y="-20" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="34">STATE OF MIND</text>
+    <text x="0" y="-40" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="34" stroke="#431407" stroke-width="8">STATE OF MIND</text>
+
+    <text x="0" y="360" font-family="'Georgia', serif" font-size="120" font-style="italic" font-weight="700" fill="#78350F" text-anchor="middle" letter-spacing="18">GOLDEN LEAVES &amp; CRISP BREEZES • 2026</text>
+  </g>
+</svg>
+`
+  },
+
+  // 9. Thanksgiving: Thanksgiving Social Club (Poster)
   {
     slug: 'thanksgiving-social-club',
     title: 'Thanksgiving Social Club',
+    category: 'poster',
+    width: 5400,
+    height: 7200,
+    previewWidth: 900,
+    previewHeight: 1200,
     svg: `
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="5400" height="7200" viewBox="0 0 5400 7200" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="shadow-tsc" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0f172a" flood-opacity="0.3"/>
+    <filter id="shadow-tsc-poster" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#0f172a" flood-opacity="0.35"/>
     </filter>
   </defs>
 
-  <!-- Heritage Circular Seal / Crest -->
-  <g filter="url(#shadow-tsc)">
-    <!-- Outer Rope / Beaded Circle -->
-    <circle cx="1800" cy="1800" r="1450" fill="none" stroke="#1E293B" stroke-width="24" stroke-dasharray="24 16" />
-    <circle cx="1800" cy="1800" r="1400" fill="none" stroke="#D97706" stroke-width="12" />
-    <circle cx="1800" cy="1800" r="1150" fill="none" stroke="#1E293B" stroke-width="16" />
+  <!-- Heritage Circular Seal -->
+  <g filter="url(#shadow-tsc-poster)">
+    <circle cx="2700" cy="3600" r="2250" fill="none" stroke="#1E293B" stroke-width="36" stroke-dasharray="36 24" />
+    <circle cx="2700" cy="3600" r="2170" fill="none" stroke="#D97706" stroke-width="18" />
+    <circle cx="2700" cy="3600" r="1800" fill="none" stroke="#1E293B" stroke-width="24" />
   </g>
 
-  <!-- Circular Arch Top Text -->
-  <g filter="url(#shadow-tsc)">
-    <text x="1800" y="720" font-family="'Impact', 'Arial Black', sans-serif" font-size="200" font-weight="900" fill="#1E293B" text-anchor="middle" letter-spacing="22">THANKSGIVING</text>
-    <text x="1800" y="705" font-family="'Impact', 'Arial Black', sans-serif" font-size="200" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="22">THANKSGIVING</text>
-    <text x="1800" y="690" font-family="'Impact', 'Arial Black', sans-serif" font-size="200" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="22" stroke="#1E293B" stroke-width="6">THANKSGIVING</text>
+  <!-- Top Arch Text: "THANKSGIVING" -->
+  <g filter="url(#shadow-tsc-poster)">
+    <text x="2700" y="1650" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#1E293B" text-anchor="middle" letter-spacing="34">THANKSGIVING</text>
+    <text x="2700" y="1625" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="34">THANKSGIVING</text>
+    <text x="2700" y="1600" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="34" stroke="#1E293B" stroke-width="9">THANKSGIVING</text>
   </g>
 
   <!-- Central Cornucopia & Harvest Bounty -->
-  <g transform="translate(1800, 1750)" filter="url(#shadow-tsc)">
-    <!-- Woven Cornucopia Horn -->
-    <path d="M -200,200 C -450,200 -600,-50 -450,-250 C -350,-380 -100,-350 150,-250 C 400,-150 500,50 450,250 C 300,300 -100,250 -200,200 Z" fill="#92400E" stroke="#451A03" stroke-width="14" />
-    <ellipse cx="380" cy="120" rx="160" ry="240" fill="#451A03" stroke="#78350F" stroke-width="10" />
+  <g transform="translate(2700, 3500) scale(1.5)" filter="url(#shadow-tsc-poster)">
+    <path d="M -200,200 C -450,200 -600,-50 -450,-250 C -350,-380 -100,-350 150,-250 C 400,-150 500,50 450,250 C 300,300 -100,250 -200,200 Z" fill="#92400E" stroke="#451A03" stroke-width="16" />
+    <ellipse cx="380" cy="120" rx="160" ry="240" fill="#451A03" stroke="#78350F" stroke-width="12" />
 
-    <!-- Harvest Fruit Spilling Out -->
-    <!-- Giant Pumpkin -->
-    <ellipse cx="280" cy="150" rx="200" ry="160" fill="#EA580C" stroke="#7C2D12" stroke-width="10" />
-    <!-- Red Apples -->
-    <circle cx="160" cy="240" r="75" fill="#DC2626" stroke="#7F1D1D" stroke-width="6" />
-    <circle cx="380" cy="280" r="85" fill="#B91C1C" stroke="#7F1D1D" stroke-width="6" />
-    <!-- Golden Pears -->
-    <ellipse cx="450" cy="80" rx="70" ry="110" fill="#EAB308" stroke="#854D0E" stroke-width="6" />
-    <!-- Purple Grapes -->
+    <ellipse cx="280" cy="150" rx="200" ry="160" fill="#EA580C" stroke="#7C2D12" stroke-width="12" />
+    <circle cx="160" cy="240" r="75" fill="#DC2626" stroke="#7F1D1D" stroke-width="7" />
+    <circle cx="380" cy="280" r="85" fill="#B91C1C" stroke="#7F1D1D" stroke-width="7" />
+    <ellipse cx="450" cy="80" rx="70" ry="110" fill="#EAB308" stroke="#854D0E" stroke-width="7" />
     <circle cx="280" cy="-20" r="45" fill="#6B21A8" />
     <circle cx="350" cy="-40" r="45" fill="#581C87" />
     <circle cx="320" cy="30" r="45" fill="#7E22CE" />
 
-    <!-- Est. 1621 Ribbon -->
-    <g transform="translate(0, 380)">
-      <rect x="-350" y="-55" width="700" height="110" rx="30" fill="#1E293B" stroke="#D97706" stroke-width="6" />
-      <text x="0" y="20" font-family="'Georgia', serif" font-size="65" font-weight="700" fill="#FDE68A" text-anchor="middle" letter-spacing="10">• EST. 1621 •</text>
+    <g transform="translate(0, 390)">
+      <rect x="-360" y="-60" width="720" height="120" rx="32" fill="#1E293B" stroke="#D97706" stroke-width="7" />
+      <text x="0" y="22" font-family="'Georgia', serif" font-size="70" font-weight="700" fill="#FDE68A" text-anchor="middle" letter-spacing="12">• EST. 1621 •</text>
     </g>
   </g>
 
   <!-- Big Serif "SOCIAL CLUB" -->
-  <g filter="url(#shadow-tsc)">
-    <text x="1800" y="2780" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#0F172A" text-anchor="middle" letter-spacing="24">SOCIAL CLUB</text>
-    <text x="1800" y="2760" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="24">SOCIAL CLUB</text>
-    <text x="1800" y="2740" font-family="'Impact', 'Arial Black', sans-serif" font-size="280" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="24" stroke="#0F172A" stroke-width="8">SOCIAL CLUB</text>
+  <g filter="url(#shadow-tsc-poster)">
+    <text x="2700" y="5550" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#0F172A" text-anchor="middle" letter-spacing="36">SOCIAL CLUB</text>
+    <text x="2700" y="5525" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#D97706" text-anchor="middle" letter-spacing="36">SOCIAL CLUB</text>
+    <text x="2700" y="5500" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#F8FAFC" text-anchor="middle" letter-spacing="36" stroke="#0F172A" stroke-width="12">SOCIAL CLUB</text>
   </g>
 
   <!-- Motto Banner -->
-  <g transform="translate(1800, 3120)">
-    <text x="0" y="0" font-family="'Georgia', serif" font-style="italic" font-size="80" font-weight="700" fill="#1E293B" text-anchor="middle" letter-spacing="12">GATHER • FEAST • GIVE THANKS</text>
+  <g transform="translate(2700, 6100)">
+    <text x="0" y="0" font-family="'Georgia', serif" font-style="italic" font-size="120" font-weight="700" fill="#1E293B" text-anchor="middle" letter-spacing="18">GATHER • FEAST • GIVE THANKS</text>
   </g>
 </svg>
 `
@@ -723,7 +725,7 @@ const designs = [
 ];
 
 async function generateAssets() {
-  console.log(`Generating production assets for ${designs.length} designs...`);
+  console.log(`Generating product-specific production assets for ${designs.length} designs...`);
 
   for (const design of designs) {
     const svgPath = path.join(outputDir, `${design.slug}.svg`);
@@ -734,26 +736,28 @@ async function generateAssets() {
     const svgClean = design.svg.trim();
     fs.writeFileSync(svgPath, svgClean, 'utf8');
 
-    // Render 3600x3600 PNG (Production Asset: print-resolution, transparent)
+    // Render exact product-specific PNG (Production Print Area Asset)
     await sharp(Buffer.from(svgClean))
+      .resize(design.width, design.height)
       .png({ compressionLevel: 9 })
       .toFile(pngPath);
 
-    // Render 1200x1200 WebP (Web Preview)
+    // Render WebP Preview (Preserving exact aspect ratio)
     await sharp(Buffer.from(svgClean))
-      .resize(1200, 1200)
+      .resize(design.previewWidth, design.previewHeight)
       .webp({ quality: 90 })
       .toFile(webpPath);
 
     const pngStat = fs.statSync(pngPath);
     const webpStat = fs.statSync(webpPath);
 
-    console.log(`[OK] ${design.title} (${design.slug}):`);
-    console.log(`     PNG:  ${pngStat.size} bytes (${pngPath})`);
-    console.log(`     WebP: ${webpStat.size} bytes (${webpPath})`);
+    console.log(`[OK] ${design.title} (${design.slug}) [${design.category.toUpperCase()}]:`);
+    console.log(`     Dimensions: ${design.width} × ${design.height} px`);
+    console.log(`     PNG Size:   ${pngStat.size} bytes`);
+    console.log(`     WebP Size:  ${webpStat.size} bytes (${design.previewWidth} × ${design.previewHeight})`);
   }
 
-  console.log('All 9 Fall 2026 production assets generated successfully!');
+  console.log('\nAll 9 Fall 2026 product-specific production assets generated successfully!');
 }
 
 generateAssets().catch((err) => {

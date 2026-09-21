@@ -1,59 +1,58 @@
-<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+<svg width="1275" height="1155" viewBox="0 0 1275 1155" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <filter id="shadow-pps" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#451A03" flood-opacity="0.3"/>
+    <filter id="shadow-pps-mug" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#451A03" flood-opacity="0.35"/>
     </filter>
-    <linearGradient id="cup-sleeve" x1="0" y1="0" x2="1" y2="0">
+    <linearGradient id="cup-sleeve-mug" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#D97706"/>
       <stop offset="50%" stop-color="#B45309"/>
       <stop offset="100%" stop-color="#92400E"/>
     </linearGradient>
   </defs>
 
-  <!-- Header Banner: "POWERED BY" -->
-  <g filter="url(#shadow-pps)">
-    <text x="1800" y="650" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="20">POWERED BY</text>
-    <text x="1800" y="635" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="20">POWERED BY</text>
-    <text x="1800" y="620" font-family="'Impact', 'Arial Black', sans-serif" font-size="240" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="20" stroke="#451A03" stroke-width="8">POWERED BY</text>
+  <!-- Header: "POWERED BY" -->
+  <g filter="url(#shadow-pps-mug)">
+    <text x="637.5" y="210" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="8">POWERED BY</text>
+    <text x="637.5" y="204" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="8">POWERED BY</text>
+    <text x="637.5" y="198" font-family="'Impact', 'Arial Black', sans-serif" font-size="95" font-weight="900" fill="#FFFBEB" text-anchor="middle" letter-spacing="8" stroke="#451A03" stroke-width="4">POWERED BY</text>
   </g>
 
   <!-- Big Latte Coffee Cup Center -->
-  <g transform="translate(1800, 1850)" filter="url(#shadow-pps)">
-    <!-- Steam Swirls & Hearts -->
-    <path d="M -120,-800 C -200,-950 -80,-1080 -140,-1200" fill="none" stroke="#FED7AA" stroke-width="16" stroke-linecap="round" opacity="0.8" />
-    <path d="M 0,-850 C 60,-1000 -40,-1120 20,-1250" fill="none" stroke="#FED7AA" stroke-width="20" stroke-linecap="round" opacity="0.9" />
-    <path d="M 120,-800 C 200,-950 80,-1080 140,-1200" fill="none" stroke="#FED7AA" stroke-width="16" stroke-linecap="round" opacity="0.8" />
+  <g transform="translate(637.5, 590)" filter="url(#shadow-pps-mug)">
+    <!-- Steam Swirls -->
+    <path d="M -40,-290 C -70,-350 -30,-390 -50,-430" fill="none" stroke="#FED7AA" stroke-width="6" stroke-linecap="round" opacity="0.85" />
+    <path d="M 0,-310 C 25,-370 -15,-410 10,-450" fill="none" stroke="#FED7AA" stroke-width="8" stroke-linecap="round" opacity="0.95" />
+    <path d="M 40,-290 C 70,-350 30,-390 50,-430" fill="none" stroke="#FED7AA" stroke-width="6" stroke-linecap="round" opacity="0.85" />
 
     <!-- Whipped Cream Mountain -->
-    <path d="M -380,-450 C -420,-600 -300,-750 -150,-780 C -50,-850 80,-850 160,-780 C 300,-750 420,-600 380,-450 Z" fill="#FFFBEB" stroke="#D97706" stroke-width="12" />
-    <!-- Cinnamon Stick poking out -->
-    <rect x="80" y="-880" width="60" height="380" rx="30" transform="rotate(25 80 -880)" fill="#78350F" stroke="#451A03" stroke-width="8" />
-    <!-- Star Anise / Cinnamon sprinkle dots -->
-    <circle cx="-80" cy="-620" r="12" fill="#78350F" />
-    <circle cx="20" cy="-660" r="16" fill="#78350F" />
-    <circle cx="-160" cy="-560" r="10" fill="#78350F" />
-    <circle cx="100" cy="-590" r="14" fill="#78350F" />
+    <path d="M -140,-160 C -155,-220 -110,-270 -55,-280 C -20,-310 30,-310 60,-280 C 110,-270 155,-220 140,-160 Z" fill="#FFFBEB" stroke="#D97706" stroke-width="5" />
+    <!-- Cinnamon Stick -->
+    <rect x="30" y="-320" width="22" height="140" rx="11" transform="rotate(25 30 -320)" fill="#78350F" stroke="#451A03" stroke-width="3" />
+    <circle cx="-30" cy="-225" r="5" fill="#78350F" />
+    <circle cx="10" cy="-240" r="6" fill="#78350F" />
+    <circle cx="-60" cy="-205" r="4" fill="#78350F" />
+    <circle cx="40" cy="-215" r="5" fill="#78350F" />
 
     <!-- Cup Body -->
-    <polygon points="-420,-450 -320,550 320,550 420,-450" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="14" />
+    <polygon points="-155,-160 -120,200 120,200 155,-160" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="6" />
 
-    <!-- Kraft Corrugated Sleeve -->
-    <polygon points="-395,-180 -340,320 340,320 395,-180" fill="url(#cup-sleeve)" stroke="#78350F" stroke-width="10" />
-    <!-- Little Pumpkin Icon on Sleeve -->
-    <ellipse cx="0" cy="70" rx="140" ry="110" fill="#EA580C" stroke="#7C2D12" stroke-width="6" />
-    <path d="M -10,-40 Q 10,-80 30,-60" fill="none" stroke="#15803D" stroke-width="10" stroke-linecap="round" />
+    <!-- Sleeve -->
+    <polygon points="-145,-60 -125,120 125,120 145,-60" fill="url(#cup-sleeve-mug)" stroke="#78350F" stroke-width="4" />
+    <!-- Mini Pumpkin on Sleeve -->
+    <ellipse cx="0" cy="25" rx="52" ry="40" fill="#EA580C" stroke="#7C2D12" stroke-width="3" />
+    <path d="M -4,-15 Q 4,-30 11,-22" fill="none" stroke="#15803D" stroke-width="4" stroke-linecap="round" />
   </g>
 
   <!-- Big "PUMPKIN SPICE" Footer -->
-  <g filter="url(#shadow-pps)">
-    <text x="1800" y="2850" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="14">PUMPKIN SPICE</text>
-    <text x="1800" y="2830" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="14">PUMPKIN SPICE</text>
-    <text x="1800" y="2810" font-family="'Impact', 'Arial Black', sans-serif" font-size="340" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="14" stroke="#451A03" stroke-width="10">PUMPKIN SPICE</text>
+  <g filter="url(#shadow-pps-mug)">
+    <text x="637.5" y="930" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#451A03" text-anchor="middle" letter-spacing="6">PUMPKIN SPICE</text>
+    <text x="637.5" y="922" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#EA580C" text-anchor="middle" letter-spacing="6">PUMPKIN SPICE</text>
+    <text x="637.5" y="915" font-family="'Impact', 'Arial Black', sans-serif" font-size="125" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="6" stroke="#451A03" stroke-width="4">PUMPKIN SPICE</text>
   </g>
 
   <!-- Subtext Pill -->
-  <g transform="translate(1800, 3180)">
-    <rect x="-650" y="-70" width="1300" height="140" rx="70" fill="#78350F" />
-    <text x="0" y="20" font-family="'Trebuchet MS', sans-serif" font-size="65" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="10">EXTRA WHIP &amp; DOUBLE SHOT • 2026</text>
+  <g transform="translate(637.5, 1030)">
+    <rect x="-280" y="-30" width="560" height="60" rx="30" fill="#78350F" />
+    <text x="0" y="9" font-family="'Trebuchet MS', sans-serif" font-size="28" font-weight="900" fill="#FEF3C7" text-anchor="middle" letter-spacing="4">EXTRA WHIP &amp; DOUBLE SHOT • 2026</text>
   </g>
 </svg>

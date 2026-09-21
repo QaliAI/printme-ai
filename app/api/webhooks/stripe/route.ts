@@ -9,6 +9,10 @@ import {
   PrintifyFulfillmentService,
 } from '@/lib/commerce/fulfillment/service';
 import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
+import {
+  PrintifyDraftGatewayAdapter,
+  PrintifyProductionGatewayAdapter,
+} from '@/lib/commerce/fulfillment/printify-gateway';
 import { trackServerCommerceEvent } from '@/lib/commerce/analytics-server';
 import {
   E2EFulfillmentStore,
@@ -68,6 +72,8 @@ export async function POST(request: NextRequest) {
           e2eRequest
             ? new E2EFulfillmentStore()
             : new SupabaseFulfillmentStore(),
+          e2eRequest ? undefined : new PrintifyProductionGatewayAdapter(),
+          e2eRequest ? undefined : new PrintifyDraftGatewayAdapter(),
         ).prepare(result.orderId);
         fulfillment = job.state;
       } catch {

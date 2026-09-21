@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
       items: getE2ECart(getCommerceE2ESession(request)),
     });
   }
+  if (process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true') {
+    return NextResponse.json({ schemaVersion: 2, items: [] });
+  }
   try {
     const identity = await resolveCartRequestIdentity(request);
     const service = new CommerceCartService(

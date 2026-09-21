@@ -48,3 +48,4 @@ next-env.d.ts
 build-output*.txt
 build-output*.txt
 *.legacy.sql.bak
+/screenshots
