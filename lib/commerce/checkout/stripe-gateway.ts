@@ -90,6 +90,25 @@ export class StripeTestCheckoutGateway implements CheckoutGateway {
         shipping_address_collection: {
           allowed_countries: ['US'],
         },
+        shipping_options:
+          typeof input.shippingFeeCents === 'number' && input.shippingFeeCents >= 0
+            ? [
+                {
+                  shipping_rate_data: {
+                    type: 'fixed_amount',
+                    fixed_amount: {
+                      amount: input.shippingFeeCents,
+                      currency: 'usd',
+                    },
+                    display_name: 'Standard Ground Shipping',
+                    delivery_estimate: {
+                      minimum: { unit: 'business_day', value: 3 },
+                      maximum: { unit: 'business_day', value: 7 },
+                    },
+                  },
+                },
+              ]
+            : undefined,
         phone_number_collection: { enabled: true },
         billing_address_collection: 'auto',
         success_url: `${appUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

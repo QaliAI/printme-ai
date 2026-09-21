@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function CartPage() {
+export default function CartRedirect() {
   redirect('/shop-v2');
 }

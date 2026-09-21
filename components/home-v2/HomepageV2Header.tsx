@@ -3,14 +3,16 @@
 import Link from 'next/link';
 import { Search, ShoppingBag } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import styles from '@/app/home-v2.module.css';
 import { Navbar } from '@/components/Navbar';
+import { readLocalCart } from '@/lib/commerce/local-cart';
 
 const navigation = [
-  { href: '/designs', label: 'Shop Designs' },
-  { href: '/create', label: 'Create Yours' },
+  { href: '/designs', label: 'Shop Fall Designs' },
+  { href: '/create', label: 'Create with Your Photo' },
+  { href: '/collections', label: 'Collections' },
   { href: '/products', label: 'Products' },
-  { href: '/#gifts', label: 'Gifts' },
 ];
 
 const legacyApplicationPrefixes = [
@@ -22,6 +24,27 @@ const legacyApplicationPrefixes = [
 
 export function HomepageV2Header() {
   const pathname = usePathname();
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    function refreshCartCount() {
+      try {
+        const items = readLocalCart(window.localStorage);
+        const total = items.reduce((acc, item) => acc + item.quantity, 0);
+        setCartCount(total);
+      } catch {
+        setCartCount(0);
+      }
+    }
+
+    refreshCartCount();
+    window.addEventListener('storage', refreshCartCount);
+    window.addEventListener('printme:cart-updated', refreshCartCount);
+    return () => {
+      window.removeEventListener('storage', refreshCartCount);
+      window.removeEventListener('printme:cart-updated', refreshCartCount);
+    };
+  }, []);
 
   if (pathname.startsWith('/studio')) {
     return null;
@@ -49,9 +72,14 @@ export function HomepageV2Header() {
             <Search aria-hidden="true" size={18} strokeWidth={1.8} />
             <span>Search</span>
           </Link>
-          <Link href="/shop-v2" aria-label="Open bag">
+          <Link href="/shop-v2" aria-label={`Open bag with ${cartCount} items`}>
             <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
             <span>Bag</span>
+            {cartCount > 0 && (
+              <span className={styles.cartBadge} data-testid="cart-badge-count">
+                {cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
@@ -62,6 +90,9 @@ export function HomepageV2Header() {
           </Link>
         ))}
         <Link href="/designs">Search</Link>
+        <Link href="/shop-v2">
+          Bag{cartCount > 0 ? ` (${cartCount})` : ''}
+        </Link>
       </nav>
     </header>
   );

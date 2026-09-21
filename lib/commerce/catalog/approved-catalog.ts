@@ -338,7 +338,7 @@ const approvedProducts: MerchProduct[] = [
         title: 'White / 11 oz',
         color: 'White',
         size: '11 oz',
-        unitPrice: 2600,
+        unitPrice: 1900,
         unitCost: null,
         currency: 'USD',
         available: true,

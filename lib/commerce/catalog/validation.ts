@@ -34,18 +34,37 @@ export async function validateSnapshotAgainstApprovedCatalog(
   const design = (await getDesignCatalogService().listPublished()).find(
     (candidate) => candidate.id === configuration.designId,
   );
-  if (!design) {
-    throw new CatalogValidationError(
-      'DESIGN_NOT_PUBLISHED',
-      configuration.designId,
-    );
+  const isCurated = Boolean(design);
+
+  if (design) {
+    if (!isDesignProductCompatible(design, product.id)) {
+      throw new CatalogValidationError(
+        'DESIGN_PRODUCT_INCOMPATIBLE',
+        `${design.id}:${product.id}`,
+      );
+    }
+  } else {
+    // Customer design validation: ensure production artwork is permanently persisted
+    const prodUrl = configuration.productionAssetUrl;
+    if (!prodUrl || prodUrl.startsWith('blob:') || prodUrl.startsWith('data:')) {
+      throw new CatalogValidationError(
+        'BLOB_URL_NOT_ALLOWED',
+        'Customer artwork must be permanently stored before checkout.',
+      );
+    }
+    try {
+      const parsed = new URL(prodUrl);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        throw new Error('Invalid protocol');
+      }
+    } catch {
+      throw new CatalogValidationError(
+        'MISSING_PRODUCTION_ARTWORK',
+        'Valid production asset URL is required.',
+      );
+    }
   }
-  if (!isDesignProductCompatible(design, product.id)) {
-    throw new CatalogValidationError(
-      'DESIGN_PRODUCT_INCOMPATIBLE',
-      `${design.id}:${product.id}`,
-    );
-  }
+
   const variant = product.variants.find(
     (candidate) =>
       candidate.printifyVariantId === configuration.printifyVariantId,
@@ -77,22 +96,25 @@ export async function validateSnapshotAgainstApprovedCatalog(
   assertEqual(configuration.selectedSize, variant.size, 'SIZE_MISMATCH');
   assertEqual(snapshot.productTitle, product.name, 'PRODUCT_TITLE_MISMATCH');
   assertEqual(snapshot.variantTitle, variant.title, 'VARIANT_TITLE_MISMATCH');
-  assertEqual(snapshot.designTitle, design.title, 'DESIGN_TITLE_MISMATCH');
-  assertEqual(
-    configuration.designVersion,
-    design.asset.version,
-    'DESIGN_VERSION_MISMATCH',
-  );
-  assertEqual(
-    configuration.designAssetUrl,
-    design.asset.url,
-    'DESIGN_ASSET_MISMATCH',
-  );
-  assertEqual(
-    configuration.productionAssetUrl,
-    design.asset.productionUrl ?? design.asset.url,
-    'PRODUCTION_ASSET_MISMATCH',
-  );
+
+  if (design) {
+    assertEqual(snapshot.designTitle, design.title, 'DESIGN_TITLE_MISMATCH');
+    assertEqual(
+      configuration.designVersion,
+      design.asset.version,
+      'DESIGN_VERSION_MISMATCH',
+    );
+    assertEqual(
+      configuration.designAssetUrl,
+      design.asset.url,
+      'DESIGN_ASSET_MISMATCH',
+    );
+    assertEqual(
+      configuration.productionAssetUrl,
+      design.asset.productionUrl ?? design.asset.url,
+      'PRODUCTION_ASSET_MISMATCH',
+    );
+  }
 
   const placeholder = variant.placeholders.find(
     (candidate) =>

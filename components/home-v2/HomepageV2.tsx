@@ -50,22 +50,26 @@ export async function HomepageV2() {
     ),
   );
 
+  const fallDesigns = designs.filter((d) => d.tags.includes('fall-2026'));
+  const showcaseDesigns = fallDesigns.length > 0 ? fallDesigns.slice(0, 6) : designs.slice(0, 4);
+
   return (
     <div className={styles.homeV2}>
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Upload once. Make it yours.</p>
-          <h1>Turn a favorite photo into something worth keeping.</h1>
+          <p className={styles.eyebrow}>Fall 2026 Launch · Made to Order</p>
+          <h1>Turn your photo into art or shop our Fall Collection.</h1>
           <p>
-            Upload from your phone, prepare the artwork, and preview it on a
-            poster, tee, or mug before you add it to your bag.
+            Upload from your phone to customize a keepsake, or choose from our
+            curated Halloween, Fall, and Thanksgiving merchandise ready to print
+            on tees, mugs, and posters.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/create">Create Yours</Link>
-            <Link href="/designs">Shop Designs</Link>
+            <Link href="/create">Create with Your Photo</Link>
+            <Link href="/designs">Shop Fall Designs</Link>
           </div>
           <span className={styles.startingPrice}>
-            Custom products start at {formatPrice(startingPrice)}
+            Custom items from {formatPrice(startingPrice)} · $19 Mug, $29 Poster, $34 Tee
           </span>
         </div>
         <HeroProductSwitcher products={products} />
@@ -73,22 +77,22 @@ export async function HomepageV2() {
 
       <section className={styles.featuredSection}>
         <div className={styles.sectionHeading}>
-          <h2>Or start with a design you already love.</h2>
+          <h2>Fall 2026 Featured Collection</h2>
           <p>
-            Choose the artwork first, compare compatible products, and fine-tune
-            the placement before adding it to your bag.
+            Explore new seasonal designs for Halloween, Fall, and Thanksgiving,
+            or customize any approved product directly.
           </p>
         </div>
         <HomeCommerceShowcase
-          designs={designs.slice(0, 4)}
+          designs={showcaseDesigns}
           products={products}
         />
       </section>
 
       <section className={styles.productsSection} id="products">
         <div className={styles.sectionHeading}>
-          <h2>Choose what you want to make.</h2>
-          <p>A focused collection of products selected for reliable printing.</p>
+          <h2>The 3 Anchor Products</h2>
+          <p>Crafted for durable color, reliable fit, and guaranteed quality.</p>
         </div>
         <div className={styles.productGrid}>
           {products.map((product, index) => {
@@ -130,15 +134,15 @@ export async function HomepageV2() {
           <Camera aria-hidden="true" size={28} strokeWidth={1.6} />
           <h2>Create a personal gift from one good photo.</h2>
           <p>
-            Keep the original, remove the background, or turn it into artwork.
+            Keep the original, remove the background, or turn it into stylized artwork.
             Then position it directly on the product from any phone or computer.
           </p>
           <div className={styles.photoActions}>
             <Link href="/create">
-              Upload a Photo
+              Create with Your Photo
               <ArrowRight aria-hidden="true" size={18} strokeWidth={1.8} />
             </Link>
-            <Link href="/designs">Browse ready-to-print designs</Link>
+            <Link href="/designs">Shop Fall Designs</Link>
           </div>
         </div>
         <div className={styles.photoPair}>
@@ -167,24 +171,24 @@ export async function HomepageV2() {
 
       <section className={styles.sameDesignSection}>
         <div>
-          <h2>One design. More than one product.</h2>
+          <h2>One design. Multiple formats.</h2>
           <p>
-            Keep the artwork consistent while PrintMe adapts its scale and
-            placement for each approved format.
+            Keep your artwork consistent across matching gifts. PrintMe adapts
+            scale and placement for each approved item automatically.
           </p>
           <Link href="/create">Make a matching set</Link>
         </div>
         <div className={styles.sameDesignProducts}>
           <Image
             src="/landing/mockups/product-poster.webp"
-            alt="The same artwork printed as a poster"
+            alt="Artwork printed as an archival gallery poster"
             width={960}
             height={960}
             sizes="(max-width: 767px) 50vw, 28vw"
           />
           <Image
             src="/landing/mockups/product-tshirt.webp"
-            alt="The same artwork printed on a t-shirt"
+            alt="Artwork printed on an Everyday Tee"
             width={960}
             height={960}
             sizes="(max-width: 767px) 50vw, 28vw"
@@ -196,8 +200,8 @@ export async function HomepageV2() {
         <div className={styles.sectionHeading}>
           <h2>Made in the PrintMe studio.</h2>
           <p>
-            A few examples of the kinds of photos and memories you can prepare
-            for printing. Your own artwork stays yours.
+            Real transformations prepared by our creators. Every piece is printed
+            to order with premium inks and materials.
           </p>
         </div>
         <div className={styles.customerPlaceholders}>
@@ -220,18 +224,20 @@ export async function HomepageV2() {
         <article id="shipping">
           <h2>Clear production and delivery estimates</h2>
           <p>
-            Production time and carrier transit are shown separately whenever
-            live provider data is available, so the timing is easier to understand.
+            Production (2–3 business days) and carrier shipping (typically 3–5
+            business days) are calculated transparently so you know exactly when
+            to expect your order.
           </p>
           <Link href="/products">Review products</Link>
         </article>
         <article id="guarantee">
-          <h2>Support for damaged or misprinted orders</h2>
+          <h2>Defect and damage replacement guarantee</h2>
           <p>
-            Every item is made to order. Verified damage or production defects
-            are reviewed for replacement or reprint support.
+            Because every item is custom printed, we inspect each order carefully.
+            If your item arrives damaged or with a printing defect, we reprint
+            and replace it promptly.
           </p>
-          <Link href="mailto:support@printme.ai">Ask a question</Link>
+          <Link href="mailto:support@printme.ai">Contact support</Link>
         </article>
       </section>
 
@@ -240,7 +246,8 @@ export async function HomepageV2() {
         <nav aria-label="Footer">
           <Link href="/#shipping">Shipping</Link>
           <Link href="/#guarantee">Order Support</Link>
-          <Link href="/designs">Designs</Link>
+          <Link href="/designs">Fall Designs</Link>
+          <Link href="/collections">Collections</Link>
           <Link href="/products">Products</Link>
         </nav>
       </footer>

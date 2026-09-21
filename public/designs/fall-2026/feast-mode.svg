@@ -1,0 +1,72 @@
+<svg width="3600" height="3600" viewBox="0 0 3600 3600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow-fm" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#451A03" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="turkey-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top Banner: "THANKSGIVING DAY" -->
+  <g transform="translate(1800, 550)">
+    <rect x="-750" y="-70" width="1500" height="140" rx="70" fill="#991B1B" />
+    <text x="0" y="20" font-family="'Impact', 'Arial Black', sans-serif" font-size="80" font-weight="900" fill="#FEF2F2" text-anchor="middle" letter-spacing="12">THANKSGIVING DAY CHAMPIONSHIP</text>
+  </g>
+
+  <!-- Giant Athletic "FEAST" -->
+  <g filter="url(#shadow-fm)">
+    <text x="1800" y="980" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="25">FEAST</text>
+    <text x="1800" y="955" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#DC2626" text-anchor="middle" letter-spacing="25">FEAST</text>
+    <text x="1800" y="930" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="25" stroke="#450A0A" stroke-width="12">FEAST</text>
+  </g>
+
+  <!-- Central Roasted Turkey on Platter + Crossed Fork & Knife -->
+  <g transform="translate(1800, 1850)" filter="url(#shadow-fm)">
+    <!-- Crossed Fork & Carving Knife in background -->
+    <g stroke="#94A3B8" stroke-width="24" stroke-linecap="round">
+      <line x1="-500" y1="-450" x2="500" y2="450" />
+      <line x1="500" y1="-450" x2="-500" y2="450" />
+    </g>
+
+    <!-- Silver Platter -->
+    <ellipse cx="0" cy="220" rx="750" ry="240" fill="#E2E8F0" stroke="#94A3B8" stroke-width="16" />
+    <ellipse cx="0" cy="220" rx="660" ry="190" fill="#F8FAFC" />
+
+    <!-- Golden Roast Turkey Body -->
+    <path d="M -320,180 C -420,50 -350,-180 -180,-250 C 0,-300 180,-250 320,50 C 350,180 200,240 0,240 C -200,240 -300,220 -320,180 Z" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="14" />
+
+    <!-- Drumsticks -->
+    <!-- Left Drumstick -->
+    <g transform="translate(-250, -50) rotate(-35)">
+      <ellipse cx="0" cy="0" rx="140" ry="220" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="10" />
+      <!-- Bone & Chef Frill -->
+      <rect x="-24" y="-300" width="48" height="150" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+      <circle cx="-16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+      <circle cx="16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+    </g>
+
+    <!-- Right Drumstick -->
+    <g transform="translate(250, -50) rotate(35)">
+      <ellipse cx="0" cy="0" rx="140" ry="220" fill="url(#turkey-grad)" stroke="#451A03" stroke-width="10" />
+      <!-- Bone & Chef Frill -->
+      <rect x="-24" y="-300" width="48" height="150" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+      <circle cx="-16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+      <circle cx="16" cy="-310" r="28" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="6" />
+    </g>
+
+    <!-- Rosemary Garnish Sprigs on Platter -->
+    <path d="M -450,220 Q -380,160 -300,240" fill="none" stroke="#15803D" stroke-width="14" stroke-linecap="round" />
+    <path d="M 450,220 Q 380,160 300,240" fill="none" stroke="#15803D" stroke-width="14" stroke-linecap="round" />
+  </g>
+
+  <!-- Giant Athletic "MODE" -->
+  <g filter="url(#shadow-fm)">
+    <text x="1800" y="2780" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#450A0A" text-anchor="middle" letter-spacing="25">MODE</text>
+    <text x="1800" y="2755" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#F59E0B" text-anchor="middle" letter-spacing="25">MODE</text>
+    <text x="1800" y="2730" font-family="'Impact', 'Arial Black', sans-serif" font-size="440" font-weight="900" fill="#FEF08A" text-anchor="middle" letter-spacing="25" stroke="#450A0A" stroke-width="12">MODE</text>
+  </g>
+
+  <text x="1800" y="3150" font-family="'Trebuchet MS', sans-serif" font-size="80" font-weight="900" fill="#78350F" text-anchor="middle" letter-spacing="14">UNBUTTON THE PANTS • IT'S GAME TIME</text>
+</svg>

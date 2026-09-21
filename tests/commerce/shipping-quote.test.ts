@@ -44,17 +44,37 @@ describe('Shipping Quote Flow', () => {
     expect(quote.shippingMethod).toBe('standard');
   });
 
-  it('calculates multi-item shipping with first and additional item rates', () => {
-    const poster1 = createMockCartItem('gallery-poster'); // 1st item: $5.99
-    const tee1 = createMockCartItem('everyday-tee'); // addl item: $2.09
+  it('calculates multi-item shipping for same provider with first and additional item rates', () => {
+    const tee1 = createMockCartItem('everyday-tee', 1); // 1st tee (Monster Digital): $3.99
+    const tee2 = createMockCartItem('everyday-tee', 2); // 2 more tees (same provider): 2 * $2.09 = $4.18
 
     const quote = calculateShippingQuote({
       destination: validUS,
-      items: [poster1, tee1],
+      items: [tee1, tee2],
     });
 
-    // 1st poster ($5.99) + 1st tee as additional ($2.09) = 599 + 209 = 808 cents ($8.08)
-    expect(quote.shippingFeeCents).toBe(808);
+    // 1st tee ($3.99) + 2 addl tees (2 * $2.09 = $4.18) = 399 + 418 = 817 cents ($8.17)
+    expect(quote.shippingFeeCents).toBe(817);
+  });
+
+  it('calculates split-provider shipping where each facility ships a separate parcel', () => {
+    const poster1 = createMockCartItem('gallery-poster', 1); // Spoke Custom: $5.99
+    const tee1 = createMockCartItem('everyday-tee', 1); // Monster Digital: $3.99
+    const mug1 = createMockCartItem('keepsake-mug', 1); // District Photo: $6.39
+
+    const quoteTwoProviders = calculateShippingQuote({
+      destination: validUS,
+      items: [poster1, tee1],
+    });
+    // Spoke Custom ($5.99) + Monster Digital ($3.99) = 998 cents ($9.98)
+    expect(quoteTwoProviders.shippingFeeCents).toBe(998);
+
+    const quoteThreeProviders = calculateShippingQuote({
+      destination: validUS,
+      items: [poster1, tee1, mug1],
+    });
+    // Spoke Custom ($5.99) + Monster Digital ($3.99) + District Photo ($6.39) = 1637 cents ($16.37)
+    expect(quoteThreeProviders.shippingFeeCents).toBe(1637);
   });
 
   it('rejects non-US shipping destinations like Canada', () => {

@@ -82,49 +82,37 @@ export function calculateShippingQuote(input: {
     throw new ShippingQuoteError('EMPTY_CART', 'Cart has no items to quote.');
   }
 
-  // 2. Multi-item calculation (group by provider / blueprint)
-  // For split-provider / multi-product scenarios: highest first-item rate pays first-item cost, all remaining items pay additional-item cost.
-  let highestFirstItemRate = 0;
-  let highestFirstItemBlueprint = 0;
-
+  // 2. Multi-item calculation (group by product blueprint / fulfillment packaging)
+  // Different physical products (apparel, ceramic drinkware, flat rolled posters)
+  // require separate packaging and facility routing in Printify.
+  // Each distinct product blueprint incurs its first-item shipping fee,
+  // while additional items of the same product type incur their respective additional-item fee.
+  const itemsByBlueprint = new Map<number, CartConfigurationSnapshot[]>();
   for (const item of input.items) {
     const blueprintId = item.configuration.printifyBlueprintId;
-    const rates = US_SHIPPING_RATES_BY_BLUEPRINT[blueprintId] ?? {
-      firstItemCents: 500,
-      additionalItemCents: 250,
-    };
-    if (rates.firstItemCents > highestFirstItemRate) {
-      highestFirstItemRate = rates.firstItemCents;
-      highestFirstItemBlueprint = blueprintId;
-    }
+    const existing = itemsByBlueprint.get(blueprintId) ?? [];
+    existing.push(item);
+    itemsByBlueprint.set(blueprintId, existing);
   }
 
   let totalShippingFeeCents = 0;
-  let firstItemClaimed = false;
 
-  // Sort items so the item with the highest first-item rate gets processed first
-  const sortedItems = [...input.items].sort((a, b) => {
-    const aRates = US_SHIPPING_RATES_BY_BLUEPRINT[a.configuration.printifyBlueprintId]?.firstItemCents ?? 500;
-    const bRates = US_SHIPPING_RATES_BY_BLUEPRINT[b.configuration.printifyBlueprintId]?.firstItemCents ?? 500;
-    return bRates - aRates;
-  });
-
-  for (const item of sortedItems) {
-    const blueprintId = item.configuration.printifyBlueprintId;
+  for (const [blueprintId, blueprintItems] of itemsByBlueprint) {
     const rates = US_SHIPPING_RATES_BY_BLUEPRINT[blueprintId] ?? {
       firstItemCents: 500,
       additionalItemCents: 250,
     };
 
-    let quantityRemaining = item.quantity;
-    if (!firstItemClaimed) {
-      totalShippingFeeCents += rates.firstItemCents;
-      quantityRemaining -= 1;
-      firstItemClaimed = true;
-    }
+    const totalQuantity = blueprintItems.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
 
-    if (quantityRemaining > 0) {
-      totalShippingFeeCents += quantityRemaining * rates.additionalItemCents;
+    if (totalQuantity > 0) {
+      totalShippingFeeCents += rates.firstItemCents;
+      if (totalQuantity > 1) {
+        totalShippingFeeCents += (totalQuantity - 1) * rates.additionalItemCents;
+      }
     }
   }
 

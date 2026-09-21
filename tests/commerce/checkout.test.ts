@@ -170,7 +170,8 @@ describe('secure Stripe test checkout', () => {
 
   it('supports guest checkout and copies immutable order snapshots', async () => {
     const store = new MemoryCheckoutStore();
-    const service = new SecureCheckoutService(store, gateway());
+    const mockGateway = gateway();
+    const service = new SecureCheckoutService(store, mockGateway);
     const result = await service.create(identity, {
       idempotencyKey: 'acb5afe4-ff4d-4a98-8069-2d5fd1142f4a',
     });
@@ -180,6 +181,12 @@ describe('secure Stripe test checkout', () => {
     expect(store.identity?.guestTokenHash).toBe(identity.guestTokenHash);
     store.cartItems[0].configuration.selectedSize = 'L';
     expect(store.createdItems[0].configuration.selectedSize).toBe('M');
+    // Everyday Tee (Blueprint 12) US standard first-item shipping is $3.99 (399 cents)
+    expect(mockGateway.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shippingFeeCents: 399,
+      }),
+    );
   });
 
   it('returns an existing redirect without creating a duplicate order', async () => {
