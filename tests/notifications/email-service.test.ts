@@ -1,7 +1,9 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   FakeEmailTransport,
+  HttpEmailTransport,
   TransactionalEmailService,
+  escapeHtml,
   type OrderConfirmationEmailData,
   type OrderShippedEmailData,
 } from '@/lib/notifications/email-service';
@@ -15,7 +17,7 @@ describe('TransactionalEmailService', () => {
     service = new TransactionalEmailService(transport);
   });
 
-  it('formats and dispatches order confirmation email correctly', async () => {
+  it('formats and dispatches order confirmation email correctly with real items', async () => {
     const data: OrderConfirmationEmailData = {
       orderId: '00000000-0000-0000-0000-000000000001',
       orderNumber: 'PM-TEST-001',
@@ -23,17 +25,23 @@ describe('TransactionalEmailService', () => {
       recipientName: 'Alice Smith',
       items: [
         {
-          title: 'Everyday Tee',
+          title: 'Everyday Tee (Boo Crew)',
           variantTitle: 'White / L',
           quantity: 2,
           unitPriceCents: 3400,
           artworkThumbnailUrl: 'https://printme.ai/thumb.png',
         },
+        {
+          title: 'Keepsake Mug (Here for the Boos)',
+          variantTitle: '11oz White',
+          quantity: 1,
+          unitPriceCents: 1900,
+        },
       ],
-      subtotalCents: 6800,
+      subtotalCents: 8700,
       shippingCents: 500,
       taxCents: 450,
-      totalCents: 7750,
+      totalCents: 9650,
       currency: 'USD',
       shippingAddress: {
         name: 'Alice Smith',
@@ -55,9 +63,82 @@ describe('TransactionalEmailService', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].to).toBe('customer@example.com');
     expect(sent[0].subject).toContain('PM-TEST-001');
-    expect(sent[0].html).toContain('$77.50');
+    expect(sent[0].html).toContain('$96.50');
+    expect(sent[0].html).toContain('Everyday Tee (Boo Crew)');
+    expect(sent[0].html).toContain('Keepsake Mug (Here for the Boos)');
     expect(sent[0].html).toContain('123 Main St');
     expect(sent[0].text).toContain('Alice Smith');
+
+    // Verify durable notification history logged
+    const history = service.getNotificationLog('00000000-0000-0000-0000-000000000001');
+    expect(history).toHaveLength(1);
+    expect(history[0].type).toBe('order_confirmed');
+    expect(history[0].result.success).toBe(true);
+  });
+
+  it('escapes untrusted user input in email HTML (prevents XSS)', async () => {
+    const maliciousName = '<script>alert("xss")</script>';
+    const maliciousAddress = '<b onmouseover=alert(1)>Hack St</b>';
+    const data: OrderConfirmationEmailData = {
+      orderId: 'xss-test-order',
+      orderNumber: 'PM-XSS-999',
+      recipientEmail: 'victim@example.com',
+      recipientName: maliciousName,
+      items: [
+        {
+          title: 'Custom Tee <img src=x onerror=alert(1)>',
+          variantTitle: 'Large & In Charge',
+          quantity: 1,
+          unitPriceCents: 3400,
+        },
+      ],
+      subtotalCents: 3400,
+      shippingCents: 499,
+      taxCents: 0,
+      totalCents: 3899,
+      currency: 'USD',
+      shippingAddress: {
+        name: maliciousName,
+        address1: maliciousAddress,
+        city: 'SafeTown',
+        postalCode: '12345',
+        country: 'US',
+      },
+    };
+
+    const result = await service.sendOrderConfirmation(data);
+    expect(result.success).toBe(true);
+
+    const sent = transport.getSentMessages();
+    expect(sent[0].html).not.toContain('<script>');
+    expect(sent[0].html).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    expect(sent[0].html).not.toContain('<b onmouseover=alert(1)>');
+    expect(sent[0].html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(sent[0].html).toContain('Large &amp; In Charge');
+  });
+
+  it('does not invent fake shipping address details when address is absent (Defect C fix)', async () => {
+    const data: OrderConfirmationEmailData = {
+      orderId: 'no-addr-order',
+      orderNumber: 'PM-NOADDR-1',
+      recipientEmail: 'digital@example.com',
+      recipientName: 'Digital Buyer',
+      items: [{ title: 'Digital Asset Poster', quantity: 1, unitPriceCents: 2000 }],
+      subtotalCents: 2000,
+      shippingCents: 0,
+      taxCents: 0,
+      totalCents: 2000,
+      currency: 'USD',
+      shippingAddress: null, // No shipping address
+    };
+
+    const result = await service.sendOrderConfirmation(data);
+    expect(result.success).toBe(true);
+
+    const sent = transport.getSentMessages();
+    expect(sent[0].html).not.toContain('Order Address on File');
+    expect(sent[0].html).not.toContain('city: US');
+    expect(sent[0].html).not.toContain('Shipping To:');
   });
 
   it('enforces idempotency on duplicate order confirmation calls', async () => {
@@ -90,16 +171,20 @@ describe('TransactionalEmailService', () => {
     expect(transport.getSentMessages()).toHaveLength(1);
   });
 
-  it('formats and dispatches order shipped notification with tracking link', async () => {
+  it('formats and dispatches order shipped notification with tracking link and items (Defect A fix)', async () => {
     const data: OrderShippedEmailData = {
       orderId: 'ship-123',
       orderNumber: 'PM-SHIP-123',
-      recipientEmail: 'charlie@example.com',
-      recipientName: 'Charlie',
+      recipientEmail: 'realbuyer@example.com', // Must be real buyer, not customer@printme.ai
+      recipientName: 'Charlie Brown',
       carrier: 'USPS',
       trackingNumber: '9400100000000000000000',
       trackingUrl: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=9400100000000000000000',
-      shippedItems: [{ title: 'Gallery Poster', quantity: 1 }],
+      shippedItems: [
+        { title: 'Everyday Tee (Boo Crew)', variantTitle: 'White / M', quantity: 2 },
+      ],
+      packageNumber: 1,
+      totalPackages: 2,
     };
 
     const result = await service.sendOrderShipped(data);
@@ -107,10 +192,39 @@ describe('TransactionalEmailService', () => {
     expect(result.success).toBe(true);
     const msg = transport.findByIdempotencyKey(result.idempotencyKey);
     expect(msg).toBeDefined();
+    expect(msg?.to).toBe('realbuyer@example.com');
     expect(msg?.subject).toContain('PM-SHIP-123');
     expect(msg?.html).toContain('9400100000000000000000');
+    expect(msg?.html).toContain('Package 1 of 2');
+    expect(msg?.html).toContain('Everyday Tee (Boo Crew)');
     expect(msg?.html).toContain('Track Shipment');
     expect(msg?.html).toContain('USPS');
+  });
+
+  it('HttpEmailTransport fails with actionable error if RESEND_API_KEY is missing (Defect D fix)', async () => {
+    const httpTransport = new HttpEmailTransport(''); // No API key configured
+    const result = await httpTransport.send({
+      idempotencyKey: 'test-key',
+      type: 'order_confirmed',
+      to: 'customer@example.com',
+      subject: 'Test',
+      html: '<p>Test</p>',
+      text: 'Test',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('CONFIGURATION_ERROR');
+    expect(result.error).toContain('RESEND_API_KEY');
+    // Ensure it NEVER reports simulated success
+    expect(result.messageId).toBeUndefined();
+  });
+
+  it('escapeHtml helper handles null, undefined, and special characters', () => {
+    expect(escapeHtml(null)).toBe('');
+    expect(escapeHtml(undefined)).toBe('');
+    expect(escapeHtml('Hello & Welcome <world> "test" \'foo\'')).toBe(
+      'Hello &amp; Welcome &lt;world&gt; &quot;test&quot; &#39;foo&#39;',
+    );
   });
 
   it('sends order attention required notification', async () => {

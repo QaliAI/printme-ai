@@ -5,6 +5,11 @@ import {
   verifyPrintifyWebhookPayload,
 } from '@/lib/commerce/webhooks/printify';
 import { SupabasePrintifyWebhookStore } from '@/lib/commerce/webhooks/supabase-printify-store';
+import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
+import {
+  E2EFulfillmentStore,
+  isCommerceE2ERequest,
+} from '@/lib/commerce/testing/e2e-harness';
 import { getTransactionalEmailService } from '@/lib/notifications/email-service';
 
 export async function POST(request: NextRequest) {
@@ -47,27 +52,59 @@ export async function POST(request: NextRequest) {
       new SupabasePrintifyWebhookStore(),
     ).process(event.data);
 
-    // If shipment event with tracking information, send shipping confirmation email
+    // If shipment event with tracking information, send shipping confirmation email to the REAL customer
     if (
       !result.duplicate &&
       result.outcome === 'applied' &&
+      result.orderId &&
       (event.data.type === 'order:shipment:created' || event.data.type === 'order:updated')
     ) {
       const carrierData = event.data.resource.data?.carrier;
       if (carrierData?.tracking_number) {
         try {
-          const emailService = getTransactionalEmailService();
-          const pfyOrderId = String(event.data.resource.id);
-          await emailService.sendOrderShipped({
-            orderId: result.orderId || pfyOrderId,
-            orderNumber: result.orderId ? `PM-${result.orderId.slice(0, 8).toUpperCase()}` : `Printify #${pfyOrderId}`,
-            recipientEmail: 'customer@printme.ai', // Customer email on file for order
-            recipientName: 'Valued Customer',
-            carrier: carrierData.code.toUpperCase(),
-            trackingNumber: carrierData.tracking_number,
-            trackingUrl: carrierData.tracking_url,
-            shippedItems: [{ title: 'PrintMe Custom Merchandise', quantity: 1 }],
-          });
+          const e2eRequest = isCommerceE2ERequest(request);
+          const fulfillmentStore = e2eRequest
+            ? new E2EFulfillmentStore()
+            : new SupabaseFulfillmentStore();
+          const paidOrder = await fulfillmentStore.loadPaidOrder(result.orderId);
+
+          if (paidOrder && paidOrder.customerEmail) {
+            const emailService = getTransactionalEmailService();
+            const recipientName =
+              (paidOrder.shippingAddress as Record<string, string | undefined>)?.name ||
+              'Valued Customer';
+            const shippedItems =
+              paidOrder.items && paidOrder.items.length > 0
+                ? paidOrder.items.map((it) => ({
+                    title: it.designTitle
+                      ? `${it.productTitle} (${it.designTitle})`
+                      : it.productTitle,
+                    variantTitle: it.variantTitle || undefined,
+                    quantity: it.quantity,
+                  }))
+                : [{ title: 'PrintMe Custom Merchandise', quantity: 1 }];
+
+            const emailResult = await emailService.sendOrderShipped({
+              orderId: result.orderId,
+              orderNumber: `PM-${result.orderId.slice(0, 8).toUpperCase()}`,
+              recipientEmail: paidOrder.customerEmail,
+              recipientName,
+              carrier: (carrierData.code || 'Standard Carrier').toUpperCase(),
+              trackingNumber: carrierData.tracking_number,
+              trackingUrl: carrierData.tracking_url,
+              shippedItems,
+            });
+
+            if (!emailResult.success) {
+              console.error(
+                `[Printify Webhook] Shipping email delivery failed: ${emailResult.error}`,
+              );
+            }
+          } else {
+            console.warn(
+              `[Printify Webhook] Shipping notification skipped: No customer email found for PrintMe order ${result.orderId}.`,
+            );
+          }
         } catch (emailErr) {
           console.warn('[Printify Webhook] Shipping email dispatch failed:', emailErr);
         }

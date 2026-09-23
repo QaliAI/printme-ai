@@ -1,5 +1,5 @@
 -- ============================================================================
--- PRINTME.AI — CONSOLIDATED DATABASE MIGRATION BUNDLE (002 TO 009)
+-- PRINTME.AI — CONSOLIDATED DATABASE MIGRATION BUNDLE (002 TO 010)
 -- Target Project: vfgbvnfhvjmkmfmianpb (printme-ai)
 -- Generation Date: Fall 2026 Launch Sprint
 --
@@ -2072,6 +2072,28 @@ CREATE TRIGGER design_versions_preserve_purchased
 BEFORE UPDATE OR DELETE ON design_versions
 FOR EACH ROW
 EXECUTE FUNCTION prevent_purchased_curated_version_mutation();
+
+-- ============================================================================
+-- MIGRATION 010: ANALYTICS EVENTS
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  anonymous_id TEXT,
+  event_name TEXT NOT NULL,
+  properties JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role can manage analytics_events" ON analytics_events;
+DROP POLICY IF EXISTS "Users can view own analytics events" ON analytics_events;
+CREATE POLICY "Users can view own analytics events" ON analytics_events
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_name ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC);
 
 COMMIT;
 

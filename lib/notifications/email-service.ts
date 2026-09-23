@@ -36,7 +36,7 @@ export interface OrderConfirmationEmailData {
   taxCents: number;
   totalCents: number;
   currency: string;
-  shippingAddress: ShippingAddressSummary;
+  shippingAddress?: ShippingAddressSummary | null;
   estimatedDelivery?: string;
 }
 
@@ -48,7 +48,9 @@ export interface OrderShippedEmailData {
   carrier: string;
   trackingNumber: string;
   trackingUrl?: string;
-  shippedItems: Array<{ title: string; quantity: number }>;
+  shippedItems: Array<{ title: string; variantTitle?: string; quantity: number }>;
+  packageNumber?: number;
+  totalPackages?: number;
 }
 
 export interface OrderAttentionEmailData {
@@ -75,6 +77,7 @@ export interface TransactionalEmailMessage {
   type: NotificationType;
   to: string;
   from?: string;
+  replyTo?: string;
   subject: string;
   html: string;
   text: string;
@@ -89,8 +92,30 @@ export interface EmailSendResult {
   timestamp: string;
 }
 
+export interface EmailNotificationLogEntry {
+  idempotencyKey: string;
+  orderId: string;
+  type: NotificationType;
+  recipientEmail: string;
+  result: EmailSendResult;
+  createdAt: string;
+}
+
 export interface EmailTransport {
   send(message: TransactionalEmailMessage): Promise<EmailSendResult>;
+}
+
+/**
+ * Escapes untrusted text for safe HTML embedding.
+ */
+export function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -140,22 +165,26 @@ export class FakeEmailTransport implements EmailTransport {
 }
 
 /**
- * Production HTTPS Email transport (e.g. Resend or custom SMTP proxy).
+ * Production HTTPS Email transport using Resend.
+ * In production/preview environments, missing configuration returns an actionable failure,
+ * never a simulated success.
  */
 export class HttpEmailTransport implements EmailTransport {
   constructor(
     private apiKey: string = process.env.RESEND_API_KEY || '',
     private defaultFrom: string = process.env.TRANSACTIONAL_FROM_EMAIL || 'PrintMe Orders <orders@printme.ai>',
+    private defaultReplyTo: string = process.env.SUPPORT_EMAIL || 'support@printme.ai',
   ) {}
 
   async send(message: TransactionalEmailMessage): Promise<EmailSendResult> {
     if (!this.apiKey) {
-      console.warn(
-        `[EmailService] No RESEND_API_KEY configured. Skipping live delivery for ${message.idempotencyKey} to ${message.to}.`,
+      const errorMsg = 'CONFIGURATION_ERROR: RESEND_API_KEY is not configured in environment.';
+      console.error(
+        `[EmailService] ${errorMsg} Cannot deliver email ${message.idempotencyKey} to ${message.to}.`,
       );
       return {
-        success: true,
-        messageId: `simulated-no-key-${Date.now()}`,
+        success: false,
+        error: errorMsg,
         idempotencyKey: message.idempotencyKey,
         timestamp: new Date().toISOString(),
       };
@@ -172,6 +201,7 @@ export class HttpEmailTransport implements EmailTransport {
         body: JSON.stringify({
           from: message.from || this.defaultFrom,
           to: [message.to],
+          reply_to: message.replyTo || this.defaultReplyTo,
           subject: message.subject,
           html: message.html,
           text: message.text,
@@ -191,7 +221,7 @@ export class HttpEmailTransport implements EmailTransport {
         };
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { id?: string };
       return {
         success: true,
         messageId: data.id || `resend-${Date.now()}`,
@@ -217,6 +247,8 @@ function formatCents(cents: number, currency: string = 'USD'): string {
 }
 
 export class TransactionalEmailService {
+  private log: EmailNotificationLogEntry[] = [];
+
   constructor(private transport: EmailTransport) {}
 
   setTransport(transport: EmailTransport) {
@@ -227,6 +259,29 @@ export class TransactionalEmailService {
     return this.transport;
   }
 
+  getNotificationLog(orderId?: string): EmailNotificationLogEntry[] {
+    if (orderId) {
+      return this.log.filter((entry) => entry.orderId === orderId);
+    }
+    return [...this.log];
+  }
+
+  private recordLog(
+    orderId: string,
+    type: NotificationType,
+    recipientEmail: string,
+    result: EmailSendResult,
+  ) {
+    this.log.push({
+      idempotencyKey: result.idempotencyKey,
+      orderId,
+      type,
+      recipientEmail,
+      result,
+      createdAt: result.timestamp,
+    });
+  }
+
   /**
    * 1. Payment Accepted / Order Confirmed
    */
@@ -234,13 +289,16 @@ export class TransactionalEmailService {
     data: OrderConfirmationEmailData,
   ): Promise<EmailSendResult> {
     const idempotencyKey = `order-confirmed-${data.orderId}`;
+    const escapedName = escapeHtml(data.recipientName);
+    const escapedOrderNumber = escapeHtml(data.orderNumber);
+
     const itemsHtml = data.items
       .map(
         (item) => `
         <tr style="border-bottom: 1px solid #eee;">
           <td style="padding: 12px 0;">
-            ${item.artworkThumbnailUrl ? `<img src="${item.artworkThumbnailUrl}" alt="${item.title}" width="48" height="48" style="vertical-align:middle;margin-right:12px;border-radius:4px;border:1px solid #e5e5e5;object-fit:cover;" />` : ''}
-            <strong>${item.title}</strong>${item.variantTitle ? ` <span style="color:#666;">(${item.variantTitle})</span>` : ''}
+            ${item.artworkThumbnailUrl ? `<img src="${escapeHtml(item.artworkThumbnailUrl)}" alt="${escapeHtml(item.title)}" width="48" height="48" style="vertical-align:middle;margin-right:12px;border-radius:4px;border:1px solid #e5e5e5;object-fit:cover;" />` : ''}
+            <strong>${escapeHtml(item.title)}</strong>${item.variantTitle ? ` <span style="color:#666;">(${escapeHtml(item.variantTitle)})</span>` : ''}
           </td>
           <td style="padding: 12px 0; text-align: center;">${item.quantity}</td>
           <td style="padding: 12px 0; text-align: right;">${formatCents(item.unitPriceCents * item.quantity, data.currency)}</td>
@@ -255,6 +313,23 @@ export class TransactionalEmailService {
       )
       .join('\n');
 
+    let addressHtml = '';
+    let addressText = '';
+    if (data.shippingAddress && data.shippingAddress.address1) {
+      const addr = data.shippingAddress;
+      addressHtml = `
+        <div style="background:#f9f9f9; padding:16px; border-radius:6px; margin-bottom:24px;">
+          <h4 style="margin:0 0 8px 0; font-size:14px;">Shipping To:</h4>
+          <p style="margin:0; font-size:14px; color:#444;">
+            ${escapeHtml(addr.name || data.recipientName)}<br>
+            ${escapeHtml(addr.address1)}${addr.address2 ? `<br>${escapeHtml(addr.address2)}` : ''}<br>
+            ${escapeHtml(addr.city)}${addr.state ? `, ${escapeHtml(addr.state)}` : ''} ${escapeHtml(addr.postalCode)}<br>
+            ${escapeHtml(addr.country)}
+          </p>
+        </div>`;
+      addressText = `\nSHIPPING ADDRESS:\n${addr.name || data.recipientName}\n${addr.address1} ${addr.address2 || ''}\n${addr.city}, ${addr.state || ''} ${addr.postalCode}\n${addr.country}\n`;
+    }
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -262,13 +337,13 @@ export class TransactionalEmailService {
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto; padding: 24px;">
         <div style="text-align: center; margin-bottom: 24px;">
           <h1 style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0;">PRINTME.AI</h1>
-          <p style="color: #666; margin-top: 4px;">Thank you for your order!</p>
+          <p style="color: #666; margin-top: 4px;">Thank you for your order, ${escapedName}!</p>
         </div>
 
         <div style="background: #fafafa; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
           <p style="margin: 0; font-size: 14px; color: #666;">Order Number</p>
-          <p style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700; color: #111;">${data.orderNumber}</p>
-          <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">Estimated Delivery: ${data.estimatedDelivery || '5–10 business days'}</p>
+          <p style="margin: 4px 0 0 0; font-size: 20px; font-weight: 700; color: #111;">${escapedOrderNumber}</p>
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">Estimated Delivery: ${escapeHtml(data.estimatedDelivery || '5–10 business days')}</p>
         </div>
 
         <h3 style="font-size: 16px; margin-bottom: 8px;">Order Details</h3>
@@ -300,15 +375,7 @@ export class TransactionalEmailService {
           </div>
         </div>
 
-        <div style="background:#f9f9f9; padding:16px; border-radius:6px; margin-bottom:24px;">
-          <h4 style="margin:0 0 8px 0; font-size:14px;">Shipping To:</h4>
-          <p style="margin:0; font-size:14px; color:#444;">
-            ${data.shippingAddress.name}<br>
-            ${data.shippingAddress.address1}${data.shippingAddress.address2 ? `<br>${data.shippingAddress.address2}` : ''}<br>
-            ${data.shippingAddress.city}, ${data.shippingAddress.state || ''} ${data.shippingAddress.postalCode}<br>
-            ${data.shippingAddress.country}
-          </p>
-        </div>
+        ${addressHtml}
 
         <footer style="text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #888;">
           <p>Questions about your order? Contact <a href="mailto:support@printme.ai" style="color:#111;">support@printme.ai</a></p>
@@ -330,19 +397,13 @@ Subtotal: ${formatCents(data.subtotalCents, data.currency)}
 Shipping: ${formatCents(data.shippingCents, data.currency)}
 Tax: ${formatCents(data.taxCents, data.currency)}
 Total: ${formatCents(data.totalCents, data.currency)}
-
-SHIPPING ADDRESS:
-${data.shippingAddress.name}
-${data.shippingAddress.address1} ${data.shippingAddress.address2 || ''}
-${data.shippingAddress.city}, ${data.shippingAddress.state || ''} ${data.shippingAddress.postalCode}
-${data.shippingAddress.country}
-
+${addressText}
 Estimated Delivery: ${data.estimatedDelivery || '5–10 business days'}
 
 Need help? Contact support@printme.ai
     `.trim();
 
-    return this.transport.send({
+    const result = await this.transport.send({
       idempotencyKey,
       type: 'order_confirmed',
       to: data.recipientEmail,
@@ -351,41 +412,75 @@ Need help? Contact support@printme.ai
       text,
       metadata: { orderId: data.orderId, orderNumber: data.orderNumber },
     });
+
+    this.recordLog(data.orderId, 'order_confirmed', data.recipientEmail, result);
+    return result;
   }
 
   /**
-   * 2. Order Shipped with Carrier and Verified Tracking
+   * 2. Shipment Created with Tracking Link (supports multi-package shipments)
    */
   async sendOrderShipped(data: OrderShippedEmailData): Promise<EmailSendResult> {
     const idempotencyKey = `order-shipped-${data.orderId}-${data.trackingNumber}`;
-    const trackingLink =
-      data.trackingUrl ||
-      `https://www.google.com/search?q=${encodeURIComponent(`${data.carrier} tracking ${data.trackingNumber}`)}`;
+    const escapedName = escapeHtml(data.recipientName);
+    const escapedOrderNumber = escapeHtml(data.orderNumber);
+    const escapedCarrier = escapeHtml(data.carrier);
+    const escapedTracking = escapeHtml(data.trackingNumber);
+
+    const packageNote =
+      data.totalPackages && data.totalPackages > 1
+        ? ` (Package ${data.packageNumber || 1} of ${data.totalPackages})`
+        : '';
+
+    const itemsHtml = data.shippedItems
+      .map(
+        (it) =>
+          `<li><strong>${escapeHtml(it.title)}</strong>${it.variantTitle ? ` (${escapeHtml(it.variantTitle)})` : ''} × ${it.quantity}</li>`,
+      )
+      .join('');
+
+    const itemsText = data.shippedItems
+      .map(
+        (it) =>
+          `- ${it.title}${it.variantTitle ? ` (${it.variantTitle})` : ''} x ${it.quantity}`,
+      )
+      .join('\n');
+
+    const trackingButton = data.trackingUrl
+      ? `<div style="text-align: center; margin: 24px 0;">
+           <a href="${escapeHtml(data.trackingUrl)}" style="background: #111; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; display: inline-block;">Track Shipment</a>
+         </div>`
+      : '';
 
     const html = `
       <!DOCTYPE html>
       <html>
+      <head><meta charset="utf-8"></head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto; padding: 24px;">
         <div style="text-align: center; margin-bottom: 24px;">
-          <h1 style="font-size: 24px; font-weight: 800; margin: 0;">PRINTME.AI</h1>
-          <p style="color: #666; margin-top: 4px;">Your order has shipped!</p>
+          <h1 style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0;">PRINTME.AI</h1>
+          <p style="color: #666; margin-top: 4px;">Your order is on the way${escapeHtml(packageNote)}!</p>
         </div>
 
-        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px; text-align: center;">
-          <p style="margin: 0; font-size: 14px; color: #166534;">Carrier: <strong>${data.carrier}</strong></p>
-          <p style="margin: 8px 0; font-size: 18px; font-weight: 700; color: #14532d;">Tracking #: ${data.trackingNumber}</p>
-          <div style="margin-top: 16px;">
-            <a href="${trackingLink}" style="background:#16a34a; color:#fff; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-block;">Track Shipment</a>
-          </div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <h3 style="margin: 0 0 8px 0; color: #166534; font-size: 18px;">Shipment Details</h3>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Order:</strong> ${escapedOrderNumber}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Carrier:</strong> ${escapedCarrier}</p>
+          <p style="margin: 4px 0; font-size: 14px;"><strong>Tracking Number:</strong> ${escapedTracking}</p>
         </div>
 
-        <p>Order <strong>${data.orderNumber}</strong> is on its way. Items in this package:</p>
-        <ul>
-          ${data.shippedItems.map((item) => `<li>${item.title} (x${item.quantity})</li>`).join('')}
-        </ul>
+        ${trackingButton}
 
-        <footer style="text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #888; margin-top: 32px;">
+        <div style="margin-bottom: 24px;">
+          <h4 style="font-size: 14px; margin-bottom: 8px;">Items in this shipment:</h4>
+          <ul style="padding-left: 20px; font-size: 14px; color: #444;">
+            ${itemsHtml}
+          </ul>
+        </div>
+
+        <footer style="text-align: center; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; color: #888;">
           <p>Questions? Contact <a href="mailto:support@printme.ai" style="color:#111;">support@printme.ai</a></p>
+          <p>PrintMe.ai · Made to order with archival quality.</p>
         </footer>
       </body>
       </html>
@@ -393,87 +488,115 @@ Need help? Contact support@printme.ai
 
     const text = `
 PRINTME.AI - ORDER SHIPPED
-Order Number: ${data.orderNumber}
+Order: ${data.orderNumber}
+Hello ${data.recipientName}, your order is on the way${packageNote}!
+
 Carrier: ${data.carrier}
 Tracking Number: ${data.trackingNumber}
-Tracking Link: ${trackingLink}
+${data.trackingUrl ? `Tracking Link: ${data.trackingUrl}` : ''}
 
-Items in shipment:
-${data.shippedItems.map((i) => `- ${i.title} (x${i.quantity})`).join('\n')}
+Items in this shipment:
+${itemsText}
 
-Support: support@printme.ai
+Questions? Contact support@printme.ai
     `.trim();
 
-    return this.transport.send({
+    const result = await this.transport.send({
       idempotencyKey,
       type: 'order_shipped',
       to: data.recipientEmail,
-      subject: `Your PrintMe Order Has Shipped: ${data.orderNumber}`,
+      subject: `Your PrintMe.ai Order Has Shipped (${data.orderNumber})`,
       html,
       text,
       metadata: {
         orderId: data.orderId,
-        carrier: data.carrier,
         trackingNumber: data.trackingNumber,
+        carrier: data.carrier,
       },
     });
+
+    this.recordLog(data.orderId, 'order_shipped', data.recipientEmail, result);
+    return result;
   }
 
   /**
-   * 3. Order Attention Required (Delays or Production Review)
+   * 3. Attention Required (Delays, Address issues, Quality holds)
    */
   async sendOrderAttentionRequired(
     data: OrderAttentionEmailData,
   ): Promise<EmailSendResult> {
     const idempotencyKey = `order-attention-${data.orderId}-${Date.now()}`;
+    const escapedName = escapeHtml(data.recipientName);
+    const escapedOrderNumber = escapeHtml(data.orderNumber);
+    const escapedIssue = escapeHtml(data.issueDescription);
+
     const html = `
       <!DOCTYPE html>
       <html>
+      <head><meta charset="utf-8"></head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto; padding: 24px;">
-        <h1 style="font-size: 20px; font-weight: 800; margin: 0;">PRINTME.AI</h1>
-        <div style="background:#fefce8; border:1px solid #fef08a; padding:16px; border-radius:6px; margin: 16px 0;">
-          <p style="margin: 0; font-weight: 600; color: #854d0e;">Notice Regarding Order ${data.orderNumber}</p>
-          <p style="margin: 8px 0 0 0; color: #713f12;">${data.issueDescription}</p>
+        <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 16px 0;">PRINTME.AI</h1>
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <h2 style="margin: 0 0 8px 0; color: #92400e; font-size: 16px;">Notice Regarding Order ${escapedOrderNumber}</h2>
+          <p style="margin: 0; font-size: 14px; color: #78350f;">Hello ${escapedName},</p>
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #78350f;">${escapedIssue}</p>
         </div>
-        <p>Our production team is reviewing your order to guarantee the highest print standard. We will update you as soon as production advances.</p>
-        <p>If you need assistance, reply to this email or reach us at <a href="mailto:support@printme.ai">support@printme.ai</a>.</p>
+        <p style="font-size: 14px; color: #444;">Our concierge team is monitoring this closely. If we need any additional details, please reply directly to this email or contact us at <a href="mailto:support@printme.ai">support@printme.ai</a>.</p>
+        <footer style="margin-top: 32px; border-top: 1px solid #eee; padding-top: 16px; font-size: 12px; color: #888;">
+          PrintMe.ai Support Concierge
+        </footer>
       </body>
       </html>
     `;
 
     const text = `
 PRINTME.AI - ORDER UPDATE
-Order: ${data.orderNumber}
-Notice: ${data.issueDescription}
-Our team is reviewing your order. Contact support@printme.ai for questions.
+Notice regarding order ${data.orderNumber}
+Hello ${data.recipientName},
+
+${data.issueDescription}
+
+If you have questions, reply to this email or contact support@printme.ai.
     `.trim();
 
-    return this.transport.send({
+    const result = await this.transport.send({
       idempotencyKey,
       type: 'order_attention_required',
       to: data.recipientEmail,
       subject: `Update Regarding Order ${data.orderNumber} - PrintMe.ai`,
       html,
       text,
-      metadata: { orderId: data.orderId, alert: data.merchantAlertDetails },
+      metadata: { orderId: data.orderId },
     });
+
+    this.recordLog(data.orderId, 'order_attention_required', data.recipientEmail, result);
+    return result;
   }
 
   /**
-   * 4. Refund or Cancellation Notice
+   * 4. Order Refunded
    */
   async sendOrderRefunded(data: OrderRefundedEmailData): Promise<EmailSendResult> {
-    const idempotencyKey = `order-refunded-${data.orderId}`;
+    const idempotencyKey = `order-refunded-${data.orderId}-${data.refundAmountCents}`;
+    const escapedName = escapeHtml(data.recipientName);
+    const escapedOrderNumber = escapeHtml(data.orderNumber);
+    const escapedReason = data.reason ? escapeHtml(data.reason) : '';
+
     const html = `
       <!DOCTYPE html>
       <html>
+      <head><meta charset="utf-8"></head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto; padding: 24px;">
-        <h1 style="font-size: 20px; font-weight: 800; margin: 0;">PRINTME.AI</h1>
-        <p>A refund of <strong>${formatCents(data.refundAmountCents, data.currency)}</strong> has been processed for Order <strong>${data.orderNumber}</strong>.</p>
-        ${data.reason ? `<p>Reason: ${data.reason}</p>` : ''}
-        <p>Refunds typically appear on your original payment method in 3–5 business days.</p>
-        <footer style="margin-top: 24px; font-size: 12px; color: #888;">
-          <p>Questions? Contact support@printme.ai</p>
+        <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 16px 0;">PRINTME.AI</h1>
+        <div style="background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <h2 style="margin: 0 0 8px 0; font-size: 16px;">Refund Confirmation</h2>
+          <p style="margin: 0; font-size: 14px;">Hello ${escapedName},</p>
+          <p style="margin: 8px 0 0 0; font-size: 14px;">A refund of <strong>${formatCents(data.refundAmountCents, data.currency)}</strong> has been processed for order <strong>${escapedOrderNumber}</strong>.</p>
+          ${escapedReason ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">Reason: ${escapedReason}</p>` : ''}
+          <p style="margin: 8px 0 0 0; font-size: 13px; color: #888;">Funds typically appear on your payment method within 3–5 business days.</p>
+        </div>
+        <footer style="margin-top: 32px; border-top: 1px solid #eee; padding-top: 16px; font-size: 12px; color: #888;">
+          Questions? Contact <a href="mailto:support@printme.ai">support@printme.ai</a>
         </footer>
       </body>
       </html>
@@ -481,12 +604,15 @@ Our team is reviewing your order. Contact support@printme.ai for questions.
 
     const text = `
 PRINTME.AI - REFUND CONFIRMATION
-Order: ${data.orderNumber}
-A refund of ${formatCents(data.refundAmountCents, data.currency)} has been issued.
-Support: support@printme.ai
+Hello ${data.recipientName},
+A refund of ${formatCents(data.refundAmountCents, data.currency)} has been processed for order ${data.orderNumber}.
+${data.reason ? `Reason: ${data.reason}\n` : ''}
+Funds typically appear on your original payment method in 3–5 business days.
+
+Questions? Contact support@printme.ai
     `.trim();
 
-    return this.transport.send({
+    const result = await this.transport.send({
       idempotencyKey,
       type: 'order_refunded',
       to: data.recipientEmail,
@@ -495,20 +621,34 @@ Support: support@printme.ai
       text,
       metadata: { orderId: data.orderId, amount: data.refundAmountCents },
     });
+
+    this.recordLog(data.orderId, 'order_refunded', data.recipientEmail, result);
+    return result;
   }
 }
 
-// Global singleton instance
-const defaultTransport: EmailTransport =
-  process.env.NODE_ENV === 'test' || !process.env.RESEND_API_KEY
-    ? new FakeEmailTransport()
-    : new HttpEmailTransport();
+/**
+ * Returns the configured default transport.
+ * FakeEmailTransport runs ONLY in explicit test environments.
+ * HttpEmailTransport runs in production and staging, producing an actionable error
+ * if credentials are missing.
+ */
+export function getDefaultEmailTransport(): EmailTransport {
+  if (process.env.NODE_ENV === 'test' || process.env.EMAIL_TRANSPORT === 'fake') {
+    return new FakeEmailTransport();
+  }
+  return new HttpEmailTransport();
+}
 
 let emailServiceInstance: TransactionalEmailService | null = null;
 
 export function getTransactionalEmailService(): TransactionalEmailService {
   if (!emailServiceInstance) {
-    emailServiceInstance = new TransactionalEmailService(defaultTransport);
+    emailServiceInstance = new TransactionalEmailService(getDefaultEmailTransport());
   }
   return emailServiceInstance;
+}
+
+export function resetTransactionalEmailService(): void {
+  emailServiceInstance = null;
 }

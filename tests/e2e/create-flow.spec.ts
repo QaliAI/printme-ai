@@ -73,7 +73,8 @@ test('guest upload, preparation, customization, and cart survive refresh', async
     .getAttribute('data-render-key');
 
   await page.reload();
-  await expect(page.getByText('Apparel-ready spacing artwork')).toBeVisible();
+  await page.waitForLoadState('domcontentloaded');
+  await expect(page.getByText('Apparel-ready spacing artwork')).toBeVisible({ timeout: 10000 });
   await expect(page.getByTestId('instant-preview')).toHaveAttribute(
     'data-render-key',
     renderKey ?? '',

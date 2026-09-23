@@ -20,7 +20,11 @@ import {
   E2EStripeWebhookStore,
   isCommerceE2ERequest,
 } from '@/lib/commerce/testing/e2e-harness';
-import { getTransactionalEmailService } from '@/lib/notifications/email-service';
+import {
+  getTransactionalEmailService,
+  type OrderEmailItem,
+  type ShippingAddressSummary,
+} from '@/lib/notifications/email-service';
 
 export async function POST(request: NextRequest) {
   const e2eRequest = isCommerceE2ERequest(request);
@@ -100,46 +104,93 @@ export async function POST(request: NextRequest) {
         source: 'stripe_webhook',
       });
 
-      // Send Order Confirmation Email asynchronously and safely
+      // Send Order Confirmation Email asynchronously and safely using REAL order details
       try {
         const sessionObj = event.data.object as Stripe.Checkout.Session;
+        const fulfillmentStore = e2eRequest
+          ? new E2EFulfillmentStore()
+          : new SupabaseFulfillmentStore();
+        const paidOrder = await fulfillmentStore.loadPaidOrder(result.orderId);
+
         const customerEmail =
-          sessionObj.customer_details?.email || sessionObj.customer_email;
+          paidOrder?.customerEmail ||
+          sessionObj.customer_details?.email ||
+          sessionObj.customer_email;
+
         if (customerEmail) {
           const emailService = getTransactionalEmailService();
           const shippingDetails = sessionObj.collected_information?.shipping_details;
+          const rawAddress = (paidOrder?.shippingAddress || shippingDetails?.address) as
+            | Record<string, string | null | undefined>
+            | undefined;
+
           const recipientName =
+            (paidOrder?.shippingAddress as Record<string, string | undefined>)?.name ||
             sessionObj.customer_details?.name ||
             shippingDetails?.name ||
             'Valued Customer';
-          const shipping = shippingDetails?.address;
-          await emailService.sendOrderConfirmation({
+
+          // Format actual purchased items from the persisted order
+          const emailItems: OrderEmailItem[] =
+            paidOrder?.items && paidOrder.items.length > 0
+              ? paidOrder.items.map((item) => ({
+                  title: item.designTitle
+                    ? `${item.productTitle} (${item.designTitle})`
+                    : item.productTitle,
+                  variantTitle: item.variantTitle || undefined,
+                  quantity: item.quantity,
+                  unitPriceCents: item.configuration.unitPrice,
+                  artworkThumbnailUrl: item.configuration.instantPreview?.url || undefined,
+                }))
+              : [
+                  {
+                    title: 'PrintMe Custom Merchandise',
+                    quantity: 1,
+                    unitPriceCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
+                  },
+                ];
+
+          const shippingAddressSummary: ShippingAddressSummary | null =
+            rawAddress && rawAddress.line1
+              ? {
+                  name: rawAddress.name || recipientName,
+                  address1: rawAddress.line1,
+                  address2: rawAddress.line2 || null,
+                  city: rawAddress.city || '',
+                  state: rawAddress.state || null,
+                  postalCode: (rawAddress.postal_code || rawAddress.postalCode || '') as string,
+                  country: rawAddress.country || 'US',
+                }
+              : null;
+
+          const subtotalCents =
+            sessionObj.amount_subtotal ??
+            Math.max(
+              0,
+              (sessionObj.amount_total || 0) -
+                (sessionObj.total_details?.amount_shipping || 0) -
+                (sessionObj.total_details?.amount_tax || 0),
+            );
+
+          const emailResult = await emailService.sendOrderConfirmation({
             orderId: result.orderId,
             orderNumber: `PM-${result.orderId.slice(0, 8).toUpperCase()}`,
             recipientEmail: customerEmail,
             recipientName,
-            items: [
-              {
-                title: 'PrintMe Custom Merchandise',
-                quantity: 1,
-                unitPriceCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
-              },
-            ],
-            subtotalCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
+            items: emailItems,
+            subtotalCents,
             shippingCents: sessionObj.total_details?.amount_shipping || 0,
             taxCents: sessionObj.total_details?.amount_tax || 0,
             totalCents: sessionObj.amount_total || 0,
             currency: (sessionObj.currency || 'USD').toUpperCase(),
-            shippingAddress: {
-              name: recipientName,
-              address1: shipping?.line1 || 'Order Address on File',
-              address2: shipping?.line2 || null,
-              city: shipping?.city || 'US',
-              state: shipping?.state || '',
-              postalCode: shipping?.postal_code || '',
-              country: shipping?.country || 'US',
-            },
+            shippingAddress: shippingAddressSummary,
           });
+
+          if (!emailResult.success) {
+            console.error(
+              `[Stripe Webhook] Order confirmation email delivery failed: ${emailResult.error}`,
+            );
+          }
         }
       } catch (emailErr) {
         console.warn('[Stripe Webhook] Order confirmation email dispatch failed:', emailErr);
