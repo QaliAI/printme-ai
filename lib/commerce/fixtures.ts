@@ -505,14 +505,14 @@ export const merchProducts: MerchProduct[] = [
     previewTemplateId: 'mug-11oz-v1',
     provider: {
       id: 'fixture-mug-provider',
-      printifyProviderId: 99,
+      printifyProviderId: 1,
       name: 'Sprint 1 fixture provider',
       decorationMethods: ['sublimation'],
     },
     variants: [
       {
         id: 'mug-white-11oz',
-        printifyVariantId: 721,
+        printifyVariantId: 33719,
         title: 'White / 11 oz',
         color: 'White',
         size: '11 oz',

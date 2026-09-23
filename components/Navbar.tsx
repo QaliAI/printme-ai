@@ -21,7 +21,6 @@ export function Navbar() {
       setLoading(false);
     };
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkAuth();
 
     const {

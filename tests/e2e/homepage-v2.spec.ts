@@ -31,7 +31,9 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   ).toBeVisible();
 
   const showcase = page.getByTestId('home-commerce-showcase');
-  await expect(showcase).toContainText(/Boo Crew|Sunday Sidekick/);
+  await expect(showcase).toContainText(
+    /Boo Crew|Sunday Sidekick|Haunted Household|Autumn State of Mind/,
+  );
   await page.getByTestId('home-featured-product-everyday-tee').click();
   await expect(
     showcase.getByTestId('instant-preview'),

@@ -29,7 +29,7 @@ const fall2026Metadata: Record<
     keywords: ['ghosts', 'halloween', 'spooky', 'cute', 'boo crew', 'autumn', 'trick or treat'],
     compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
     merchandisingPriority: 99,
-    filters: ['new', 'trending', 'bestsellers'],
+    filters: ['new', 'trending'],
   },
   'design-here-for-the-boos': {
     slug: 'here-for-the-boos',
@@ -43,14 +43,14 @@ const fall2026Metadata: Record<
     keywords: ['pumpkin', 'little pumpkin', 'cute halloween', 'autumn', 'baby pumpkin', 'harvest'],
     compatibleProductIds: ['gallery-poster', 'everyday-tee', 'keepsake-mug'],
     merchandisingPriority: 94,
-    filters: ['new', 'bestsellers'],
+    filters: ['new'],
   },
   'design-autumn-state-of-mind': {
     slug: 'autumn-state-of-mind',
     keywords: ['autumn', 'fall leaves', 'foliage', 'cozy', 'autumn state of mind', 'harvest'],
     compatibleProductIds: ['gallery-poster', 'everyday-tee', 'keepsake-mug'],
     merchandisingPriority: 98,
-    filters: ['new', 'trending', 'bestsellers'],
+    filters: ['new', 'trending'],
   },
   'design-powered-by-pumpkin-spice': {
     slug: 'powered-by-pumpkin-spice',
@@ -64,14 +64,14 @@ const fall2026Metadata: Record<
     keywords: ['sweater weather', 'cozy', 'knitwear', 'autumn', 'chill', 'hoodie', 'fall vibes'],
     compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
     merchandisingPriority: 93,
-    filters: ['new', 'bestsellers'],
+    filters: ['new'],
   },
   'design-feast-mode': {
     slug: 'feast-mode',
     keywords: ['feast mode', 'thanksgiving dinner', 'turkey', 'holiday food', 'funny thanksgiving'],
     compatibleProductIds: ['everyday-tee', 'keepsake-mug', 'gallery-poster'],
     merchandisingPriority: 97,
-    filters: ['new', 'trending', 'bestsellers'],
+    filters: ['new', 'trending'],
   },
   'design-thankful-grateful-caffeinated': {
     slug: 'thankful-grateful-caffeinated',
@@ -85,7 +85,7 @@ const fall2026Metadata: Record<
     keywords: ['thanksgiving social club', 'family gathering', 'dinner', 'harvest', 'heritage', 'crest'],
     compatibleProductIds: ['gallery-poster', 'everyday-tee', 'keepsake-mug'],
     merchandisingPriority: 91,
-    filters: ['new', 'bestsellers'],
+    filters: ['new'],
   },
   'design-haunted-household': {
     slug: 'haunted-household',

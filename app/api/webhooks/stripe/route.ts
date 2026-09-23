@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 import {
   StripeCheckoutWebhookService,
   verifyStripeWebhookPayload,
@@ -19,6 +20,7 @@ import {
   E2EStripeWebhookStore,
   isCommerceE2ERequest,
 } from '@/lib/commerce/testing/e2e-harness';
+import { getTransactionalEmailService } from '@/lib/notifications/email-service';
 
 export async function POST(request: NextRequest) {
   const e2eRequest = isCommerceE2ERequest(request);
@@ -30,14 +32,22 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  const isLiveMode = process.env.STRIPE_MODE === 'live';
+  const hasValidKey = isLiveMode
+    ? process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') &&
+      process.env.STRIPE_LIVE_RELEASE_APPROVED === 'true'
+    : process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_');
+
   if (
     !e2eRequest &&
-    (process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' ||
-    !process.env.STRIPE_SECRET_KEY?.startsWith('sk_test_')
-    )
+    (process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' || !hasValidKey)
   ) {
     return NextResponse.json(
-      { error: 'Stripe test checkout is disabled.' },
+      {
+        error: isLiveMode
+          ? 'Live Stripe checkout requires COMMERCE_CHECKOUT_ENABLED=true and STRIPE_LIVE_RELEASE_APPROVED=true.'
+          : 'Stripe test checkout is disabled.',
+      },
       { status: 503 },
     );
   }
@@ -89,6 +99,51 @@ export async function POST(request: NextRequest) {
         orderId: result.orderId,
         source: 'stripe_webhook',
       });
+
+      // Send Order Confirmation Email asynchronously and safely
+      try {
+        const sessionObj = event.data.object as Stripe.Checkout.Session;
+        const customerEmail =
+          sessionObj.customer_details?.email || sessionObj.customer_email;
+        if (customerEmail) {
+          const emailService = getTransactionalEmailService();
+          const shippingDetails = sessionObj.collected_information?.shipping_details;
+          const recipientName =
+            sessionObj.customer_details?.name ||
+            shippingDetails?.name ||
+            'Valued Customer';
+          const shipping = shippingDetails?.address;
+          await emailService.sendOrderConfirmation({
+            orderId: result.orderId,
+            orderNumber: `PM-${result.orderId.slice(0, 8).toUpperCase()}`,
+            recipientEmail: customerEmail,
+            recipientName,
+            items: [
+              {
+                title: 'PrintMe Custom Merchandise',
+                quantity: 1,
+                unitPriceCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
+              },
+            ],
+            subtotalCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
+            shippingCents: sessionObj.total_details?.amount_shipping || 0,
+            taxCents: sessionObj.total_details?.amount_tax || 0,
+            totalCents: sessionObj.amount_total || 0,
+            currency: (sessionObj.currency || 'USD').toUpperCase(),
+            shippingAddress: {
+              name: recipientName,
+              address1: shipping?.line1 || 'Order Address on File',
+              address2: shipping?.line2 || null,
+              city: shipping?.city || 'US',
+              state: shipping?.state || '',
+              postalCode: shipping?.postal_code || '',
+              country: shipping?.country || 'US',
+            },
+          });
+        }
+      } catch (emailErr) {
+        console.warn('[Stripe Webhook] Order confirmation email dispatch failed:', emailErr);
+      }
     }
     return NextResponse.json({
       received: true,

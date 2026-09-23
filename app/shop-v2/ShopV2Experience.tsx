@@ -324,11 +324,15 @@ export function ShopV2Experience({
   } | null>(null);
 
   useEffect(() => {
-    if (cartItems.length === 0) {
-      setShippingQuote(null);
-      return;
-    }
     let isCurrent = true;
+    if (cartItems.length === 0) {
+      queueMicrotask(() => {
+        if (isCurrent) setShippingQuote(null);
+      });
+      return () => {
+        isCurrent = false;
+      };
+    }
     fetch('/api/commerce/shipping-quote', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

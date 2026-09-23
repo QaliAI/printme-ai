@@ -303,10 +303,10 @@ const approvedProducts: MerchProduct[] = [
     previewTemplateId: 'mug-11oz-v1',
     previewBindings: [
       {
-        key: '68:99:721:White:front:sublimation:mug-left',
+        key: '68:1:33719:White:front:sublimation:mug-left',
         printifyBlueprintId: 68,
-        printifyProviderId: 99,
-        printifyVariantId: 721,
+        printifyProviderId: 1,
+        printifyVariantId: 33719,
         productColor: 'White',
         printPosition: 'front',
         decorationMethod: 'sublimation',
@@ -314,10 +314,10 @@ const approvedProducts: MerchProduct[] = [
         previewTemplateId: 'mug-11oz-v1',
       },
       {
-        key: '68:99:721:White:back:sublimation:mug-right',
+        key: '68:1:33719:White:back:sublimation:mug-right',
         printifyBlueprintId: 68,
-        printifyProviderId: 99,
-        printifyVariantId: 721,
+        printifyProviderId: 1,
+        printifyVariantId: 33719,
         productColor: 'White',
         printPosition: 'back',
         decorationMethod: 'sublimation',
@@ -326,15 +326,15 @@ const approvedProducts: MerchProduct[] = [
       },
     ],
     provider: {
-      id: 'printify-choice-mug',
-      printifyProviderId: 99,
-      name: 'Printify Choice',
+      id: 'spoke-custom-products',
+      printifyProviderId: 1,
+      name: 'SPOKE Custom Products',
       decorationMethods: ['sublimation'],
     },
     variants: [
       {
         id: 'mug-white-11oz',
-        printifyVariantId: 721,
+        printifyVariantId: 33719,
         title: 'White / 11 oz',
         color: 'White',
         size: '11 oz',

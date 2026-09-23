@@ -83,14 +83,23 @@ export const AUTHORITATIVE_PRINTIFY_COSTS: Record<
     shippingMethods: ['standard'],
     recommendedRetailCents: 3600,
   },
-  // Keepsake Mug 11oz
-  721: {
-    productCostCents: 480,
-    usShippingFirstItemCents: 639,
-    usShippingAdditionalItemCents: 299,
-    handlingEstimateDays: 10,
+  // Keepsake Mug 11oz (SPOKE Custom Products - Provider 1, Variant 33719)
+  33719: {
+    productCostCents: 644,
+    usShippingFirstItemCents: 729,
+    usShippingAdditionalItemCents: 340,
+    handlingEstimateDays: 5,
     shippingMethods: ['standard'],
-    recommendedRetailCents: 2700,
+    recommendedRetailCents: 1900,
+  },
+  // Keepsake Mug 11oz (Legacy reference)
+  721: {
+    productCostCents: 644,
+    usShippingFirstItemCents: 729,
+    usShippingAdditionalItemCents: 340,
+    handlingEstimateDays: 5,
+    shippingMethods: ['standard'],
+    recommendedRetailCents: 1900,
   },
 };
 
