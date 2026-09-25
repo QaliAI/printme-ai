@@ -28,7 +28,12 @@ class FakeCatalogSource implements PrintifyCatalogSource {
     {
       id: 99,
       title: 'Printify Choice',
-      decoration_methods: ['dtg', 'digital-printing', 'sublimation'],
+      decoration_methods: ['dtg', 'digital-printing'],
+    },
+    {
+      id: 1,
+      title: 'SPOKE Custom Products',
+      decoration_methods: ['sublimation'],
     },
   ]);
 
@@ -42,7 +47,7 @@ class FakeCatalogSource implements PrintifyCatalogSource {
         blueprintId === 12
           ? [18541, 18542]
           : blueprintId === 68
-            ? [721]
+            ? [33719]
             : [43138, 43144];
       const ids = includeOutOfStock
         ? [...approvedIds, blueprintId * 100_000]

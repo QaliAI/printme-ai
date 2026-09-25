@@ -21,7 +21,6 @@ export function Navbar() {
       setLoading(false);
     };
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkAuth();
 
     const {
@@ -77,13 +76,13 @@ export function Navbar() {
               How it Works
             </Link>
             <Link
-              href="/gift-ideas"
+              href="/#gifts"
               className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
               Gift Ideas
             </Link>
             <Link
-              href="/faq"
+              href="/#guarantee"
               className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
               FAQ

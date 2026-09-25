@@ -8,6 +8,7 @@ const sprint3ReviewBranch =
   'feature/unified-commerce-studio-sprint-3';
 const launchReleaseBranches = new Set([
   'release/launch-safe-homepage-v2-2026-07-31',
+  'launch/fall-2026-storefront',
   'master',
 ]);
 

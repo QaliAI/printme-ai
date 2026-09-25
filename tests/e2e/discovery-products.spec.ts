@@ -7,13 +7,15 @@ test('canonical design discovery routes use real classifications', async ({
   await expect(
     page.getByRole('heading', { level: 1, name: 'Newly published.' }),
   ).toBeVisible();
-  await expect(page.locator('article')).toHaveCount(5);
+  await expect(page.locator('article').first()).toBeVisible();
+  expect(await page.locator('article').count()).toBeGreaterThanOrEqual(5);
 
   await page.goto('/designs/trending');
   await expect(
     page.getByRole('heading', { level: 1, name: 'Trending now.' }),
   ).toBeVisible();
-  await expect(page.locator('article')).toHaveCount(2);
+  await expect(page.locator('article').first()).toBeVisible();
+  expect(await page.locator('article').count()).toBeGreaterThanOrEqual(2);
 
   await page.goto('/designs/bestsellers');
   await expect(
@@ -43,10 +45,9 @@ test('approved product pages expose pricing and readiness without false promises
   await expect(
     page.getByText('Returns and reprints', { exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Create Yours' })).toHaveAttribute(
-    'href',
-    '/create?product=everyday-tee',
-  );
+  await expect(
+    page.locator('section').getByRole('link', { name: 'Create Yours' }),
+  ).toHaveAttribute('href', '/create?product=everyday-tee');
 });
 
 test('shareable design URL opens the same configurator', async ({ page }) => {

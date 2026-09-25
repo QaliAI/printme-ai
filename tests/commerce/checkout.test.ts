@@ -106,6 +106,28 @@ const identity = {
 };
 
 describe('secure Stripe test checkout', () => {
+  it('enforces Stripe key mode rules correctly', async () => {
+    const { getStripeSecretKey } = await import('@/lib/commerce/checkout/stripe-gateway');
+    
+    // Test mode requires sk_test_
+    process.env.STRIPE_MODE = 'test';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_valid_key';
+    expect(getStripeSecretKey()).toBe('sk_test_valid_key');
+
+    process.env.STRIPE_SECRET_KEY = 'sk_live_invalid_for_test_mode';
+    expect(() => getStripeSecretKey()).toThrow(/STRIPE_MODE is test/);
+
+    // Live mode rejects live keys in development/preview
+    process.env.STRIPE_MODE = 'live';
+    process.env.STRIPE_SECRET_KEY = 'sk_live_valid_key';
+    vi.stubEnv('NODE_ENV', 'development');
+    expect(() => getStripeSecretKey()).toThrow(/Live Stripe keys are prohibited/);
+
+    // Reset env vars to safe test defaults
+    process.env.STRIPE_MODE = 'test';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_local_e2e_only';
+    vi.stubEnv('NODE_ENV', 'test');
+  });
   it('rejects client price tampering even with a recomputed hash', async () => {
     const store = new MemoryCheckoutStore();
     const original = snapshot();
@@ -148,7 +170,8 @@ describe('secure Stripe test checkout', () => {
 
   it('supports guest checkout and copies immutable order snapshots', async () => {
     const store = new MemoryCheckoutStore();
-    const service = new SecureCheckoutService(store, gateway());
+    const mockGateway = gateway();
+    const service = new SecureCheckoutService(store, mockGateway);
     const result = await service.create(identity, {
       idempotencyKey: 'acb5afe4-ff4d-4a98-8069-2d5fd1142f4a',
     });
@@ -158,6 +181,12 @@ describe('secure Stripe test checkout', () => {
     expect(store.identity?.guestTokenHash).toBe(identity.guestTokenHash);
     store.cartItems[0].configuration.selectedSize = 'L';
     expect(store.createdItems[0].configuration.selectedSize).toBe('M');
+    // Everyday Tee (Blueprint 12) US standard first-item shipping is $3.99 (399 cents)
+    expect(mockGateway.createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        shippingFeeCents: 399,
+      }),
+    );
   });
 
   it('returns an existing redirect without creating a duplicate order', async () => {

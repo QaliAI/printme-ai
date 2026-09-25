@@ -4,9 +4,14 @@ import { z } from 'zod';
 import type { CartConfigurationSnapshot } from '../types';
 import { validateSnapshotAgainstApprovedCatalog } from '../catalog/validation';
 import type { CatalogAvailability } from '../catalog/validation';
+import {
+  calculateShippingQuote,
+  shippingDestinationSchema,
+} from '../shipping-quote';
 
 export const checkoutRequestSchema = z.object({
   idempotencyKey: z.string().uuid(),
+  destination: shippingDestinationSchema.optional(),
 });
 
 export interface CheckoutIdentity {
@@ -59,6 +64,7 @@ export interface CheckoutGateway {
     idempotencyKey: string;
     customerEmail?: string;
     items: CartConfigurationSnapshot[];
+    shippingFeeCents?: number;
   }): Promise<{ id: string; url: string }>;
 }
 
@@ -80,7 +86,7 @@ export class SecureCheckoutService {
     identity: CheckoutIdentity,
     input: unknown,
   ): Promise<CheckoutAttempt> {
-    const { idempotencyKey } = checkoutRequestSchema.parse(input);
+    const { idempotencyKey, destination } = checkoutRequestSchema.parse(input);
     const existing = await this.store.findAttempt(identity, idempotencyKey);
     if (existing?.redirectUrl && existing.stripeSessionId) return existing;
 
@@ -118,6 +124,15 @@ export class SecureCheckoutService {
       throw new CheckoutValidationError('INVALID_TOTAL');
     }
 
+    const shipping = calculateShippingQuote({
+      destination: destination ?? {
+        country: 'US',
+        state: 'NY',
+        postalCode: '10001',
+      },
+      items,
+    });
+
     const attempt =
       existing ??
       (await this.store.createPendingOrder({
@@ -133,6 +148,7 @@ export class SecureCheckoutService {
       idempotencyKey: `printme-checkout:${attempt.checkoutId}`,
       customerEmail: identity.userEmail,
       items,
+      shippingFeeCents: shipping.shippingFeeCents,
     });
     await this.store.attachStripeSession({
       orderId: attempt.orderId,
