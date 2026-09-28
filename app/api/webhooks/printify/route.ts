@@ -73,16 +73,49 @@ export async function POST(request: NextRequest) {
             const recipientName =
               (paidOrder.shippingAddress as Record<string, string | undefined>)?.name ||
               'Valued Customer';
-            const shippedItems =
-              paidOrder.items && paidOrder.items.length > 0
-                ? paidOrder.items.map((it) => ({
-                    title: it.designTitle
-                      ? `${it.productTitle} (${it.designTitle})`
-                      : it.productTitle,
-                    variantTitle: it.variantTitle || undefined,
-                    quantity: it.quantity,
-                  }))
-                : [{ title: 'PrintMe Custom Merchandise', quantity: 1 }];
+
+            // Real split shipment resolution based on Printify payload
+            const resourceData = event.data.resource.data;
+            const skus: string[] = Array.isArray(resourceData?.skus) ? resourceData.skus : [];
+            type WebhookLineItem = { id?: number | string; sku?: string; variant_id?: number | string; quantity?: number };
+            const rawLineItems = (resourceData as Record<string, unknown> | null)?.line_items;
+            const lineItems: WebhookLineItem[] = Array.isArray(rawLineItems)
+              ? (rawLineItems as WebhookLineItem[])
+              : [];
+            const printifyStatus = resourceData?.status || '';
+            const reportedPartial = printifyStatus === 'partially-fulfilled';
+
+            const allItems = paidOrder.items || [];
+            let matchedItems = allItems;
+            let isPartial = reportedPartial;
+
+            if (skus.length > 0 || lineItems.length > 0) {
+              const filtered = allItems.filter((item) => {
+                const variantIdStr = String(item.configuration.printifyVariantId);
+                const matchesSku = skus.some((s) => s.includes(variantIdStr) || s === variantIdStr);
+                const matchesLineItem = lineItems.some(
+                  (li) => String(li.variant_id) === variantIdStr || li.sku === variantIdStr,
+                );
+                return matchesSku || matchesLineItem;
+              });
+
+              if (filtered.length > 0) {
+                matchedItems = filtered;
+                if (filtered.length < allItems.length) {
+                  isPartial = true;
+                }
+              }
+            } else if (reportedPartial) {
+              isPartial = true;
+            }
+
+            const shippedItems = matchedItems.map((it) => ({
+              title: it.designTitle
+                ? `${it.productTitle} (${it.designTitle})`
+                : it.productTitle,
+              variantTitle: it.variantTitle || undefined,
+              quantity: it.quantity,
+            }));
 
             const emailResult = await emailService.sendOrderShipped({
               orderId: result.orderId,
@@ -93,6 +126,7 @@ export async function POST(request: NextRequest) {
               trackingNumber: carrierData.tracking_number,
               trackingUrl: carrierData.tracking_url,
               shippedItems,
+              isPartial,
             });
 
             if (!emailResult.success) {

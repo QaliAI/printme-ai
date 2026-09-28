@@ -139,10 +139,11 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async markReady(input: Parameters<FulfillmentStore['markReady']>[0]) {
+    const targetState = input.state ?? 'fulfillment_ready';
     await this.updatePreparedJob(
       input,
-      'fulfillment_ready',
-      'fulfillment_ready',
+      targetState,
+      targetState,
     );
   }
 

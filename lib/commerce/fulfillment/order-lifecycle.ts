@@ -61,6 +61,7 @@ export interface RawOrderForLifecycle {
   payment_status?: string | null;
   fulfillment_status?: string | null;
   printify_order_id?: string | null;
+  production_submitted_at?: string | null;
   shipping?: number | null;
   tracking_number?: string | null;
   tracking_carrier?: string | null;
@@ -208,13 +209,22 @@ export function resolveOrderLifecycle(
     };
   }
 
-  // 4. Submitted States (Printify order / draft created)
-  if (
-    printifyOrderId ||
+  // 4. Submitted States (Printify order sent to physical production)
+  const isActuallySubmittedToProduction =
+    Boolean(order.production_submitted_at) ||
     fulfillmentStatus === 'submitted' ||
     jobState === 'submitted' ||
-    orderStatus === 'submitted_to_printify'
-  ) {
+    orderStatus === 'submitted_to_printify';
+
+  const isDraftWaitingReview =
+    jobState === 'manual_review_ready' ||
+    fulfillmentStatus === 'manual_review_ready' ||
+    (Boolean(printifyOrderId) &&
+      !order.production_submitted_at &&
+      fulfillmentStatus !== 'submitted' &&
+      jobState !== 'submitted');
+
+  if (isActuallySubmittedToProduction && !isDraftWaitingReview) {
     return {
       orderId: order.id,
       orderNumber: order.order_number || order.id.slice(0, 8),

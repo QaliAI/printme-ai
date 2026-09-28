@@ -131,65 +131,62 @@ export async function POST(request: NextRequest) {
             'Valued Customer';
 
           // Format actual purchased items from the persisted order
-          const emailItems: OrderEmailItem[] =
-            paidOrder?.items && paidOrder.items.length > 0
-              ? paidOrder.items.map((item) => ({
-                  title: item.designTitle
-                    ? `${item.productTitle} (${item.designTitle})`
-                    : item.productTitle,
-                  variantTitle: item.variantTitle || undefined,
-                  quantity: item.quantity,
-                  unitPriceCents: item.configuration.unitPrice,
-                  artworkThumbnailUrl: item.configuration.instantPreview?.url || undefined,
-                }))
-              : [
-                  {
-                    title: 'PrintMe Custom Merchandise',
-                    quantity: 1,
-                    unitPriceCents: sessionObj.amount_subtotal || sessionObj.amount_total || 0,
-                  },
-                ];
-
-          const shippingAddressSummary: ShippingAddressSummary | null =
-            rawAddress && rawAddress.line1
-              ? {
-                  name: rawAddress.name || recipientName,
-                  address1: rawAddress.line1,
-                  address2: rawAddress.line2 || null,
-                  city: rawAddress.city || '',
-                  state: rawAddress.state || null,
-                  postalCode: (rawAddress.postal_code || rawAddress.postalCode || '') as string,
-                  country: rawAddress.country || 'US',
-                }
-              : null;
-
-          const subtotalCents =
-            sessionObj.amount_subtotal ??
-            Math.max(
-              0,
-              (sessionObj.amount_total || 0) -
-                (sessionObj.total_details?.amount_shipping || 0) -
-                (sessionObj.total_details?.amount_tax || 0),
-            );
-
-          const emailResult = await emailService.sendOrderConfirmation({
-            orderId: result.orderId,
-            orderNumber: `PM-${result.orderId.slice(0, 8).toUpperCase()}`,
-            recipientEmail: customerEmail,
-            recipientName,
-            items: emailItems,
-            subtotalCents,
-            shippingCents: sessionObj.total_details?.amount_shipping || 0,
-            taxCents: sessionObj.total_details?.amount_tax || 0,
-            totalCents: sessionObj.amount_total || 0,
-            currency: (sessionObj.currency || 'USD').toUpperCase(),
-            shippingAddress: shippingAddressSummary,
-          });
-
-          if (!emailResult.success) {
+          if (!paidOrder?.items || paidOrder.items.length === 0) {
             console.error(
-              `[Stripe Webhook] Order confirmation email delivery failed: ${emailResult.error}`,
+              `[Stripe Webhook] Order confirmation notification blocked: order ${result.orderId} has no persisted items.`,
             );
+          } else {
+            const emailItems: OrderEmailItem[] = paidOrder.items.map((item) => ({
+              title: item.designTitle
+                ? `${item.productTitle} (${item.designTitle})`
+                : item.productTitle,
+              variantTitle: item.variantTitle || undefined,
+              quantity: item.quantity,
+              unitPriceCents: item.configuration.unitPrice,
+              artworkThumbnailUrl: item.configuration.instantPreview?.url || undefined,
+            }));
+
+            const shippingAddressSummary: ShippingAddressSummary | null =
+              rawAddress && rawAddress.line1
+                ? {
+                    name: rawAddress.name || recipientName,
+                    address1: rawAddress.line1,
+                    address2: rawAddress.line2 || null,
+                    city: rawAddress.city || '',
+                    state: rawAddress.state || null,
+                    postalCode: (rawAddress.postal_code || rawAddress.postalCode || '') as string,
+                    country: rawAddress.country || 'US',
+                  }
+                : null;
+
+            const subtotalCents =
+              sessionObj.amount_subtotal ??
+              Math.max(
+                0,
+                (sessionObj.amount_total || 0) -
+                  (sessionObj.total_details?.amount_shipping || 0) -
+                  (sessionObj.total_details?.amount_tax || 0),
+              );
+
+            const emailResult = await emailService.sendOrderConfirmation({
+              orderId: result.orderId,
+              orderNumber: `PM-${result.orderId.slice(0, 8).toUpperCase()}`,
+              recipientEmail: customerEmail,
+              recipientName,
+              items: emailItems,
+              subtotalCents,
+              shippingCents: sessionObj.total_details?.amount_shipping || 0,
+              taxCents: sessionObj.total_details?.amount_tax || 0,
+              totalCents: sessionObj.amount_total || 0,
+              currency: (sessionObj.currency || 'USD').toUpperCase(),
+              shippingAddress: shippingAddressSummary,
+            });
+
+            if (!emailResult.success) {
+              console.error(
+                `[Stripe Webhook] Order confirmation email delivery failed: ${emailResult.error}`,
+              );
+            }
           }
         }
       } catch (emailErr) {

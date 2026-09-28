@@ -54,6 +54,7 @@ export interface FulfillmentStore {
     redactedPayload: unknown;
     printifyOrderId?: string | null;
     printifyProductId?: string | null;
+    state?: string;
   }): Promise<void>;
   markFailed(input: {
     jobId: string;
@@ -151,6 +152,7 @@ export class PrintifyFulfillmentService {
         printifyProductId = draftResult.printifyProductId ?? null;
       }
 
+      const readyState = mode === 'draft' ? 'manual_review_ready' : 'fulfillment_ready';
       await this.store.markReady({
         jobId: lock.job.id,
         orderId,
@@ -158,12 +160,13 @@ export class PrintifyFulfillmentService {
         redactedPayload,
         printifyOrderId,
         printifyProductId,
+        state: readyState,
       });
 
       return {
         ...lock.job,
         printifyOrderId,
-        state: mode === 'draft' ? 'manual_review_ready' : 'fulfillment_ready',
+        state: readyState,
         mode,
       };
     } catch (error) {
@@ -183,7 +186,8 @@ export class PrintifyFulfillmentService {
   }
 
   async submitExistingOrderToProduction(orderId: string) {
-    if (getFulfillmentMode() !== 'live') {
+    const currentMode = getFulfillmentMode();
+    if (currentMode !== 'live' && currentMode !== 'draft') {
       throw new FulfillmentModeError('LIVE_MODE_REQUIRED');
     }
     if (!this.productionGateway) {
@@ -196,7 +200,10 @@ export class PrintifyFulfillmentService {
     if (!order) {
       throw new FulfillmentValidationError('PAID_ORDER_REQUIRED');
     }
-    if (!job || job.state !== 'fulfillment_ready') {
+    if (
+      !job ||
+      (job.state !== 'fulfillment_ready' && job.state !== 'manual_review_ready')
+    ) {
       throw new FulfillmentValidationError('FULFILLMENT_NOT_READY');
     }
     const printifyOrderId = order.printifyOrderId ?? job.printifyOrderId;

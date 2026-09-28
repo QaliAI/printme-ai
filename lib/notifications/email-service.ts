@@ -1,4 +1,5 @@
 import 'server-only';
+import { getNotificationOutbox } from './outbox';
 
 export type NotificationType =
   | 'order_confirmed'
@@ -51,6 +52,7 @@ export interface OrderShippedEmailData {
   shippedItems: Array<{ title: string; variantTitle?: string; quantity: number }>;
   packageNumber?: number;
   totalPackages?: number;
+  isPartial?: boolean;
 }
 
 export interface OrderAttentionEmailData {
@@ -197,6 +199,7 @@ export class HttpEmailTransport implements EmailTransport {
           Authorization: `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
           'User-Agent': 'PrintMe.ai Transactional Service',
+          'Idempotency-Key': message.idempotencyKey,
         },
         body: JSON.stringify({
           from: message.from || this.defaultFrom,
@@ -280,6 +283,45 @@ export class TransactionalEmailService {
       result,
       createdAt: result.timestamp,
     });
+  }
+
+  private async dispatchMessage(
+    orderId: string | undefined,
+    type: NotificationType,
+    recipientEmail: string,
+    message: TransactionalEmailMessage,
+  ): Promise<EmailSendResult> {
+    const outbox = getNotificationOutbox();
+    const alreadyDelivered = await outbox.isAlreadyDelivered(message.idempotencyKey);
+    if (alreadyDelivered) {
+      const duplicateResult: EmailSendResult = {
+        success: true,
+        messageId: `duplicate-cached-${message.idempotencyKey}`,
+        idempotencyKey: message.idempotencyKey,
+        timestamp: new Date().toISOString(),
+      };
+      this.recordLog(orderId || 'unknown', type, recipientEmail, duplicateResult);
+      return duplicateResult;
+    }
+
+    await outbox.recordSending({
+      orderId: orderId ?? null,
+      eventType: type,
+      recipient: recipientEmail,
+      idempotencyKey: message.idempotencyKey,
+      payload: (message.metadata as Record<string, unknown>) || {},
+    });
+
+    const result = await this.transport.send(message);
+
+    if (result.success) {
+      await outbox.recordSuccess(message.idempotencyKey, result.messageId);
+    } else {
+      await outbox.recordFailure(message.idempotencyKey, result.error || 'Unknown send error');
+    }
+
+    this.recordLog(orderId || 'unknown', type, recipientEmail, result);
+    return result;
   }
 
   /**
@@ -403,7 +445,7 @@ Estimated Delivery: ${data.estimatedDelivery || '5–10 business days'}
 Need help? Contact support@printme.ai
     `.trim();
 
-    const result = await this.transport.send({
+    return this.dispatchMessage(data.orderId, 'order_confirmed', data.recipientEmail, {
       idempotencyKey,
       type: 'order_confirmed',
       to: data.recipientEmail,
@@ -412,9 +454,6 @@ Need help? Contact support@printme.ai
       text,
       metadata: { orderId: data.orderId, orderNumber: data.orderNumber },
     });
-
-    this.recordLog(data.orderId, 'order_confirmed', data.recipientEmail, result);
-    return result;
   }
 
   /**
@@ -427,24 +466,37 @@ Need help? Contact support@printme.ai
     const escapedCarrier = escapeHtml(data.carrier);
     const escapedTracking = escapeHtml(data.trackingNumber);
 
+    const isPartial = Boolean(data.isPartial);
     const packageNote =
       data.totalPackages && data.totalPackages > 1
         ? ` (Package ${data.packageNumber || 1} of ${data.totalPackages})`
         : '';
+    const statusHeadline = isPartial
+      ? `Part of your order is on the way${escapeHtml(packageNote)}!`
+      : `Your order is on the way${escapeHtml(packageNote)}!`;
+    const emailSubject = isPartial
+      ? `Part of your order has shipped: ${data.orderNumber} - PrintMe.ai`
+      : `Your PrintMe.ai Order Has Shipped (${data.orderNumber})`;
 
-    const itemsHtml = data.shippedItems
-      .map(
-        (it) =>
-          `<li><strong>${escapeHtml(it.title)}</strong>${it.variantTitle ? ` (${escapeHtml(it.variantTitle)})` : ''} × ${it.quantity}</li>`,
-      )
-      .join('');
+    const itemsHtml =
+      data.shippedItems && data.shippedItems.length > 0
+        ? data.shippedItems
+            .map(
+              (it) =>
+                `<li><strong>${escapeHtml(it.title)}</strong>${it.variantTitle ? ` (${escapeHtml(it.variantTitle)})` : ''} × ${it.quantity}</li>`,
+            )
+            .join('')
+        : '<li>Items in this shipment are on the way. Remaining items will follow as they complete production.</li>';
 
-    const itemsText = data.shippedItems
-      .map(
-        (it) =>
-          `- ${it.title}${it.variantTitle ? ` (${it.variantTitle})` : ''} x ${it.quantity}`,
-      )
-      .join('\n');
+    const itemsText =
+      data.shippedItems && data.shippedItems.length > 0
+        ? data.shippedItems
+            .map(
+              (it) =>
+                `- ${it.title}${it.variantTitle ? ` (${it.variantTitle})` : ''} x ${it.quantity}`,
+            )
+            .join('\n')
+        : '- Items in this shipment are in transit.';
 
     const trackingButton = data.trackingUrl
       ? `<div style="text-align: center; margin: 24px 0;">
@@ -459,10 +511,11 @@ Need help? Contact support@printme.ai
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #111; max-width: 600px; margin: 0 auto; padding: 24px;">
         <div style="text-align: center; margin-bottom: 24px;">
           <h1 style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin: 0;">PRINTME.AI</h1>
-          <p style="color: #666; margin-top: 4px;">Your order is on the way${escapeHtml(packageNote)}!</p>
+          <p style="color: #666; margin-top: 4px;">${statusHeadline}</p>
         </div>
 
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+          <p style="margin: 0 0 12px 0; font-size: 15px;">Hello ${escapedName},</p>
           <h3 style="margin: 0 0 8px 0; color: #166534; font-size: 18px;">Shipment Details</h3>
           <p style="margin: 4px 0; font-size: 14px;"><strong>Order:</strong> ${escapedOrderNumber}</p>
           <p style="margin: 4px 0; font-size: 14px;"><strong>Carrier:</strong> ${escapedCarrier}</p>
@@ -489,7 +542,7 @@ Need help? Contact support@printme.ai
     const text = `
 PRINTME.AI - ORDER SHIPPED
 Order: ${data.orderNumber}
-Hello ${data.recipientName}, your order is on the way${packageNote}!
+Hello ${data.recipientName}, ${isPartial ? 'part of your order is on the way' : 'your order is on the way'}${packageNote}!
 
 Carrier: ${data.carrier}
 Tracking Number: ${data.trackingNumber}
@@ -501,22 +554,20 @@ ${itemsText}
 Questions? Contact support@printme.ai
     `.trim();
 
-    const result = await this.transport.send({
+    return this.dispatchMessage(data.orderId, 'order_shipped', data.recipientEmail, {
       idempotencyKey,
       type: 'order_shipped',
       to: data.recipientEmail,
-      subject: `Your PrintMe.ai Order Has Shipped (${data.orderNumber})`,
+      subject: emailSubject,
       html,
       text,
       metadata: {
         orderId: data.orderId,
         trackingNumber: data.trackingNumber,
         carrier: data.carrier,
+        isPartial,
       },
     });
-
-    this.recordLog(data.orderId, 'order_shipped', data.recipientEmail, result);
-    return result;
   }
 
   /**
@@ -559,18 +610,15 @@ ${data.issueDescription}
 If you have questions, reply to this email or contact support@printme.ai.
     `.trim();
 
-    const result = await this.transport.send({
+    return this.dispatchMessage(data.orderId, 'order_attention_required', data.recipientEmail, {
       idempotencyKey,
       type: 'order_attention_required',
       to: data.recipientEmail,
       subject: `Update Regarding Order ${data.orderNumber} - PrintMe.ai`,
       html,
       text,
-      metadata: { orderId: data.orderId },
+      metadata: { orderId: data.orderId, issueDescription: data.issueDescription },
     });
-
-    this.recordLog(data.orderId, 'order_attention_required', data.recipientEmail, result);
-    return result;
   }
 
   /**
@@ -612,7 +660,7 @@ Funds typically appear on your original payment method in 3–5 business days.
 Questions? Contact support@printme.ai
     `.trim();
 
-    const result = await this.transport.send({
+    return this.dispatchMessage(data.orderId, 'order_refunded', data.recipientEmail, {
       idempotencyKey,
       type: 'order_refunded',
       to: data.recipientEmail,
@@ -621,9 +669,6 @@ Questions? Contact support@printme.ai
       text,
       metadata: { orderId: data.orderId, amount: data.refundAmountCents },
     });
-
-    this.recordLog(data.orderId, 'order_refunded', data.recipientEmail, result);
-    return result;
   }
 }
 

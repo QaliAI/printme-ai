@@ -339,7 +339,7 @@ export class E2EFulfillmentStore implements FulfillmentStore {
     input: Parameters<FulfillmentStore['markReady']>[0],
   ) {
     const job = state().orders.get(input.orderId)?.fulfillmentJob;
-    if (job) job.state = 'fulfillment_ready';
+    if (job) job.state = input.state ?? 'fulfillment_ready';
   }
 
   async markFailed(

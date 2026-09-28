@@ -61,7 +61,7 @@ export async function POST(
       );
     }
 
-    if (order.production_submitted_at || order.printify_order_id) {
+    if (order.production_submitted_at) {
       return NextResponse.json(
         { error: 'Order is already submitted or in production.' },
         { status: 409 },
@@ -109,23 +109,48 @@ export async function POST(
     const approvedAt = new Date().toISOString();
     const operator = auth.operatorEmail || 'admin-operator';
 
-    // If live or draft mode is enabled with Printify credentials
-    if (mode === 'draft' || mode === 'live') {
-      const service = new PrintifyFulfillmentService(
-        new SupabaseFulfillmentStore(),
-        new PrintifyProductionGatewayAdapter(),
-        new PrintifyDraftGatewayAdapter(),
-      );
-      const job = await service.prepare(orderId);
+    // If an existing draft already exists on Printify, submit it to production
+    if (order.printify_order_id) {
+      if (mode === 'draft' || mode === 'live') {
+        const service = new PrintifyFulfillmentService(
+          new SupabaseFulfillmentStore(),
+          new PrintifyProductionGatewayAdapter(),
+          new PrintifyDraftGatewayAdapter(),
+        );
+        await service.submitExistingOrderToProduction(orderId);
 
-      return NextResponse.json({
-        success: true,
-        orderId,
-        mode,
-        job,
-        approvedBy: operator,
-        approvedAt,
-      });
+        return NextResponse.json({
+          success: true,
+          orderId,
+          mode,
+          status: 'submitted',
+          approvedBy: operator,
+          approvedAt,
+        });
+      }
+    } else {
+      // If live or draft mode is enabled with Printify credentials
+      if (mode === 'draft' || mode === 'live') {
+        const service = new PrintifyFulfillmentService(
+          new SupabaseFulfillmentStore(),
+          new PrintifyProductionGatewayAdapter(),
+          new PrintifyDraftGatewayAdapter(),
+        );
+        const job = await service.prepare(orderId);
+
+        if (mode === 'live') {
+          await service.submitExistingOrderToProduction(orderId);
+        }
+
+        return NextResponse.json({
+          success: true,
+          orderId,
+          mode,
+          job,
+          approvedBy: operator,
+          approvedAt,
+        });
+      }
     }
 
     // In dry-run or disabled mode: mark as approved by operator

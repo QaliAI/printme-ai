@@ -1007,6 +1007,17 @@ export function UnifiedCreateExperience({
             <small>On desktop, you can also drag and drop here.</small>
           </div>
           {uploadError && <p role="alert">{uploadError}</p>}
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e7e5e4', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.875rem', color: '#57534e', marginBottom: '0.5rem' }}>
+              Want to print a funny conversation or group chat moment?
+            </p>
+            <Link
+              href="/text-thread"
+              style={{ fontSize: '0.875rem', fontWeight: 600, color: '#047857', textDecoration: 'underline', textUnderlineOffset: '4px' }}
+            >
+              Turn a Text Thread into Merch →
+            </Link>
+          </div>
         </section>
       </main>
     );

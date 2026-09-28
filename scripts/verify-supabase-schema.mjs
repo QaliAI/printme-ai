@@ -48,6 +48,7 @@ const TABLES = [
   'fulfillment_attempts',
   'analytics_events',
   'studio_design_drafts',
+  'commerce_notification_outbox',
 ];
 
 const RPCS = [
