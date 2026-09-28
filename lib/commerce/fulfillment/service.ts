@@ -9,7 +9,7 @@ import {
   type FulfillmentOrder,
 } from './payload';
 
-export type FulfillmentMode = 'disabled' | 'dry-run' | 'live';
+export type FulfillmentMode = 'disabled' | 'dry-run' | 'draft' | 'live';
 export type RetryClassification =
   | 'not_retryable'
   | 'retryable_before_submission'
@@ -22,6 +22,15 @@ export interface FulfillmentJob {
   mode: FulfillmentMode;
   printifyOrderId: string | null;
   productionSubmittedAt: string | null;
+}
+
+export interface PrintifyDraftOrderResult {
+  printifyProductId?: string;
+  printifyOrderId: string;
+}
+
+export interface PrintifyDraftGateway {
+  createDraftOrder(order: FulfillmentOrder): Promise<PrintifyDraftOrderResult>;
 }
 
 export interface FulfillmentStore {
@@ -43,6 +52,9 @@ export interface FulfillmentStore {
     orderId: string;
     payloadHash: string;
     redactedPayload: unknown;
+    printifyOrderId?: string | null;
+    printifyProductId?: string | null;
+    state?: string;
   }): Promise<void>;
   markFailed(input: {
     jobId: string;
@@ -68,7 +80,12 @@ export class FulfillmentModeError extends Error {
 
 export function getFulfillmentMode(): FulfillmentMode {
   const value = process.env.PRINTIFY_FULFILLMENT_MODE ?? 'disabled';
-  if (value === 'disabled' || value === 'dry-run' || value === 'live') {
+  if (
+    value === 'disabled' ||
+    value === 'dry-run' ||
+    value === 'draft' ||
+    value === 'live'
+  ) {
     return value;
   }
   throw new FulfillmentModeError('INVALID_FULFILLMENT_MODE');
@@ -91,6 +108,7 @@ export class PrintifyFulfillmentService {
   constructor(
     private readonly store: FulfillmentStore,
     private readonly productionGateway?: PrintifyProductionGateway,
+    private readonly draftGateway?: PrintifyDraftGateway,
     private readonly workerId: () => string = () => randomUUID(),
   ) {}
 
@@ -125,13 +143,32 @@ export class PrintifyFulfillmentService {
         return { ...lock.job, state: 'dry_run_complete', mode };
       }
 
+      let printifyOrderId: string | null = null;
+      let printifyProductId: string | null = null;
+
+      if ((mode === 'draft' || mode === 'live') && this.draftGateway) {
+        const draftResult = await this.draftGateway.createDraftOrder(order);
+        printifyOrderId = draftResult.printifyOrderId;
+        printifyProductId = draftResult.printifyProductId ?? null;
+      }
+
+      const readyState = mode === 'draft' ? 'manual_review_ready' : 'fulfillment_ready';
       await this.store.markReady({
         jobId: lock.job.id,
         orderId,
         payloadHash,
         redactedPayload,
+        printifyOrderId,
+        printifyProductId,
+        state: readyState,
       });
-      return { ...lock.job, state: 'fulfillment_ready', mode };
+
+      return {
+        ...lock.job,
+        printifyOrderId,
+        state: readyState,
+        mode,
+      };
     } catch (error) {
       await this.store.markFailed({
         jobId: lock.job.id,
@@ -149,7 +186,8 @@ export class PrintifyFulfillmentService {
   }
 
   async submitExistingOrderToProduction(orderId: string) {
-    if (getFulfillmentMode() !== 'live') {
+    const currentMode = getFulfillmentMode();
+    if (currentMode !== 'live' && currentMode !== 'draft') {
       throw new FulfillmentModeError('LIVE_MODE_REQUIRED');
     }
     if (!this.productionGateway) {
@@ -162,7 +200,10 @@ export class PrintifyFulfillmentService {
     if (!order) {
       throw new FulfillmentValidationError('PAID_ORDER_REQUIRED');
     }
-    if (!job || job.state !== 'fulfillment_ready') {
+    if (
+      !job ||
+      (job.state !== 'fulfillment_ready' && job.state !== 'manual_review_ready')
+    ) {
       throw new FulfillmentValidationError('FULFILLMENT_NOT_READY');
     }
     const printifyOrderId = order.printifyOrderId ?? job.printifyOrderId;

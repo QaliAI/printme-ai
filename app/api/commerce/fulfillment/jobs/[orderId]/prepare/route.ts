@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { PrintifyFulfillmentService } from '@/lib/commerce/fulfillment/service';
 import { SupabaseFulfillmentStore } from '@/lib/commerce/fulfillment/supabase-store';
+import {
+  PrintifyDraftGatewayAdapter,
+  PrintifyProductionGatewayAdapter,
+} from '@/lib/commerce/fulfillment/printify-gateway';
 import { hasCommerceOperationsAccess } from '@/lib/commerce/operations-auth';
 
 export async function POST(
@@ -14,6 +18,8 @@ export async function POST(
     const { orderId } = await context.params;
     const job = await new PrintifyFulfillmentService(
       new SupabaseFulfillmentStore(),
+      new PrintifyProductionGatewayAdapter(),
+      new PrintifyDraftGatewayAdapter(),
     ).prepare(orderId);
     return NextResponse.json({ job });
   } catch (error) {

@@ -9,6 +9,20 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const SAFE_URL = supabaseUrl || 'https://placeholder.supabase.co';
 const SAFE_KEY = supabaseAnonKey || 'placeholder-anon-key';
 
+// Fallback WebSocket stub for Node environments without native WebSocket (prevents test crashes)
+if (typeof globalThis.WebSocket === 'undefined') {
+  // @ts-expect-error minimal stub to satisfy Supabase Realtime in older Node test runners
+  globalThis.WebSocket = class NodeWebSocketStub {
+    static CONNECTING = 0;
+    static OPEN = 1;
+    static CLOSING = 2;
+    static CLOSED = 3;
+    readyState = 3;
+    close() {}
+    send() {}
+  };
+}
+
 // Client for browser (limited access via RLS)
 export const supabase: SupabaseClient = createClient(SAFE_URL, SAFE_KEY, {
   auth: {

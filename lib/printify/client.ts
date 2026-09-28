@@ -62,6 +62,8 @@ export const printifyCatalogVariantSchema = z
   .object({
     id: idSchema,
     title: z.string(),
+    cost: z.number().int().nonnegative().optional(),
+    price: z.number().int().nonnegative().optional(),
     options: z.record(z.string(), z.string()).optional().default({}),
     placeholders: z.array(printifyPlaceholderSchema).optional().default([]),
   })

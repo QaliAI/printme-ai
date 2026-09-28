@@ -39,6 +39,7 @@ describe('PrintMe feature flags', () => {
 
   it.each([
     'release/launch-safe-homepage-v2-2026-07-31',
+    'launch/fall-2026-storefront',
     'master',
   ])('enables only customer-facing features on %s', (branch) => {
     delete process.env.NEXT_PUBLIC_COMMERCE_V2_ENABLED;

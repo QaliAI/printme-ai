@@ -50,6 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Products', href: '/admin/products' },
     { label: 'Designs', href: '/admin/designs' },
     { label: 'Styles', href: '/admin/styles' },
+    { label: 'Seasonal Trends', href: '/admin/seasonal-trends' },
   ];
 
   return (

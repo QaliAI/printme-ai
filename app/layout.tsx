@@ -47,8 +47,13 @@ export default function RootLayout({
 }>) {
   const commercePreviewEnabled = isReviewFeatureEnabled('commerce');
   const homepageV2Enabled = isReviewFeatureEnabled('homepage');
+  const isProduction =
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.VERCEL_GIT_COMMIT_REF === 'master';
   const showReviewNavigation =
-    process.env.VERCEL_ENV === 'preview' && commercePreviewEnabled;
+    !isProduction &&
+    process.env.VERCEL_ENV === 'preview' &&
+    commercePreviewEnabled;
 
   return (
     <html lang="en" className="h-full">

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS fulfillment_jobs (
   idempotency_key TEXT NOT NULL UNIQUE,
   triggering_event_id TEXT,
   mode TEXT NOT NULL DEFAULT 'disabled'
-    CHECK (mode IN ('disabled', 'dry-run', 'live')),
+    CHECK (mode IN ('disabled', 'dry-run', 'draft', 'live')),
   state TEXT NOT NULL DEFAULT 'pending_payment'
     CHECK (
       state IN (
@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS fulfillment_jobs (
         'paid',
         'preparing_fulfillment',
         'fulfillment_ready',
+        'manual_review_ready',
         'fulfillment_submitting',
         'dry_run_complete',
         'submitted',
@@ -117,7 +118,7 @@ AS $$
 DECLARE
   target fulfillment_jobs%ROWTYPE;
 BEGIN
-  IF p_mode NOT IN ('dry-run', 'live') THEN
+  IF p_mode NOT IN ('dry-run', 'draft', 'live') THEN
     RAISE EXCEPTION 'disabled mode cannot acquire a fulfillment job'
       USING ERRCODE = '23514';
   END IF;
@@ -132,6 +133,8 @@ BEGIN
 
   IF target.state IN (
     'dry_run_complete',
+    'manual_review_ready',
+    'fulfillment_ready',
     'submitted',
     'in_production',
     'shipped',

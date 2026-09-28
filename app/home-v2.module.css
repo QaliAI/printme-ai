@@ -105,6 +105,20 @@
   background: var(--home-ink);
 }
 
+.cartBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: var(--home-accent);
+  margin-left: 4px;
+}
+
 .desktopNav a:hover,
 .desktopNav a:focus-visible,
 .headerActions a:first-child:hover,

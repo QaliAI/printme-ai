@@ -76,7 +76,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(5);
+    await expect(service.listPublished()).resolves.toHaveLength(20);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -84,10 +84,52 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(5);
+    expect(designs).toHaveLength(20);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
     }
+  });
+
+  it('correctly resolves Fall 2026 collections and anchor products', async () => {
+    const repository = new SeedDesignRepository();
+    const [halloween, fall, thanksgiving] = await Promise.all([
+      repository.findCollectionBySlug('halloween'),
+      repository.findCollectionBySlug('fall'),
+      repository.findCollectionBySlug('thanksgiving'),
+    ]);
+
+    expect(halloween?.designIds).toEqual([
+      'design-boo-crew',
+      'design-here-for-the-boos',
+      'design-little-pumpkin',
+      'design-haunted-household',
+      'design-library-of-lost-hours',
+      'design-midnight-hayride',
+    ]);
+    expect(fall?.designIds).toEqual([
+      'design-autumn-state-of-mind',
+      'design-powered-by-pumpkin-spice',
+      'design-sweater-weather',
+      'design-night-garden-society',
+      'design-field-notes-after-dark',
+    ]);
+    expect(thanksgiving?.designIds).toEqual([
+      'design-feast-mode',
+      'design-thankful-grateful-caffeinated',
+      'design-thanksgiving-social-club',
+      'design-leftovers-league',
+    ]);
+
+    const booCrew = await repository.findPublishedBySlug('boo-crew');
+    expect(booCrew?.recommendedProductId).toBe('everyday-tee');
+    expect(booCrew?.compatibleProductIds).toContain('keepsake-mug');
+    expect(booCrew?.compatibleProductIds).toContain('gallery-poster');
+
+    const pps = await repository.findPublishedBySlug('powered-by-pumpkin-spice');
+    expect(pps?.recommendedProductId).toBe('keepsake-mug');
+
+    const poster = await repository.findPublishedBySlug('autumn-state-of-mind');
+    expect(poster?.recommendedProductId).toBe('gallery-poster');
   });
 });

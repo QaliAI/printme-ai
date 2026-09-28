@@ -317,6 +317,45 @@ export function ShopV2Experience({
     }
   }, [cartUpsells]);
 
+  const [shippingQuote, setShippingQuote] = useState<{
+    shippingFeeCents: number;
+    carrierName: string;
+    estimatedDeliveryDays: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let isCurrent = true;
+    if (cartItems.length === 0) {
+      queueMicrotask(() => {
+        if (isCurrent) setShippingQuote(null);
+      });
+      return () => {
+        isCurrent = false;
+      };
+    }
+    fetch('/api/commerce/shipping-quote', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ items: cartItems }),
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isCurrent && data?.success) {
+          setShippingQuote({
+            shippingFeeCents: data.shippingFeeCents,
+            carrierName: data.carrierName,
+            estimatedDeliveryDays: data.estimatedDeliveryDays,
+          });
+        }
+      })
+      .catch(() => {
+        // Non-blocking fallback
+      });
+    return () => {
+      isCurrent = false;
+    };
+  }, [cartItems]);
+
   function switchProduct(product: MerchProduct) {
     if (!selectedDesign || !configuration) return;
     assertDesignProductCompatible(selectedDesign, product.id);
@@ -379,6 +418,7 @@ export function ShopV2Experience({
     writeLocalCart(window.localStorage, nextItems);
     window.sessionStorage.removeItem('printme:checkout:idempotency');
     setCartItems(nextItems);
+    window.dispatchEvent(new Event('printme:cart-updated'));
   }
 
   async function addToCart() {
@@ -531,12 +571,12 @@ export function ShopV2Experience({
   return (
     <div className={styles.shop}>
       <header className={styles.hero}>
-        <p className={styles.eyebrow}>The PrintMe edit · Sprint 1 preview</p>
+        <p className={styles.eyebrow}>Fall 2026 Collection · Launch Edition</p>
         <div className={styles.heroRow}>
           <div>
             <h1>Art worth living with.</h1>
             <p className={styles.heroCopy}>
-              Five curated starting points, paired with a product that suits the work.
+              Curated seasonal and everyday designs, paired with products crafted for lasting print quality.
             </p>
           </div>
           <button
@@ -780,7 +820,7 @@ export function ShopV2Experience({
                 <div className={styles.emptyCart}>
                   <p>Your bag is ready for something personal.</p>
                   <button type="button" onClick={() => setCartOpen(false)}>
-                    Browse designs
+                    Browse Fall Designs
                   </button>
                 </div>
               ) : (
@@ -948,8 +988,22 @@ export function ShopV2Experience({
             </div>
 
             <footer className={styles.cartFooter}>
-              <span>Subtotal</span>
-              <strong>{formatPrice(cartTotal)}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '4px' }}>
+                <span>Subtotal</span>
+                <strong>{formatPrice(cartTotal)}</strong>
+              </div>
+              {shippingQuote !== null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.86rem', color: '#4b5563', marginBottom: '4px' }}>
+                  <span>Standard US Shipping</span>
+                  <span>{formatPrice(shippingQuote.shippingFeeCents)}</span>
+                </div>
+              )}
+              {shippingQuote !== null && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', borderTop: '1px solid var(--home-line, #e2e8f0)', paddingTop: '6px', marginBottom: '8px' }}>
+                  <strong>Estimated Total</strong>
+                  <strong>{formatPrice(cartTotal + shippingQuote.shippingFeeCents)}</strong>
+                </div>
+              )}
               {cartItems.length > 0 && (
                 <button
                   type="button"
@@ -959,14 +1013,18 @@ export function ShopV2Experience({
                   data-testid="begin-checkout"
                 >
                   {checkoutPending
-                    ? 'Opening test checkout...'
-                    : 'Secure test checkout'}
+                    ? 'Opening checkout...'
+                    : 'Proceed to Checkout'}
                 </button>
               )}
               {checkoutError && (
                 <small role="alert">{checkoutError}</small>
               )}
-              <small>Preview only · Stripe test mode is required</small>
+              <small>
+                {shippingQuote
+                  ? `Estimated delivery: ${shippingQuote.estimatedDeliveryDays} business days (2–3 days production + carrier transit)`
+                  : 'Standard US shipping calculated at checkout (typically 5–8 business days total)'}
+              </small>
             </footer>
           </aside>
         </div>

@@ -858,17 +858,63 @@ export function UnifiedCreateExperience({
   async function addToCart() {
     if (!asset || !configuration || !designId) return;
     const product = getProduct(products, configuration.merchProductId);
+
+    let durableProductionUrl = configuration.productionAssetUrl;
+    let durableAsset = asset;
+    let durableConfig = configuration;
+
+    if (
+      durableProductionUrl.startsWith('blob:') ||
+      !durableProductionUrl.startsWith('http')
+    ) {
+      try {
+        const sourceBlob =
+          (asset.storageKey ? await loadCreateAsset(asset.storageKey) : null) ??
+          originalBlob ??
+          (await (await fetch(asset.url)).blob());
+
+        if (sourceBlob) {
+          const form = new FormData();
+          form.append('file', sourceBlob, `${designId}.png`);
+          form.append('designId', designId);
+          form.append('revision', String(revision));
+          const res = await fetch('/api/commerce/artwork/persist', {
+            method: 'POST',
+            body: form,
+          });
+          if (res.ok) {
+            const data = (await res.json()) as { productionAssetUrl?: string };
+            if (data.productionAssetUrl) {
+              durableProductionUrl = data.productionAssetUrl;
+              durableAsset = {
+                ...asset,
+                productionUrl: durableProductionUrl,
+              };
+              durableConfig = {
+                ...configuration,
+                productionAssetUrl: durableProductionUrl,
+              };
+              setAsset(durableAsset);
+              setConfiguration(durableConfig);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Artwork persistence attempt failed:', err);
+      }
+    }
+
     const design: CuratedDesign = {
       id: designId,
       title: 'Your design',
       description: 'Customer-provided artwork',
       collection: 'Your uploads',
-      asset,
+      asset: durableAsset,
       recommendedProductId: product.id,
     };
     const snapshot = createCartSnapshot({
       id: crypto.randomUUID(),
-      configuration,
+      configuration: durableConfig,
       design,
       product,
       createdAt: new Date().toISOString(),
@@ -879,6 +925,7 @@ export function UnifiedCreateExperience({
       window.localStorage,
       upsertCartItem(current, persisted ?? snapshot),
     );
+    window.dispatchEvent(new Event('printme:cart-updated'));
     setCartMessage(`${product.name} added with your exact placement.`);
     trackCommerceEvent('add_to_cart', {
       productId: product.id,
@@ -960,6 +1007,17 @@ export function UnifiedCreateExperience({
             <small>On desktop, you can also drag and drop here.</small>
           </div>
           {uploadError && <p role="alert">{uploadError}</p>}
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #e7e5e4', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.875rem', color: '#57534e', marginBottom: '0.5rem' }}>
+              Want to print a funny conversation or group chat moment?
+            </p>
+            <Link
+              href="/text-thread"
+              style={{ fontSize: '0.875rem', fontWeight: 600, color: '#047857', textDecoration: 'underline', textUnderlineOffset: '4px' }}
+            >
+              Turn a Text Thread into Merch →
+            </Link>
+          </div>
         </section>
       </main>
     );
