@@ -1,6 +1,7 @@
 import { calculateContributionMargin } from './margin';
 import { createProductConfiguration } from './placement';
 import { getPreviewTemplate } from './templates';
+import { peakShippingSurchargeCents } from './holiday-shipping';
 import type {
   CartConfigurationSnapshot,
   DesignAsset,
@@ -81,7 +82,7 @@ export function getSameDesignUpsells(input: {
     if (
       !margin.complete ||
       margin.contributionMargin === null ||
-      margin.contributionMargin <= 0
+      margin.contributionMargin - peakShippingSurchargeCents() <= 0
     ) {
       return [];
     }

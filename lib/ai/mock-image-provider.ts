@@ -1,37 +1,15 @@
-import { ImageProvider, ImageProviderOptions, ImageProviderResult } from './image-provider';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { ImageProviderError, type ImageProvider, type ImageProviderOptions } from './image-provider';
 
+// Explicit local demo fixture. Production never selects this provider.
 export class MockImageProvider implements ImageProvider {
-  getName(): string {
-    return 'mock';
-  }
-
-  async validateConnection(): Promise<boolean> {
-    // Mock always succeeds
-    return true;
-  }
-
-  async generateDesign(options: ImageProviderOptions): Promise<ImageProviderResult> {
-    // Simulate network latency
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Build a more detailed prompt for the user to see what was requested
-    const fullPrompt = `
-${options.promptTemplate}
-
-Image Context: ${options.imageContext || 'User uploaded image'}
-Negative Prompt: ${options.negativePrompt || 'None'}
-
-MOCK MODE: No actual AI processing. Use this URL for demo:
-    `.trim();
-
-    // Return a placeholder image URL
-    // In production, use Cloudinary transformations or actual generated images
-    const mockImageUrl = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80';
-
-    return {
-      imageUrl: mockImageUrl,
-      requestId: `mock-${Date.now()}`,
-      prompt: fullPrompt,
-    };
+  getName() { return 'mock'; }
+  async validateConnection() { return process.env.NODE_ENV !== 'production'; }
+  async generateDesign(options: ImageProviderOptions) {
+    if (process.env.NODE_ENV === 'production') throw new ImageProviderError('Image generation is temporarily unavailable.', 'PROVIDER_UNAVAILABLE', 503);
+    const bytes = await readFile(join(process.cwd(), 'public/designs/seasonal-edit/haunted-household.png'));
+    return { imageUrl: 'data:image/png;base64,' + bytes.toString('base64'), model: 'local-demo-fixture',
+      prompt: 'Local demo fixture: ' + options.promptTemplate, width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
   }
 }

@@ -1,6 +1,10 @@
 # Migrations
 
-Applied to Supabase project `vfgbvnfhvjmkmfmianpb` (printme-ai).
+Canonical project: `vfgbvnfhvjmkmfmianpb` (printme-ai).
+
+The 2026-10-11 read-only audit found only the initial 12 public tables and the
+original nine migration-history entries. Later commerce migrations below are
+**not verified as applied**. See [the current reconciliation and launch blockers](../docs/revenue-activation-2026-10-11.md).
 
 Order of execution:
 1. `initial_schema` — all tables (profiles, style_presets, user_uploads, generated_designs, products, product_variants, carts, cart_items, orders, order_items, webhook_events) including Printify mockup cache columns
@@ -13,10 +17,13 @@ Order of execution:
 8. `security_hardening` — fix RLS gaps, search_path, listing leak, RPC EXECUTE
 9. `performance_optimization` — RLS init-plan, dedupe policies, FK indexes
 
-To verify: `node scripts/test-supabase-setup.mjs` (or run a Supabase advisor).
+To check REST schema metadata without executing commerce RPCs:
+`node --env-file=.env.local scripts/verify-supabase-schema.mjs`.
+PostgreSQL catalog inspection is still required to verify RLS and constraints.
 
-To replay against a fresh project, apply migrations in numbered order via the
-Supabase dashboard SQL editor or via the Supabase CLI.
+Do not replay files by numeric prefix alone: several prefixes are duplicated,
+and older guest policies expose every row whose user_id is null. Reconcile a
+reviewed migration plan against the restored canonical schema before execution.
 
 Application-owned commerce migrations:
 
@@ -29,3 +36,12 @@ Application-owned commerce migrations:
 7. `007_harden_commerce_webhooks.sql`
 8. `008_unify_design_pipeline.sql` (Sprint 3 additive, not applied to production)
 9. `009_add_printme_studio.sql` (Sprint 3 additive, not applied to production)
+10. `010_add_analytics_events.sql`
+11. `011_add_commerce_rls_policies.sql`
+12. `012_launch_fulfillment_and_notification_outbox.sql`
+
+The order/status compatibility patch `004_adjust_orders_status_and_columns.sql`
+also supplies `orders.order_number`, which is absent on the restored project.
+The old `003_add_orders_stripe_session_id_unique.sql` names a different column
+from the restored `stripe_checkout_session_id`; do not apply it blindly.
+This list describes source files, not a certified production execution plan.

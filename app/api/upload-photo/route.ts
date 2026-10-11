@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCurrentUser } from '@/lib/auth';
-import path from 'path';
+import { randomUUID } from 'node:crypto';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -48,8 +48,9 @@ export async function POST(req: NextRequest) {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabaseAdmin.storage.from('user-uploads').getPublicUrl(storagePath);
-      const publicUrl = data?.publicUrl || '';
+      const { data, error: signError } = await supabaseAdmin.storage.from('user-uploads').createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+      if (signError || !data?.signedUrl) throw new Error('Unable to prepare photo.');
+      const publicUrl = data.signedUrl;
 
       // Insert record
       const { data: uploadRecord, error: dbError } = await supabaseAdmin
@@ -67,12 +68,12 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json(uploadRecord);
     } else {
-      // Guest upload path: upload to designs bucket (public) under guests/ folder
-      const storagePath = `guests/${timestamp}-${cleanFileName}`;
+      // Customer photos remain in private storage, including guest uploads.
+      const storagePath = `guests/${randomUUID()}.photo`;
       const fileBuffer = Buffer.from(await file.arrayBuffer());
 
       const { error: uploadError } = await supabaseAdmin.storage
-        .from('designs')
+        .from('user-uploads')
         .upload(storagePath, fileBuffer, {
           contentType: file.type,
           duplex: 'half',
@@ -80,8 +81,9 @@ export async function POST(req: NextRequest) {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabaseAdmin.storage.from('designs').getPublicUrl(storagePath);
-      const publicUrl = data?.publicUrl || '';
+      const { data, error: signError } = await supabaseAdmin.storage.from('user-uploads').createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+      if (signError || !data?.signedUrl) throw new Error('Unable to prepare photo.');
+      const publicUrl = data.signedUrl;
 
       // Return a mock upload record format for guest
       return NextResponse.json({
@@ -93,9 +95,9 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (err) {
-    console.error('Guest upload error:', err);
+    void err;
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Upload failed' },
+      { error: 'Your photo could not be uploaded. Please try again.' },
       { status: 500 }
     );
   }

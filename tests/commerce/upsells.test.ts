@@ -8,6 +8,7 @@ import {
   getSameDesignUpsells,
 } from '@/lib/commerce/upsells';
 import { calculateBundleQuote } from '@/lib/commerce/bundle-pricing';
+import { getSameDesignSets } from '@/lib/commerce/same-design-sets';
 
 function sourceItem() {
   const products = getApprovedMerchProducts();
@@ -28,6 +29,17 @@ function sourceItem() {
 }
 
 describe('same-design upsells', () => {
+  it('builds full-price sets from already margin-approved same-design offers', () => {
+    const item = sourceItem();
+    const products = getApprovedMerchProducts();
+    products.forEach(product => { product.merchandising!.shippingCost = 500; product.variants.forEach(variant => { variant.unitCost = 700; }); });
+    const offers = getSameDesignUpsells({ sourceItem: item, cartItems: [item], products });
+    const sets = getSameDesignSets(item, [item], offers);
+    expect(sets.map(set => set.label)).toEqual(['Tee + Poster', 'Tee + Mug + Poster']);
+    expect(sets[1].total).toBe(item.configuration.unitPrice + offers.reduce((sum, offer) => sum + offer.configuration.unitPrice, 0));
+    expect(sets[1].additions.every(offer => offer.configuration.productionAssetUrl === item.configuration.productionAssetUrl)).toBe(true);
+    expect(getSameDesignSets(item, [item], [])).toEqual([]);
+  });
   it('hides recommendations while contribution margin is unknown', () => {
     const item = sourceItem();
     expect(

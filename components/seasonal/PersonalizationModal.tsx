@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { X, Check, ShoppingBag, Sparkles, ArrowRight } from 'lucide-react';
 import {
@@ -9,11 +8,15 @@ import {
   defaultPersonalization,
   buildPersonalizedSvg,
   addPersonalizedDesignToCart,
+  personalizedArtworkDimensions,
 } from '@/lib/commerce/personalization-engine';
 import { trackCommerceEvent } from '@/lib/commerce/analytics-events';
 import type { SeasonalTrendCard } from '@/lib/commerce/seasonal-trends';
 import type { CuratedDesign, MerchProduct } from '@/lib/commerce/types';
 import styles from './seasonal.module.css';
+import { InstantPreview } from '@/components/commerce/InstantPreview';
+import { createProductConfiguration } from '@/lib/commerce/placement';
+import { getPreviewTemplate } from '@/lib/commerce/templates';
 
 interface PersonalizationModalProps {
   card: SeasonalTrendCard;
@@ -33,6 +36,7 @@ export function PersonalizationModal({
   }));
   const [isAdding, setIsAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Close on escape key
@@ -50,12 +54,26 @@ export function PersonalizationModal({
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   }, [card.relatedDesignSlug, fields]);
 
+  const previewAsset = useMemo(() => ({
+    ...design.asset, url: previewSvgDataUrl, productionUrl: previewSvgDataUrl,
+    ...personalizedArtworkDimensions(card.relatedDesignSlug),
+    mimeType: 'image/svg+xml', hasTransparency: true,
+    alt: 'Your personalized artwork', sourceType: 'text-personalized' as const,
+  }), [design.asset, previewSvgDataUrl, card.relatedDesignSlug]);
+  const previewConfiguration = useMemo(() => createProductConfiguration({
+    designId: design.id, design: previewAsset, product, template: getPreviewTemplate(product.previewTemplateId),
+  }), [design.id, previewAsset, product]);
+  const price = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(previewConfiguration.unitPrice / 100);
+
   const handleFieldChange = (key: keyof PersonalizationFields, val: string) => {
+    setAdded(false);
+    setError(null);
     setFields((prev) => ({ ...prev, [key]: val }));
   };
 
   const handleAddToCart = async () => {
     setIsAdding(true);
+    setError(null);
     try {
       await addPersonalizedDesignToCart({
         slug: card.relatedDesignSlug,
@@ -69,7 +87,7 @@ export function PersonalizationModal({
       });
       setAdded(true);
     } catch (err) {
-      console.error('Failed to add personalized item to cart:', err);
+      setError(err instanceof Error ? err.message : 'Your artwork could not be saved. Please try again.');
     } finally {
       setIsAdding(false);
     }
@@ -109,21 +127,16 @@ export function PersonalizationModal({
           {/* Live Preview Area */}
           <div className={styles.modalPreviewCol}>
             <div className={styles.modalPreviewFrame}>
-              {/* Product Mockup Base */}
-              <Image
-                src={card.mockupUrl}
-                alt={card.headline}
-                fill
-                sizes="(max-width: 768px) 100vw, 400px"
-                className={styles.modalBaseImage}
-              />
+              <div data-testid="personalization-preview">
+                <InstantPreview design={previewAsset} configuration={previewConfiguration} showSafeZone={false} />
+              </div>
               {/* Live Overlay Badge */}
               <div className={styles.liveOverlayPill}>
                 <Sparkles size={14} /> Live Customization
               </div>
             </div>
             <p className={styles.modalPreviewCaption}>
-              Printed on {card.recommendedProductName} · {card.verifiedPriceFormatted}
+              Printed on {product.name} · {price}
             </p>
           </div>
 
@@ -327,6 +340,7 @@ export function PersonalizationModal({
 
             {/* Modal Actions */}
             <div className={styles.modalActionRow}>
+              {error && <p role="alert">{error}</p>}
               {added ? (
                 <div className={styles.addedSuccessBanner}>
                   <span className={styles.successCheck}>
@@ -356,7 +370,7 @@ export function PersonalizationModal({
                     <ShoppingBag size={18} />
                     {isAdding
                       ? 'Preparing custom print...'
-                      : `Add Custom Design to Bag · ${card.verifiedPriceFormatted}`}
+                      : `Add Custom Design to Bag · ${price}`}
                   </button>
                   <button
                     type="button"

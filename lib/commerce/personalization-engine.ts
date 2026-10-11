@@ -4,6 +4,7 @@ import { createCartSnapshot, upsertCartItem, readLocalCart, writeLocalCart } fro
 import { upsertPersistentCartItem } from './persistent-cart-client';
 import { createProductConfiguration } from './placement';
 import { getPreviewTemplate } from './templates';
+import { persistBrowserArtwork, rasterizePersonalizedSvg } from './artwork-client';
 import type { CartConfigurationSnapshot, CuratedDesign, MerchProduct, ProductConfiguration } from './types';
 
 export interface PersonalizationFields {
@@ -64,10 +65,19 @@ export const defaultPersonalization: Record<string, PersonalizationFields> = {
   },
 };
 
+export function personalizedArtworkDimensions(slug: string) {
+  if (slug === 'library-of-lost-hours') return { width: 1275, height: 1155 };
+  if (slug === 'field-notes-after-dark') return { width: 5400, height: 7200 };
+  return { width: 3951, height: 4800 };
+}
+
 /**
  * Generates the customized SVG string with user-supplied text values.
  */
 export function buildPersonalizedSvg(slug: string, fields: PersonalizationFields): string {
+  fields = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key,
+    typeof value === 'string' ? value.replace(/&/g, '&#38;').replace(/</g, '&#60;').replace(/>/g, '&#62;').replace(/"/g, '&#34;').replace(/'/g, '&#39;') : value,
+  ]));
   switch (slug) {
     case 'haunted-household': {
       const family = (fields.familyName || 'THE MILLER COVEN').toUpperCase();
@@ -428,12 +438,20 @@ export async function addPersonalizedDesignToCart({
     fields.leagueFamilyName ||
     'Customized';
 
+  const customId = `personalized-${crypto.randomUUID()}`;
+  const { width, height } = personalizedArtworkDimensions(slug);
+  const printBlob = await rasterizePersonalizedSvg(svgDataUrl, width, height);
+  const productionUrl = await persistBrowserArtwork(printBlob, customId);
   const customizedAsset = {
     ...design.asset,
-    id: design.asset.id,
-    version: design.asset.version,
-    url: svgDataUrl,
-    productionUrl: design.asset.productionUrl ?? design.asset.url,
+    id: customId,
+    version: 'version-1',
+    url: productionUrl,
+    productionUrl,
+    width,
+    height,
+    mimeType: 'image/png',
+    byteSize: printBlob.size,
     alt: `${design.title} (${customLabel})`,
     hasTransparency: true,
     sourceType: 'text-personalized' as const,
@@ -441,7 +459,7 @@ export async function addPersonalizedDesignToCart({
 
   const template = getPreviewTemplate(product.previewTemplateId);
   const configuration: ProductConfiguration = createProductConfiguration({
-    designId: design.id,
+    designId: customId,
     design: customizedAsset,
     product,
     template,
@@ -452,6 +470,7 @@ export async function addPersonalizedDesignToCart({
     configuration,
     design: {
       ...design,
+      id: customId,
       title: `${design.title} (${customLabel})`,
       asset: customizedAsset,
     },
@@ -471,5 +490,6 @@ export async function addPersonalizedDesignToCart({
     // Non-blocking fallback to local cart
   }
 
+  window.dispatchEvent(new Event('printme:cart-updated'));
   return snapshot;
 }

@@ -106,12 +106,12 @@ test('guest upload, preparation, customization, and cart survive refresh', async
   ).toBeVisible();
 });
 
-test('mobile create keeps primary controls usable at 375 pixels', async ({
+test('mobile create keeps primary controls usable at 390 pixels', async ({
   page,
 }, testInfo) => {
   test.skip(
     testInfo.project.name !== 'mobile-chromium',
-    'Mobile geometry is covered by the 375 pixel project.',
+    'Mobile geometry is covered by the 390 pixel project.',
   );
   await page.goto('/create');
   await page
@@ -129,7 +129,7 @@ test('mobile create keeps primary controls usable at 375 pixels', async ({
   const addToCart = await page
     .getByTestId('create-add-to-cart')
     .boundingBox();
-  expect(viewport?.width).toBe(375);
+  expect(viewport?.width).toBe(390);
   expect(addToCart?.height).toBeGreaterThanOrEqual(44);
   expect((addToCart?.x ?? 0) + (addToCart?.width ?? 0)).toBeLessThanOrEqual(
     viewport?.width ?? 0,

@@ -1,5 +1,5 @@
-export type PreparationMode = 'original' | 'background-removed' | 'art';
-export type ArtStyle = 'illustrated' | 'poster' | 'soft-paint';
+export type PreparationMode = 'original' | 'background-removed' | 'art' | 'ai';
+export type ArtStyle = import('@/lib/ai/photo-styles').PhotoStyle;
 
 export interface PreparedImage {
   blob: Blob;

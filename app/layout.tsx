@@ -5,6 +5,7 @@ import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { HomepageV2Header } from '@/components/home-v2/HomepageV2Header';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
+import { CommerceSessionTracker } from '@/components/commerce/CommerceSessionTracker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -58,6 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} min-h-full flex flex-col bg-gray-50`}>
+        <CommerceSessionTracker />
         {homepageV2Enabled ? <HomepageV2Header /> : <Navbar />}
         {showReviewNavigation && (
           <aside className="border-y border-stone-300 bg-amber-50 px-4 py-3 text-stone-900">

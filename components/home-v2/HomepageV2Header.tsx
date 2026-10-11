@@ -11,7 +11,7 @@ import { readLocalCart } from '@/lib/commerce/local-cart';
 const navigation = [
   { href: '/designs', label: 'Shop Fall Designs' },
   { href: '/create', label: 'Create with Your Photo' },
-  { href: '/collections', label: 'Collections' },
+  { href: '/halloween', label: 'Halloween & Fall' },
   { href: '/products', label: 'Products' },
 ];
 

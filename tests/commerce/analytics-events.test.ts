@@ -7,7 +7,7 @@ import {
 
 describe('commerce analytics contract', () => {
   it('exposes the complete Sprint 3 event vocabulary', () => {
-    expect(commerceAnalyticsEvents).toHaveLength(18);
+    expect(commerceAnalyticsEvents).toHaveLength(21);
     expect(commerceAnalyticsEvents).toContain('upsell_added');
     expect(commerceAnalyticsEvents).toContain('fulfillment_failed');
   });

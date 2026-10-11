@@ -74,12 +74,15 @@ import type {
   ProductVariant,
 } from '@/lib/commerce/types';
 import styles from './create.module.css';
+import { photoStyles, type PhotoStyle } from '@/lib/ai/photo-styles';
+import { persistBrowserArtwork } from '@/lib/commerce/artwork-client';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 interface UnifiedCreateExperienceProps {
   products: MerchProduct[];
+  initialPhotoStyle?: PhotoStyle;
 }
 
 type SheetName =
@@ -116,7 +119,8 @@ function sourceTypeFor(
   fileType: string,
 ): DesignSourceType {
   if (mode === 'background-removed') return 'background-removed';
-  if (mode === 'art') return 'ai-styled';
+  if (mode === 'ai') return 'ai-styled';
+  if (mode === 'art') return 'uploaded-artwork';
   return fileType === 'image/png' ? 'uploaded-artwork' : 'uploaded-photo';
 }
 
@@ -214,6 +218,7 @@ function BottomSheet({
 
 export function UnifiedCreateExperience({
   products,
+  initialPhotoStyle = 'illustrated',
 }: UnifiedCreateExperienceProps) {
   const [asset, setAsset] = useState<DesignAsset | null>(null);
   const [originalBlob, setOriginalBlob] = useState<Blob | null>(null);
@@ -221,7 +226,7 @@ export function UnifiedCreateExperience({
   const [revision, setRevision] = useState(1);
   const [preparation, setPreparation] =
     useState<PreparationMode>('original');
-  const [artStyle, setArtStyle] = useState<ArtStyle>('illustrated');
+  const [artStyle, setArtStyle] = useState<ArtStyle>(initialPhotoStyle);
   const [adaptationLabel, setAdaptationLabel] = useState<string | null>(
     null,
   );
@@ -234,6 +239,7 @@ export function UnifiedCreateExperience({
   const [preparing, setPreparing] = useState(false);
   const [restored, setRestored] = useState(false);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [placementMessage, setPlacementMessage] = useState<string | null>(null);
   const closeSheet = useCallback(() => setSheet(null), []);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -529,11 +535,26 @@ export function UnifiedCreateExperience({
   }
 
   async function applyPreparation(mode: PreparationMode) {
-    if (!asset || !originalBlob || !designId) return;
+    if (!asset || !originalBlob || !designId || preparing || adding) return;
     setPreparing(true);
     setUploadError(null);
     try {
-      const prepared = await prepareImage(originalBlob, mode, artStyle);
+      let durableUrl: string | undefined;
+      let prepared;
+      if (mode === 'ai') {
+        const form = new FormData();
+        form.append('file', originalBlob, 'source-photo.png');
+        form.append('style', artStyle);
+        const response = await fetch('/api/commerce/artwork/generate', { method: 'POST', body: form, signal: AbortSignal.timeout(115_000) });
+        const result = await response.json() as { productionAssetUrl?: string; error?: string };
+        if (!response.ok || !result.productionAssetUrl) throw new Error(result.error || 'This photo could not be transformed. Please try again.');
+        durableUrl = result.productionAssetUrl;
+        const output = await fetch(durableUrl);
+        if (!output.ok) throw new Error('Your generated artwork could not be loaded. Please try again.');
+        prepared = await inspectImage(await output.blob());
+      } else {
+        prepared = await prepareImage(originalBlob, mode, artStyle);
+      }
       const nextRevision = revision + 1;
       const url = URL.createObjectURL(prepared.blob);
       const nextAsset = configurationAsset(
@@ -541,7 +562,7 @@ export function UnifiedCreateExperience({
           ...asset,
           id: asset.id.replace(/-r\d+$/, ''),
           url,
-          productionUrl: url,
+          productionUrl: durableUrl ?? url,
           width: prepared.width,
           height: prepared.height,
           mimeType: prepared.mimeType,
@@ -551,6 +572,7 @@ export function UnifiedCreateExperience({
         nextRevision,
         mode,
       );
+      if (mode === 'ai') nextAsset.sourceType = 'ai-styled';
       nextAsset.storageKey = createAssetStorageKey(
         designId,
         nextRevision,
@@ -857,85 +879,80 @@ export function UnifiedCreateExperience({
 
   async function addToCart() {
     if (!asset || !configuration || !designId) return;
-    const product = getProduct(products, configuration.merchProductId);
+    if (adding || preparing) return;
+    setAdding(true);
+    setUploadError(null);
+    try {
+      const product = getProduct(products, configuration.merchProductId);
 
-    let durableProductionUrl = configuration.productionAssetUrl;
-    let durableAsset = asset;
-    let durableConfig = configuration;
+      let durableProductionUrl = configuration.productionAssetUrl;
+      let durableAsset = asset;
+      let durableConfig = configuration;
 
-    if (
-      durableProductionUrl.startsWith('blob:') ||
-      !durableProductionUrl.startsWith('http')
-    ) {
-      try {
-        const sourceBlob =
-          (asset.storageKey ? await loadCreateAsset(asset.storageKey) : null) ??
-          originalBlob ??
-          (await (await fetch(asset.url)).blob());
+      if (
+        durableProductionUrl.startsWith('blob:') ||
+        !durableProductionUrl.startsWith('http')
+      ) {
+        try {
+          const sourceBlob =
+            (asset.storageKey ? await loadCreateAsset(asset.storageKey) : null) ??
+            (await (await fetch(asset.url)).blob());
 
-        if (sourceBlob) {
-          const form = new FormData();
-          form.append('file', sourceBlob, `${designId}.png`);
-          form.append('designId', designId);
-          form.append('revision', String(revision));
-          const res = await fetch('/api/commerce/artwork/persist', {
-            method: 'POST',
-            body: form,
-          });
-          if (res.ok) {
-            const data = (await res.json()) as { productionAssetUrl?: string };
-            if (data.productionAssetUrl) {
-              durableProductionUrl = data.productionAssetUrl;
-              durableAsset = {
-                ...asset,
-                productionUrl: durableProductionUrl,
-              };
-              durableConfig = {
-                ...configuration,
-                productionAssetUrl: durableProductionUrl,
-              };
-              setAsset(durableAsset);
-              setConfiguration(durableConfig);
-            }
+          if (sourceBlob) {
+            durableProductionUrl = await persistBrowserArtwork(sourceBlob, designId, revision);
+            durableAsset = {
+              ...asset,
+              productionUrl: durableProductionUrl,
+            };
+            durableConfig = {
+              ...configuration,
+              productionAssetUrl: durableProductionUrl,
+            };
+            setAsset(durableAsset);
+            setConfiguration(durableConfig);
           }
+        } catch {
+          throw new Error('Your artwork could not be saved. Please try again before adding it to your bag.');
         }
-      } catch (err) {
-        console.warn('Artwork persistence attempt failed:', err);
       }
-    }
+      if (!durableProductionUrl.startsWith('https://')) throw new Error('Your artwork could not be saved. Please try again.');
 
-    const design: CuratedDesign = {
-      id: designId,
-      title: 'Your design',
-      description: 'Customer-provided artwork',
-      collection: 'Your uploads',
-      asset: durableAsset,
-      recommendedProductId: product.id,
-    };
-    const snapshot = createCartSnapshot({
-      id: crypto.randomUUID(),
-      configuration: durableConfig,
-      design,
-      product,
-      createdAt: new Date().toISOString(),
-    });
-    const persisted = await upsertPersistentCartItem(snapshot);
-    const current = readLocalCart(window.localStorage);
-    writeLocalCart(
-      window.localStorage,
-      upsertCartItem(current, persisted ?? snapshot),
-    );
-    window.dispatchEvent(new Event('printme:cart-updated'));
-    setCartMessage(`${product.name} added with your exact placement.`);
-    trackCommerceEvent('add_to_cart', {
-      productId: product.id,
-      variantId: selectedVariant.id,
-      quantity: 1,
-      source: 'create',
-    });
+      const design: CuratedDesign = {
+        id: designId,
+        title: 'Your design',
+        description: 'Customer-provided artwork',
+        collection: 'Your uploads',
+        asset: durableAsset,
+        recommendedProductId: product.id,
+      };
+      const snapshot = createCartSnapshot({
+        id: crypto.randomUUID(),
+        configuration: durableConfig,
+        design,
+        product,
+        createdAt: new Date().toISOString(),
+      });
+      const persisted = await upsertPersistentCartItem(snapshot);
+      const current = readLocalCart(window.localStorage);
+      writeLocalCart(
+        window.localStorage,
+        upsertCartItem(current, persisted ?? snapshot),
+      );
+      window.dispatchEvent(new Event('printme:cart-updated'));
+      setCartMessage(`${product.name} added with your exact placement.`);
+      trackCommerceEvent('add_to_cart', {
+        productId: product.id,
+        variantId: selectedVariant.id,
+        quantity: 1,
+        source: 'create',
+      });
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Your artwork could not be added. Please try again.');
+    } finally { setAdding(false); }
   }
 
   async function startOver() {
+    if (preparing || adding) return;
     if (designId) {
       await removeCreateAssets(
         Array.from({ length: revision }, (_, index) =>
@@ -1034,7 +1051,7 @@ export function UnifiedCreateExperience({
             artwork
           </strong>
         </div>
-        <button type="button" onClick={() => void startOver()}>
+        <button type="button" onClick={() => void startOver()} disabled={preparing || adding}>
           Start over
         </button>
       </header>
@@ -1109,7 +1126,7 @@ export function UnifiedCreateExperience({
                 [
                   ['original', 'Keep Original'],
                   ['background-removed', 'Remove Background'],
-                  ['art', 'Make It Art'],
+                  ['art', 'Color Treatment'],
                 ] as const
               ).map(([mode, label]) => (
                 <button
@@ -1128,6 +1145,13 @@ export function UnifiedCreateExperience({
                 </button>
               ))}
             </div>
+            <label htmlFor="ai-photo-style">AI photo transformation</label>
+            <select id="ai-photo-style" value={artStyle} onChange={event => setArtStyle(event.target.value as PhotoStyle)} disabled={preparing}>
+              {Object.entries(photoStyles).map(([key, style]) => <option key={key} value={key}>{style.label}</option>)}
+            </select>
+            <button type="button" className={styles.moreStyles} onClick={() => void applyPreparation('ai')} disabled={preparing || adding} data-testid="generate-ai-photo">
+              {preparing ? 'Preparing artwork…' : 'Transform my photo with AI'}
+            </button>
             <button
               type="button"
               className={styles.moreStyles}
@@ -1266,7 +1290,7 @@ export function UnifiedCreateExperience({
         <button
           type="button"
           onClick={() => void addToCart()}
-          disabled={!qualityReport?.canAddToCart}
+          disabled={!qualityReport?.canAddToCart || preparing || adding}
           data-testid="create-add-to-cart"
         >
           <ShoppingBag aria-hidden="true" size={18} />

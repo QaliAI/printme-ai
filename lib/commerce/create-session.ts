@@ -19,8 +19,8 @@ export const savedCreateSessionSchema = z.object({
   versionId: z.string().min(1),
   revision: z.number().int().positive(),
   sourceType: designSourceTypeSchema,
-  preparation: z.enum(['original', 'background-removed', 'art']),
-  artStyle: z.enum(['illustrated', 'poster', 'soft-paint']),
+  preparation: z.enum(['original', 'background-removed', 'art', 'ai']),
+  artStyle: z.enum(['illustrated', 'poster', 'soft-paint', 'halloween-pet', 'haunted-portrait']),
   adaptationLabel: z.string().min(1).optional(),
   asset: z.object({
     id: z.string().min(1),

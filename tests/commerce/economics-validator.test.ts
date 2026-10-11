@@ -106,4 +106,15 @@ describe('Economics & Margin Floor Validator', () => {
     expect(audit.itemEvaluations).toHaveLength(2);
     expect(audit.valid).toBe(true);
   });
+  it('adds one peak surcharge across quantities and products and skips already included order quotes', () => {
+    const items = [createSnapshotForItem('everyday-tee', 18541), createSnapshotForItem('gallery-poster', 43138)];
+    items[0].quantity = 3;
+    const baseline = evaluateOrderEconomics(items, 599, undefined, { now: new Date('2026-10-14') });
+    const peak = evaluateOrderEconomics(items, 599, undefined, { now: new Date('2026-10-15') });
+    const included = evaluateOrderEconomics(items, 599, undefined, { now: new Date('2026-10-15'), alreadyIncluded: true });
+    expect(peak.peakShippingSurchargeCents).toBe(40);
+    expect(peak.totalFulfillmentShippingCents - baseline.totalFulfillmentShippingCents).toBe(40);
+    expect(baseline.netContributionProfitCents - peak.netContributionProfitCents).toBe(40);
+    expect(included).toEqual(baseline);
+  });
 });

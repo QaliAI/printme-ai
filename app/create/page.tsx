@@ -4,6 +4,7 @@ import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalo
 import { UnifiedCreateExperience } from './UnifiedCreateExperience';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
+import { photoStyles, type PhotoStyle } from '@/lib/ai/photo-styles';
 
 export const metadata = {
   title: 'Create a custom print',
@@ -14,13 +15,15 @@ export const metadata = {
 export default async function CreatePage({
   searchParams,
 }: {
-  searchParams: Promise<{ product?: string }>;
+  searchParams: Promise<{ product?: string; style?: string }>;
 }) {
   if (!isReviewFeatureEnabled('unified-create')) {
     redirect('/app/create/upload');
   }
 
-  const requestedProduct = (await searchParams).product;
+  const query = await searchParams;
+  const requestedProduct = query.product;
+  const initialPhotoStyle = query.style && Object.hasOwn(photoStyles, query.style) ? query.style as PhotoStyle : undefined;
   const cookieStore = await cookies();
   const products = applyCommerceE2EReviewEconomics(
     getApprovedMerchProducts(),
@@ -32,5 +35,5 @@ export default async function CreatePage({
   if (requestedIndex > 0) {
     products.unshift(products.splice(requestedIndex, 1)[0]);
   }
-  return <UnifiedCreateExperience products={products} />;
+  return <UnifiedCreateExperience products={products} initialPhotoStyle={initialPhotoStyle} />;
 }

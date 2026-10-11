@@ -24,8 +24,12 @@ export default defineConfig({
       name: 'mobile-chromium',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 375, height: 812 },
+        viewport: { width: 390, height: 844 },
       },
+    },
+    {
+      name: 'tablet-chromium',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 } },
     },
     {
       name: 'desktop-chromium',

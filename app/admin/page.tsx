@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
 import { getFirstOrValue } from '@/lib/types';
+import { AdminFunnelSummary } from '@/components/commerce/AdminFunnelSummary';
 
 interface Stats {
   totalOrders: number;
@@ -168,6 +169,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      <AdminFunnelSummary />
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Card className="border border-gray-200 shadow-sm">

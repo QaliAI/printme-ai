@@ -1,5 +1,9 @@
 # Database Migration Runbook
 
+Historical instructions below are incomplete for the restored 2026-10-11
+schema. Use [the current reconciliation](revenue-activation-2026-10-11.md)
+before preparing any migration. This sprint did not authorize database changes.
+
 This runbook outlines how to safely apply, verify, and roll back migrations for the PrintMe.ai database.
 
 ## Migration Files & Order

@@ -75,7 +75,7 @@ describe('The Seasonal Edit — Trend Registry & Assets', () => {
       familyName: 'THE O\'CONNOR COVEN',
       membersText: 'EMMA • NOAH • BUSTER (DOG)',
     });
-    expect(hhSvg).toContain('THE O\'CONNOR COVEN');
+    expect(hhSvg).toContain('THE O&#39;CONNOR COVEN');
     expect(hhSvg).toContain('EMMA • NOAH • BUSTER (DOG)');
 
     // 2. Library of Lost Hours

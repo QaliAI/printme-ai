@@ -31,6 +31,7 @@ import {
   getSameDesignUpsells,
   type SameDesignUpsell,
 } from '@/lib/commerce/upsells';
+import { getSameDesignSets, type SameDesignSet } from '@/lib/commerce/same-design-sets';
 import {
   assertDesignProductCompatible,
   getRecommendedProduct,
@@ -304,6 +305,7 @@ export function ShopV2Experience({
       }),
     [cartItems, designs, products],
   );
+  const cartSets = useMemo(() => cartItems.flatMap(item => getSameDesignSets(item, cartItems, cartUpsells)), [cartItems, cartUpsells]);
 
   useEffect(() => {
     for (const upsell of cartUpsells) {
@@ -316,6 +318,15 @@ export function ShopV2Experience({
       });
     }
   }, [cartUpsells]);
+  useEffect(() => {
+    if (!cartOpen) return;
+    for (const set of cartSets) {
+      const key = `set:${set.id}`;
+      if (viewedUpsellsRef.current.has(key)) continue;
+      viewedUpsellsRef.current.add(key);
+      trackCommerceEvent('bundle_view', { set: set.label, productCount: set.additions.length + set.existing.length });
+    }
+  }, [cartSets, cartOpen]);
 
   const [shippingQuote, setShippingQuote] = useState<{
     shippingFeeCents: number;
@@ -522,6 +533,26 @@ export function ShopV2Experience({
     } finally {
       setUpsellPendingId(null);
     }
+  }
+
+  async function addSet(set: SameDesignSet) {
+    if (upsellPendingId) return;
+    setUpsellPendingId(set.id);
+    try {
+      let next = cartItems;
+      for (const offer of set.additions) {
+        const sourceDesign = designFromConfiguration(set.source.configuration, products.map(product => product.id));
+        if (!sourceDesign) return;
+        const snapshot = createCartSnapshot({ id: crypto.randomUUID(), configuration: offer.configuration,
+          design: { ...sourceDesign, title: set.source.designTitle, asset: offer.design }, product: offer.product, createdAt: new Date().toISOString() });
+        const persisted = await upsertPersistentCartItem(snapshot);
+        next = upsertCartItem(next, persisted ?? snapshot);
+        // Preserve each successful addition if a later operation fails.
+        persistCart(next);
+        trackCommerceEvent('upsell_added', { productId: offer.product.id, source: 'set' });
+      }
+      trackCommerceEvent('bundle_added', { set: set.label, addedCount: set.additions.length, valueCents: set.total });
+    } finally { setUpsellPendingId(null); }
   }
 
   async function beginCheckout() {
@@ -949,11 +980,26 @@ export function ShopV2Experience({
                     <p className={styles.eyebrow}>Keep the same artwork</p>
                     <h3 id="matching-products-title">Make it a set</h3>
                   </div>
+                  <p>One design, matching products. Sets use the current price of each product; shipping is quoted at checkout.</p>
+                  {cartSets.length > 0 && <div className={styles.upsellGrid} data-testid="same-design-sets">
+                    {cartSets.map(set => <article className={styles.upsellCard} key={set.id}>
+                      <strong>{set.label}</strong>
+                      <div className={styles.upsellGrid}>
+                        {set.existing.map(item => <PersistedInstantPreview key={item.id} design={set.additions[0].design} configuration={item.configuration} showSafeZone={false} compact />)}
+                        {set.additions.map(offer => <PersistedInstantPreview key={offer.product.id} design={offer.design} configuration={offer.configuration} showSafeZone={false} compact />)}
+                      </div>
+                      <span>Set subtotal {formatPrice(set.total)}</span>
+                      <button type="button" onClick={() => void addSet(set)} disabled={Boolean(upsellPendingId)} data-testid={`add-set-${set.label.toLowerCase().replaceAll(' + ', '-')}`}>
+                        {upsellPendingId === set.id ? 'Adding…' : 'Complete this set'}
+                      </button>
+                    </article>)}
+                  </div>}
                   <div className={styles.upsellGrid}>
                     {cartUpsells.map((upsell) => (
                       <article
                         className={styles.upsellCard}
                         key={`${upsell.sourceItemId}:${upsell.product.id}`}
+                        data-testid={`upsell-product-${upsell.product.id}`}
                       >
                         <PersistedInstantPreview
                           design={upsell.design}

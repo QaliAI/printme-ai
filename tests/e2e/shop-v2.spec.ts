@@ -222,7 +222,7 @@ test('cart preserves quantity and adds an exact same-design upsell', async ({
   const upsell = drawer.getByTestId('add-upsell-gallery-poster');
   await expect(upsell).toBeVisible();
   await expect(
-    drawer.getByTestId('same-design-upsells').getByTestId('instant-preview'),
+    drawer.getByTestId('upsell-product-gallery-poster').getByTestId('instant-preview'),
   ).toHaveAttribute('data-product-id', 'gallery-poster');
 
   await drawer

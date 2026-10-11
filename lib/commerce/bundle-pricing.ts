@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { calculateContributionMargin } from './margin';
 import type { MerchProduct } from './types';
+import { peakShippingSurchargeCents } from './holiday-shipping';
 
 export const bundleQuoteRequestSchema = z.object({
   requestedDiscountRate: z.number().min(0).max(0.25).default(0.1),
@@ -65,6 +66,7 @@ export function calculateBundleQuote(
     shippingCost += margin.shippingCost * item.quantity;
   }
 
+  contributionMargin -= peakShippingSurchargeCents();
   const requestedDiscount = Math.round(
     subtotal * request.requestedDiscountRate,
   );

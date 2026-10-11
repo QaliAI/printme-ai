@@ -72,7 +72,9 @@ export function InstantPreview({
             preload={!compact}
             unoptimized={
               design.url.startsWith('blob:') ||
-              design.url.startsWith('data:')
+              design.url.startsWith('data:') ||
+              design.url.includes('/storage/v1/object/sign/') ||
+              design.url.startsWith('https://storage.printme.ai/')
             }
             sizes={compact ? '120px' : '(max-width: 700px) 55vw, 300px'}
             className={styles.artworkImage}
