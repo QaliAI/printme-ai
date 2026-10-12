@@ -100,7 +100,16 @@ test('sitewide mockup visual audit', async ({
       fullPage: true,
       animations: 'disabled'
     });
-    if (route === '/' || route === '/halloween') {
+    if (phase !== 'before' && route === '/') {
+      // Issue Nº 01 homepage: every product preview must be a clean, uncontaminated InstantPreview render.
+      await checkPreview(page.getByTestId('hero-feature').getByTestId('instant-preview'), 'everyday-tee');
+      const showcase = page.getByTestId('homepage-product-showcase');
+      const previews = showcase.getByTestId('instant-preview');
+      expect(await previews.count()).toBeGreaterThanOrEqual(6);
+      for (let i = 0; i < (await previews.count()); i++) await checkPreview(previews.nth(i));
+      await capture(showcase, 'homepage-product-showcase');
+    }
+    if (route === '/halloween') {
       for (const [slug, product, name] of seasonal) {
         const card = page.getByTestId(`seasonal-card-${slug}`);
         if (phase !== 'before') {
@@ -108,17 +117,8 @@ test('sitewide mockup visual audit', async ({
           await expect(card).not.toContainText(/Official preview ready|Safe print area/);
           await expect(card).toContainText(product === 'everyday-tee' ? '$34.00' : product === 'keepsake-mug' ? '$19.00' : '$29.00');
         }
-        if (await card.count()) await capture(card, name, route === '/');
-      }
-      if (phase !== 'before' && route === '/') {
-        await capture(page.getByTestId('homepage-product-showcase'), 'homepage-product-showcase', true);
-        for (const product of ['gallery-poster', 'everyday-tee', 'keepsake-mug']) {
-          await page.getByTestId(`home-hero-product-${product}`).click();
-          await checkPreview(page.getByTestId('home-hero-switcher').getByTestId('instant-preview'), product);
-          expect(await page.getByTestId('home-hero-switcher').evaluate(element => element.scrollLeft)).toBe(0);
-          await capture(page.getByTestId('home-hero-switcher'), `hero-${product}`);
-        }
-        await capture(page.getByTestId('home-commerce-showcase'), 'fall-featured-showcase');
+        // Pixel baselines were recorded from the retired homepage cards; /halloween is captured for review only.
+        if (await card.count()) await capture(card, name);
       }
       if (phase !== 'before' && route === '/halloween') {
         for (const slug of ['haunted-household', 'library-of-lost-hours', 'midnight-hayride', 'field-notes-after-dark', 'leftovers-league']) {

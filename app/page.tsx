@@ -4,7 +4,7 @@ import { ProductShowcase } from '@/components/landing/ProductShowcase';
 import { StylePresets } from '@/components/landing/StylePresets';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTASection } from '@/components/landing/CTASection';
-import { HomepageV2 } from '@/components/home-v2/HomepageV2';
+import { PunkHomepage } from '@/components/punk/PunkHomepage';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
@@ -13,7 +13,7 @@ import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
 
 export default async function Home() {
   if (isReviewFeatureEnabled('homepage')) {
-    return <HomepageV2 />;
+    return <PunkHomepage />;
   }
 
   const products = getApprovedMerchProducts();

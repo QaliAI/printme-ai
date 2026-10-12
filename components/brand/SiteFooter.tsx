@@ -1,60 +1,59 @@
 import Link from 'next/link';
-import { PrintMeWordmark } from './PrintMeWordmark';
 import styles from './SiteFooter.module.css';
 
+/**
+ * Expressive but fully functional footer. Every claim here is backed by the
+ * approved catalog policies (made to order, defect/damage reprints, preview
+ * before checkout); no delivery-time promises are made because production
+ * and transit are quoted per order.
+ */
 export function SiteFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brandCol}>
-          <Link href="/" aria-label="PrintMe Home">
-            <PrintMeWordmark size="md" />
+          <Link href="/" aria-label="PrintMe.ai home" className={styles.logo}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- static brand SVG */}
+            <img src="/brand/printme-logo-stacked-inverse.svg" alt="PrintMe.ai" width={220} height={171} loading="lazy" />
           </Link>
           <p className={styles.brandBio}>
-            A fast, fun personalized gift studio. Your photo. Your joke. Your merch. Made to order with archival inks.
+            An independent print shop for original merch and your own ideas. Your imagination, no permission required.
           </p>
-          <div className={styles.trustBadges}>
-            <span>✓ Preview before you buy</span>
-            <span>✓ Free defect &amp; damage replacement</span>
-            <span>✓ Printed to order in 2–3 days</span>
-          </div>
         </div>
 
         <div className={styles.col}>
-          <h4 className={styles.colTitle}>Gift Studio</h4>
-          <nav className={styles.colNav} aria-label="Gift Studio Links">
-            <Link href="/create">Make Something</Link>
-            <Link href="/shop">Shop Collection</Link>
-            <Link href="/halloween">Halloween Drop</Link>
+          <h2 className={styles.colTitle}>Make</h2>
+          <nav className={styles.colNav} aria-label="Make">
+            <Link href="/create">Upload a photo</Link>
+            <Link href="/create?style=illustrated">AI styles</Link>
+            <Link href="/text-thread">Text-thread designer</Link>
+          </nav>
+        </div>
+
+        <div className={styles.col}>
+          <h2 className={styles.colTitle}>Shop</h2>
+          <nav className={styles.colNav} aria-label="Shop">
+            <Link href="/shop">All designs</Link>
+            <Link href="/drops">Drops</Link>
             <Link href="/collections">Collections</Link>
-            <Link href="/products">All Products</Link>
+            <Link href="/halloween">Halloween</Link>
+            <Link href="/products">Products</Link>
           </nav>
         </div>
 
         <div className={styles.col}>
-          <h4 className={styles.colTitle}>Approved Items</h4>
-          <nav className={styles.colNav} aria-label="Products">
-            <Link href="/products/everyday-tee">Everyday Tee · $34</Link>
-            <Link href="/products/keepsake-mug">Keepsake Mug · $19</Link>
-            <Link href="/products/gallery-poster">Gallery Poster · $29</Link>
-            <Link href="/create">Matching Sets</Link>
-          </nav>
-        </div>
-
-        <div className={styles.col}>
-          <h4 className={styles.colTitle}>Support &amp; Trust</h4>
-          <nav className={styles.colNav} aria-label="Support Links">
-            <Link href="/#shipping">Production &amp; Shipping</Link>
-            <Link href="/#guarantee">Damage Replacement</Link>
+          <h2 className={styles.colTitle}>Help</h2>
+          <nav className={styles.colNav} aria-label="Help">
+            <Link href="/#shipping">Production &amp; shipping</Link>
+            <Link href="/#guarantee">Damage &amp; misprints</Link>
             <a href="mailto:support@printme.ai">support@printme.ai</a>
-            <Link href="/policies">Terms &amp; Policies</Link>
           </nav>
         </div>
       </div>
 
       <div className={styles.bottomBar}>
-        <p>&copy; {new Date().getFullYear()} PrintMe. All rights reserved. Made to order.</p>
-        <p>No generic gifts. Weirdly yours.</p>
+        <p>&copy; {new Date().getFullYear()} PrintMe.ai · Every item made to order.</p>
+        <p className={styles.sign}>make shit. print shit.</p>
       </div>
     </footer>
   );

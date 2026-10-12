@@ -1,23 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFF9EF;
-  --foreground: #151512;
+  /* ===== PrintMe.ai punk collage tokens (docs/creative-rebuild/BRAND_SYSTEM.md) =====
+     Foundation = ink + newsprint + print texture. Colour is explosive and rare. */
+  --pm-ink: #111111;
+  --pm-newsprint: #F3F0E9;
+  --pm-paper: #FBF9F4;
+  --pm-photocopy: #CFCBC3;
+  --pm-gray: #92908B;
+  --pm-gray-ink: #5E5C57; /* AA on newsprint for secondary text */
+  --pm-pink: #FF2B91;
+  --pm-pink-ink: #D6006F; /* AA-safe pink for text on light paper */
+  --pm-yellow: #F8D829;
+  --pm-orange: #FF6038;
+  --pm-blue: #3059FF; /* rare accent only */
+  --pm-acid: #B8F23A; /* horror/seasonal accent only */
 
-  /* PrintMe Canonical Palette */
-  --printme-ink: #151512;
-  --printme-paper: #FFF9EF;
-  --printme-surface: #F0E9DC;
-  --printme-surface-hover: #E7DFD0;
-  --printme-orange: #FF4B2B;
-  --printme-orange-hover: #E03E20;
-  --printme-yellow: #FFD84D;
+  --background: var(--pm-newsprint);
+  --foreground: var(--pm-ink);
+
+  /* Legacy names re-pointed so existing pages inherit the new system. */
+  --printme-ink: var(--pm-ink);
+  --printme-paper: var(--pm-newsprint);
+  --printme-surface: #E9E5DC;
+  --printme-surface-hover: #DFDAD0;
+  --printme-orange: var(--pm-pink);
+  --printme-orange-hover: var(--pm-pink-ink);
+  --printme-yellow: var(--pm-yellow);
   --printme-moss: #667A50;
-  --printme-border: #DED6C7;
-  --printme-muted: #6E6D65;
+  --printme-border: #D3CEC4;
+  --printme-muted: var(--pm-gray-ink);
 
-  --font-display: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  --font-sans: var(--font-sans, 'DM Sans', sans-serif);
+  --font-display: var(--font-sans), 'Archivo', sans-serif;
 }
 
 @theme inline {
@@ -51,6 +65,13 @@ body {
 
 h1, h2, h3, h4, .font-display {
   font-family: var(--font-display), Arial, Helvetica, sans-serif;
+  font-stretch: 112%;
+  font-weight: 800;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pm-pink);
+  outline-offset: 3px;
 }
 
 /* ========== Custom Keyframes ========== */
