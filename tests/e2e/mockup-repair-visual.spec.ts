@@ -174,6 +174,20 @@ test('sitewide mockup visual audit', async ({
       for (const item of await upsells.getByTestId('instant-preview').all()) await checkPreview(item);
       await capture(upsells, 'cart-upsell-previews');
     } else await expect(page.getByTestId('upsell-unavailable')).toBeVisible();
+    if (remote) {
+      for (const product of ['keepsake-mug', 'gallery-poster']) {
+        await page.goto('/shop-v2?design=haunted-household');
+        await page.getByTestId(`product-switch-${product}`).click();
+        await page.getByTestId('add-to-cart').click();
+      }
+      await expect(page.getByTestId('cart-item')).toHaveCount(3);
+      for (const product of ['everyday-tee', 'keepsake-mug', 'gallery-poster']) {
+        const cartPreview = page.getByTestId('cart-item').locator(`[data-testid="instant-preview"][data-product-id="${product}"]`);
+        await checkPreview(cartPreview, product);
+        await capture(cartPreview, `cart-thumbnail-${product}`);
+      }
+      await capture(page.getByTestId('cart-drawer'), 'cart-all-approved-products');
+    }
     await page.goto(`/app/create/products?design=guest-design-visual&designUrl=${encodeURIComponent('/designs/seasonal-edit/library-of-lost-hours.webp')}`);
     await expect(page.getByTestId('live-product-mockups')).toBeVisible();
     for (const product of ['everyday-tee', 'keepsake-mug', 'gallery-poster']) await checkPreview(page.getByTestId(`legacy-preview-${product}`).getByTestId('instant-preview'), product);

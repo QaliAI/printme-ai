@@ -771,10 +771,7 @@ export function ShopV2Experience({
                     {configuration.decorationMethod}
                   </strong>
                   <small>
-                    Center {configuration.normalizedX.toFixed(2)} /{' '}
-                    {configuration.normalizedY.toFixed(2)} · Scale{' '}
-                    {configuration.normalizedScale.toFixed(2)} · Angle{' '}
-                    {configuration.angle}°
+                    Your preview shows the selected placement. Adjust artwork size below.
                   </small>
                 </div>
                 <label className={styles.placementScale}>
@@ -933,11 +930,7 @@ export function ShopV2Experience({
                         </dl>
                         <p className={styles.cartPlacement}>
                           {item.configuration.printPosition} ·{' '}
-                          {item.configuration.decorationMethod} · x{' '}
-                          {item.configuration.normalizedX.toFixed(2)} · y{' '}
-                          {item.configuration.normalizedY.toFixed(2)} · scale{' '}
-                          {item.configuration.normalizedScale.toFixed(2)} ·{' '}
-                          {item.configuration.angle}°
+                          Artwork size {Math.round(item.configuration.normalizedScale * 100)}%
                         </p>
                         <div className={styles.cartActions}>
                           <button
