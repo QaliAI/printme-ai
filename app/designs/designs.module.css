@@ -1,8 +1,8 @@
 .shell {
   min-height: 100vh;
   padding: 24px clamp(18px, 5vw, 72px) 80px;
-  color: #191713;
-  background: #f4efe6;
+  color: var(--color-ink, #151512);
+  background: var(--color-paper, #fff9ef);
 }
 
 .header {
@@ -36,11 +36,11 @@
 .header h1 {
   max-width: 780px;
   margin: 0;
-  font-family: Georgia, serif;
-  font-size: clamp(3rem, 8vw, 7rem);
-  font-weight: 400;
-  letter-spacing: -0.06em;
-  line-height: 0.9;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
 }
 
 .header > div {
@@ -147,9 +147,10 @@
 }
 
 .cardCopy strong {
-  font-family: Georgia, serif;
-  font-size: 1.5rem;
-  font-weight: 400;
+  font-family: var(--font-display, inherit);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .cardCopy span {

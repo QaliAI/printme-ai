@@ -8,14 +8,14 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   await expect(
     page.getByRole('heading', {
       level: 1,
-      name: /Turn (your photo into art|a favorite photo)/i,
+      name: /(Turn (your photo into art|a favorite photo)|Your photo\. Your joke\. Your merch\.)/i,
     }),
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /Create (with Your Photo|Yours)/i }).first(),
+    page.getByRole('link', { name: /(Create (with Your Photo|Yours)|Make Something)/i }).first(),
   ).toBeVisible();
   await expect(
-    page.getByRole('link', { name: /Shop (Fall )?Designs/i }).first(),
+    page.getByRole('link', { name: /(Shop (Fall )?Designs|Shop Halloween)/i }).first(),
   ).toBeVisible();
   await expect(
     page.getByText(/Custom (products|items) (start at|from) \$19/),
@@ -52,14 +52,14 @@ test('Homepage V2 keeps mobile commerce controls reachable', async ({
   );
 
   await page.goto('/');
-  const primary = page.getByRole('link', { name: /Create (with Your Photo|Yours)/i }).first();
+  const primary = page.getByRole('link', { name: /(Create (with Your Photo|Yours)|Make Something)/i }).first();
   const stickyBar = page.getByTestId('home-mobile-commerce-bar');
   await expect(primary).toBeVisible();
   await expect(stickyBar).toBeVisible();
 
   const primaryBox = await primary.boundingBox();
   const stickyCreateBox = await stickyBar
-    .getByRole('link', { name: /Create (with Your Photo|Yours)/i })
+    .getByRole('link', { name: /(Create (with Your Photo|Yours)|Make Something)/i })
     .boundingBox();
   expect(primaryBox?.height).toBeGreaterThanOrEqual(44);
   expect(stickyCreateBox?.height).toBeGreaterThanOrEqual(44);

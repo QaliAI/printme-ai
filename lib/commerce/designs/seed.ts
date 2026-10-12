@@ -267,7 +267,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     slug: 'first-look',
     title: 'First Look',
     description:
-      'Five development-safe starting points used to validate PrintMe commerce.',
+      'Curated starting prints crafted in the PrintMe studio.',
     publicationStatus: 'published',
     designIds: [
       'design-pet-pop',
@@ -319,7 +319,7 @@ export const developmentDropSeeds: DesignDrop[] = [
     slug: 'studio-seeds',
     title: 'Studio Seeds',
     description:
-      'A development preview drop. No sales or bestseller claims are implied.',
+      'Curated studio originals prepared for custom physical prints.',
     publicationStatus: 'published',
     publicationDate: '2026-07-29T12:00:00.000Z',
     designIds: [

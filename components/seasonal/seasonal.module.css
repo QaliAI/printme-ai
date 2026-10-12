@@ -32,8 +32,8 @@
 
 .subheading {
   font-size: clamp(1.1rem, 2vw, 1.35rem);
-  font-style: italic;
-  font-family: var(--font-serif, 'Georgia', serif);
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
   color: var(--home-muted, #5c625f);
   margin: 0 0 16px;
 }

@@ -1001,11 +1001,10 @@ export function UnifiedCreateExperience({
       <main className={styles.createPage}>
         <section className={styles.uploadShell}>
           <div className={styles.uploadIntro}>
-            <span>PrintMe Create</span>
-            <h1>Start with one image.</h1>
+            <span>PrintMe Gift Studio</span>
+            <h1>Drop the photo. We&apos;ll do the fun part.</h1>
             <p>
-              Upload once, then prepare and place it on every compatible
-              product.
+              Turn pets, people, and inside jokes into one-of-a-kind art you can preview and print on gifts you&apos;ll actually want to give.
             </p>
           </div>
           <div
@@ -1134,14 +1133,14 @@ export function UnifiedCreateExperience({
 
         <section className={styles.controlsPanel}>
           <div className={styles.prepareBlock}>
-            <h1>Prepare your image</h1>
-            <p>Your original stays available. Each treatment creates a new version.</p>
+            <h2>Choose your style</h2>
+            <p>Your original stays safe. Pick a treatment to preview on your gift.</p>
             <div className={styles.prepareOptions}>
               {(
                 [
-                  ['original', 'Keep Original'],
+                  ['original', 'Original Photo'],
                   ['background-removed', 'Remove Background'],
-                  ['art', 'Color Treatment'],
+                  ['art', 'Illustrated Art'],
                 ] as const
               ).map(([mode, label]) => (
                 <button

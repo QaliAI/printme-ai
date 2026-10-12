@@ -143,7 +143,7 @@ export function HomeCommerceShowcase({
         </div>
         <div className={styles.featuredPrice}>
           <div>
-            <small>Current preview</small>
+            <small>Starting at</small>
             <strong>{formatPrice(configuration.unitPrice)}</strong>
           </div>
           <Link

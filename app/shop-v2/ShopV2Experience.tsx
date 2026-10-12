@@ -602,12 +602,12 @@ export function ShopV2Experience({
   return (
     <div className={styles.shop}>
       <header className={styles.hero}>
-        <p className={styles.eyebrow}>Fall 2026 Collection · Launch Edition</p>
+        <p className={styles.eyebrow}>Personalized gifts · Made to order</p>
         <div className={styles.heroRow}>
           <div>
-            <h1>Art worth living with.</h1>
+            <h1>Your joke. Your photo. Your merch.</h1>
             <p className={styles.heroCopy}>
-              Curated seasonal and everyday designs, paired with products crafted for lasting print quality.
+              Turn photos, pets, and inside jokes into one-of-a-kind gifts you&apos;ll actually want to give. Or choose an original seasonal design ready to print.
             </p>
           </div>
           <button
@@ -950,18 +950,6 @@ export function ShopV2Experience({
                     </article>
                   );
                 })
-              )}
-              {cartItems.length > 0 && cartUpsells.length === 0 && (
-                <section
-                  className={styles.upsellUnavailable}
-                  data-testid="upsell-unavailable"
-                >
-                  <strong>Matching products are paused</strong>
-                  <p>
-                    Recommendations unlock after provider cost and shipping
-                    data are synchronized, so every offer stays margin-safe.
-                  </p>
-                </section>
               )}
               {cartUpsells.length > 0 && (
                 <section

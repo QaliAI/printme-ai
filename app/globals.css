@@ -1,15 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFF9EF;
+  --foreground: #151512;
+
+  /* PrintMe Canonical Palette */
+  --printme-ink: #151512;
+  --printme-paper: #FFF9EF;
+  --printme-surface: #F0E9DC;
+  --printme-surface-hover: #E7DFD0;
+  --printme-orange: #FF4B2B;
+  --printme-orange-hover: #E03E20;
+  --printme-yellow: #FFD84D;
+  --printme-moss: #667A50;
+  --printme-border: #DED6C7;
+  --printme-muted: #6E6D65;
+
+  --font-display: var(--font-display, 'Bricolage Grotesque', sans-serif);
+  --font-sans: var(--font-sans, 'DM Sans', sans-serif);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--printme-ink);
+  --color-paper: var(--printme-paper);
+  --color-surface: var(--printme-surface);
+  --color-surface-hover: var(--printme-surface-hover);
+  --color-orange: var(--printme-orange);
+  --color-orange-hover: var(--printme-orange-hover);
+  --color-yellow: var(--printme-yellow);
+  --color-moss: var(--printme-moss);
+  --color-border: var(--printme-border);
+  --color-muted: var(--printme-muted);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
 }
 
 html {
@@ -19,9 +44,13 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display), Arial, Helvetica, sans-serif;
 }
 
 /* ========== Custom Keyframes ========== */
@@ -41,8 +70,8 @@ body {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 75, 43, 0.25); }
+  50% { box-shadow: 0 0 40px rgba(255, 75, 43, 0.45); }
 }
 
 @keyframes gradient-shift {
@@ -123,11 +152,9 @@ body {
 .animate-text-shimmer {
   background: linear-gradient(
     90deg,
-    #3b82f6 0%,
-    #8b5cf6 25%,
-    #ec4899 50%,
-    #8b5cf6 75%,
-    #3b82f6 100%
+    #FF4B2B 0%,
+    #FFD84D 50%,
+    #FF4B2B 100%
   );
   background-size: 200% auto;
   background-clip: text;
@@ -136,43 +163,28 @@ body {
   animation: text-shimmer 4s linear infinite;
 }
 
-/* ========== Glassmorphism Effects ========== */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-}
-
-.glass-dark {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
 /* ========== Custom Scrollbar ========== */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: #F0E9DC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
-  border-radius: 10px;
+  background: #DED6C7;
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #2563eb, #7c3aed);
+  background: #BDB3A1;
 }
 
 /* ========== Smooth focus rings ========== */
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #FF4B2B;
   outline-offset: 2px;
   border-radius: 4px;
 }

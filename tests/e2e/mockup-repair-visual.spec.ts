@@ -173,7 +173,7 @@ test('sitewide mockup visual audit', async ({
     if (await upsells.count()) {
       for (const item of await upsells.getByTestId('instant-preview').all()) await checkPreview(item);
       await capture(upsells, 'cart-upsell-previews');
-    } else await expect(page.getByTestId('upsell-unavailable')).toBeVisible();
+    } else await expect(page.getByTestId('same-design-upsells')).toHaveCount(0);
     if (remote) {
       for (const product of ['keepsake-mug', 'gallery-poster']) {
         await page.goto('/shop-v2?design=haunted-household');

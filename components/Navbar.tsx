@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { Button } from './Button';
 import { Container } from './Container';
+import { PrintMeWordmark } from '@/components/brand/PrintMeWordmark';
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null);
@@ -48,44 +49,34 @@ export function Navbar() {
     >
       <Container>
         <div className="flex items-center justify-between py-3.5">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            {/* Logo mark */}
-            <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 via-purple-600 to-rose-600 flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              {/* Sparkle accent */}
-              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full ring-2 ring-white" />
-            </div>
-            <div className="text-xl font-bold text-slate-900 tracking-tight">
-              PrintMe<span className="text-indigo-600">.ai</span>
-            </div>
+          <Link href="/" className="flex items-center group">
+            <PrintMeWordmark size="md" />
           </Link>
 
           <div className="flex items-center gap-6">
             <Link
-              href="/designs"
-              className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              href="/shop"
+              className="text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors"
             >
-              Featured Designs
+              Shop
             </Link>
             <Link
-              href="/#how-it-works"
-              className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              href="/create"
+              className="text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors"
             >
-              How it Works
+              Create
             </Link>
             <Link
-              href="/#gifts"
-              className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              href="/halloween"
+              className="text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors"
             >
-              Gift Ideas
+              Halloween
             </Link>
             <Link
-              href="/#guarantee"
-              className="hidden md:inline text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              href="/collections"
+              className="hidden md:inline text-sm font-semibold text-stone-700 hover:text-stone-900 transition-colors"
             >
-              FAQ
+              Collections
             </Link>
 
             {!loading && (

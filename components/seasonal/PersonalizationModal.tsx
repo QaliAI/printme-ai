@@ -347,7 +347,7 @@ export function PersonalizationModal({
                     <Check size={18} /> Added to your shopping bag!
                   </span>
                   <div className={styles.successLinks}>
-                    <Link href="/shop-v2" className={styles.primaryActionButton}>
+                    <Link href="/shop" className={styles.primaryActionButton}>
                       View Bag &amp; Checkout <ArrowRight size={16} />
                     </Link>
                     <button

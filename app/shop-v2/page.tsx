@@ -8,8 +8,9 @@ import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
 
 export const metadata: Metadata = {
-  title: 'Curated Shop Preview | PrintMe.ai',
-  description: 'Feature-flagged commerce preview for PrintMe.ai.',
+  title: 'Shop Personalized Gifts & Merch | PrintMe',
+  description: 'Turn photos, pets, and inside jokes into one-of-a-kind tees, mugs, and posters.',
+  alternates: { canonical: '/shop' },
 };
 
 export default async function ShopV2Page({

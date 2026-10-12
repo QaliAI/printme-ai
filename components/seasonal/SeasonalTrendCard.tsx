@@ -54,7 +54,7 @@ export function SeasonalTrendCard({
         <p className={styles.cardDescription}>{card.description}</p>
 
         <div className={styles.cardActions}>
-          <Link href={`/shop-v2?design=${encodeURIComponent(card.relatedDesignSlug)}`} className={styles.shopDesignButton} onClick={handleShopClick} data-testid={`shop-design-${card.relatedDesignSlug}`}>
+          <Link href={`/shop?design=${encodeURIComponent(card.relatedDesignSlug)}`} className={styles.shopDesignButton} onClick={handleShopClick} data-testid={`shop-design-${card.relatedDesignSlug}`}>
             Shop This Design
             <ArrowRight size={15} aria-hidden="true" />
           </Link>

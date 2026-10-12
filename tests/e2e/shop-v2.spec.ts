@@ -42,7 +42,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await page.reload();
 
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Art worth living with.' }),
+    page.getByRole('heading', { level: 1, name: /(Art worth living with|Your (photo|joke))/i }),
   ).toBeVisible();
   await page.getByTestId('open-design-design-pet-pop').click();
 
