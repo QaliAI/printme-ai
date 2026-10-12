@@ -37,7 +37,6 @@ export interface SeasonalTrendCard {
   recommendedProductName: string;
   verifiedPriceFormatted: string;
   verifiedPriceCents: number;
-  mockupUrl: string;
   isPersonalizationSupported: boolean;
   personalizationType: PersonalizationType;
   personalizationPrompt?: string;
@@ -65,7 +64,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Everyday Tee',
     verifiedPriceFormatted: '$34.00',
     verifiedPriceCents: 3400,
-    mockupUrl: '/designs/seasonal-edit/mockups/haunted-household-tee.webp',
     isPersonalizationSupported: true,
     personalizationType: 'family-pet',
     personalizationPrompt: 'Customize your family name and member or pet names',
@@ -113,7 +111,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Keepsake Mug',
     verifiedPriceFormatted: '$19.00',
     verifiedPriceCents: 1900,
-    mockupUrl: '/designs/seasonal-edit/mockups/library-of-lost-hours-mug.webp',
     isPersonalizationSupported: true,
     personalizationType: 'library-card',
     personalizationPrompt: 'Personalize the reader name and spooky checkout date',
@@ -161,7 +158,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Everyday Tee',
     verifiedPriceFormatted: '$34.00',
     verifiedPriceCents: 3400,
-    mockupUrl: '/designs/seasonal-edit/mockups/midnight-hayride-tee.webp',
     isPersonalizationSupported: true,
     personalizationType: 'location-chapter',
     personalizationPrompt: 'Add your custom city, town, or party chapter',
@@ -199,7 +195,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Gallery Poster',
     verifiedPriceFormatted: '$29.00',
     verifiedPriceCents: 2900,
-    mockupUrl: '/designs/seasonal-edit/mockups/night-garden-society-poster.webp',
     isPersonalizationSupported: false,
     personalizationType: 'none',
     evidenceType: 'editorial-forecast',
@@ -236,7 +231,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Gallery Poster',
     verifiedPriceFormatted: '$29.00',
     verifiedPriceCents: 2900,
-    mockupUrl: '/designs/seasonal-edit/mockups/field-notes-after-dark-poster.webp',
     isPersonalizationSupported: true,
     personalizationType: 'naturalist-specimen',
     personalizationPrompt: 'Choose your woodland animal and observation location',
@@ -284,7 +278,6 @@ export const seasonalTrendCards: SeasonalTrendCard[] = [
     recommendedProductName: 'Everyday Tee',
     verifiedPriceFormatted: '$34.00',
     verifiedPriceCents: 3400,
-    mockupUrl: '/designs/seasonal-edit/mockups/leftovers-league-tee.webp',
     isPersonalizationSupported: true,
     personalizationType: 'family-roles',
     personalizationPrompt: 'Customize your family name, year, and individual role',

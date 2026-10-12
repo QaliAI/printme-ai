@@ -1,3 +1,4 @@
+import { verifiedBlankProductImages } from './templates';
 import type {
   MerchProduct,
   PreviewTemplate,
@@ -107,13 +108,13 @@ export function validateProductTemplates(
           );
           continue;
         }
-        if (!view.baseProductImage) {
+        if (!verifiedBlankProductImages.has(view.baseProductImage)) {
           issues.push(
             issue(
               'missing-mockup',
               product,
               variant,
-              `View ${view.id} has no base product image.`,
+              `View ${view.id} has no verified blank product image.`,
             ),
           );
         }

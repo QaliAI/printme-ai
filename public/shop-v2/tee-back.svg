@@ -10,5 +10,5 @@
   <path d="M285 174 206 212 130 337l94 56 49-75v351h254V318l49 75 94-56-76-125-79-38-48 34H333z" fill="url(#fabric)" stroke="#c7c7c2" stroke-width="3"/>
   <path d="M333 174c15 35 119 35 134 0" fill="none" stroke="#c7c7c2" stroke-width="15"/>
   <path d="M273 318v351M527 318v351" stroke="#c7c7c2" opacity=".55"/>
-  <text x="400" y="748" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" fill="#6d6a63">BACK VIEW</text>
+
 </svg>

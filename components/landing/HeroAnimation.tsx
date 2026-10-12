@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/Button';
 import { Container } from '@/components/Container';
+import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
+import type { CuratedDesign, MerchProduct } from '@/lib/commerce/types';
 import { HERO_IMAGES } from '@/lib/assets';
 
 // Deterministic positions for floating accent particles (purity-rule safe)
@@ -17,7 +19,7 @@ const PARTICLES = Array.from({ length: 14 }, (_, i) => ({
 
 const STAGE_COUNT = 4;
 
-export function HeroAnimation() {
+export function HeroAnimation({ products, design }: { products: MerchProduct[]; design: CuratedDesign }) {
   const [stage, setStage] = useState(0);
   const particles = PARTICLES;
 
@@ -80,7 +82,7 @@ export function HeroAnimation() {
               transition={{ delay: 0.4 }}
               className="text-xl text-slate-600 max-w-lg leading-relaxed"
             >
-              Transform any photo into gorgeous custom prints on stretched canvas, apparel, mugs & phone cases. AI does the art transformation in 90 seconds.
+              Transform any photo into gorgeous custom prints on tees, mugs, and gallery posters. AI does the art transformation in 90 seconds.
             </motion.p>
 
             <motion.div
@@ -271,39 +273,7 @@ export function HeroAnimation() {
                 y: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
               }}
             >
-              <div className="relative">
-                {/* Real t-shirt photo */}
-                <img
-                  src={HERO_IMAGES.shirtBlank}
-                  alt="Custom printed t-shirt"
-                  className="w-full h-auto drop-shadow-2xl"
-                />
-
-                {/* Design overlay - transparent dog cutout printed onto the shirt */}
-                <motion.div
-                  className="absolute top-[29%] left-[27%] w-[46%] h-[36%] pointer-events-none"
-                  animate={{
-                    opacity: stage >= 2 ? 1 : 0,
-                    scale: stage >= 2 ? 1 : 0.5,
-                  }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
-                >
-                  <img
-                    src={HERO_IMAGES.dogCutout}
-                    alt="Dog cutout printed on shirt"
-                    className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 saturate-90 contrast-95 brightness-105"
-                  />
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-[9%] opacity-60 mix-blend-soft-light"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(circle at 30% 40%, rgba(15,23,42,0.08) 0 1px, transparent 1px), repeating-linear-gradient(12deg, rgba(255,255,255,0.16) 0 1px, transparent 1px 5px)',
-                      backgroundSize: '7px 7px, 9px 9px',
-                    }}
-                  />
-                </motion.div>
-              </div>
+<MerchandisePreview design={design} product={products.find(product => product.id === 'everyday-tee')!} />
             </motion.div>
 
             {/* Stage progress indicator */}

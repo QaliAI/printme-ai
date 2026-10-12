@@ -22,7 +22,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Hero Section with Animated Phone-to-Product Transformation */}
-      <HeroAnimation />
+      <HeroAnimation products={products} design={designs[0]} />
 
       {/* The Seasonal Edit: Curated Trends & Personalization */}
       <SeasonalEditSection products={products} designs={designs} />
@@ -37,7 +37,7 @@ export default async function Home() {
       <FloatingExamples />
 
       {/* Product Showcase with 3D Hover */}
-      <ProductShowcase />
+      <ProductShowcase products={products} design={designs[0]} />
 
       {/* Final CTA */}
       <CTASection />

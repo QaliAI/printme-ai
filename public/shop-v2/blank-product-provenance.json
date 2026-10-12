@@ -1,0 +1,48 @@
+{
+  "verifiedAt": "2026-10-11",
+  "classification": "verified-clean-blank",
+  "reviewEvidence": "output/playwright/mockup-repair/assets-before.png and printify-mug-views.png",
+  "assets": [
+    {
+      "path": "/shop-v2/tee-base.svg",
+      "sha256": "4873025df6a7fdb3dd177f469062dba520ac3cb394e2eeba469191de971a9a9c",
+      "source": "deterministic local blank SVG",
+      "transformation": "none"
+    },
+    {
+      "path": "/shop-v2/tee-back.svg",
+      "sha256": "bb6b52ca11d7ba62095be942ed3483ad500b6f63d1f58d81d58c9475790f6ba9",
+      "source": "deterministic local blank SVG",
+      "transformation": "none"
+    },
+    {
+      "path": "/shop-v2/poster-base.svg",
+      "sha256": "9ca6483a9723168d610cd56fc4e28e71ed8bcdac3407685f41fd0b0c3916207f",
+      "source": "deterministic local blank SVG",
+      "transformation": "none"
+    },
+    {
+      "path": "/shop-v2/mug-left-base.webp",
+      "sha256": "046d6dfbb9a584f236c1d78fe1a5c54e9a17c501d3cf6499ff0419307b2f65ba",
+      "source": "https://images.printify.com/66c42e5361b2691da8085442",
+      "transformation": "none",
+      "blueprintId": 68,
+      "providerId": 1,
+      "variantId": 33719
+    },
+    {
+      "path": "/shop-v2/mug-right-base.webp",
+      "sha256": "9879eb3e6c07fde186d610c90a878d86ad0bd6c87cc64bd5ec734680001c70a4",
+      "source": "https://images.printify.com/66c42e5361b2691da8085442",
+      "transformation": "horizontal mirror of official blank, handle left",
+      "blueprintId": 68,
+      "providerId": 1,
+      "variantId": 33719
+    }
+  ],
+  "notes": [
+    "All pixels reviewed; the other Printify catalog images include printed examples and are not valid bases.",
+    "Right mug is a mirrored blank display view, not a separately supplied Printify rendered mockup.",
+    "Existing template print areas and production dimensions are unchanged. Provider API reports 2700x1120 wrap; current catalog uses 1275x1155 side art. This repair does not silently change fulfillment geometry."
+  ]
+}

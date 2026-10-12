@@ -93,6 +93,8 @@ export default async function ProductDetailPage({
           <InstantPreview
             design={design.asset}
             configuration={configuration}
+            showSafeZone={false}
+            presentation="merchandising"
           />
         </div>
         <section className={styles.copy}>

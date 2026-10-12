@@ -128,7 +128,7 @@ export function PersonalizationModal({
           <div className={styles.modalPreviewCol}>
             <div className={styles.modalPreviewFrame}>
               <div data-testid="personalization-preview">
-                <InstantPreview design={previewAsset} configuration={previewConfiguration} showSafeZone={false} />
+                <InstantPreview design={previewAsset} configuration={previewConfiguration} showSafeZone={false} presentation="merchandising" />
               </div>
               {/* Live Overlay Badge */}
               <div className={styles.liveOverlayPill}>

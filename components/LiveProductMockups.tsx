@@ -1,333 +1,106 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { PRODUCT_PHOTOS } from '@/lib/assets';
-
-interface PrintifyMockupImage {
-  src: string;
-  position: string;
-  isDefault: boolean;
-}
-
+import Image from 'next/image';
+import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
+import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
 interface BlueprintMockupResult {
   blueprintId: number;
-  productId?: string;
-  title?: string;
-  mockups: PrintifyMockupImage[];
+  providerId?: number;
+  variantId?: number;
+  artworkUrl?: string;
+  mockups: Array<{
+    src: string;
+    position: string;
+    isDefault: boolean;
+  }>;
   error?: string;
 }
-
-interface MockupsResponse {
-  imageId: string;
-  mockups: BlueprintMockupResult[];
-  fromCache?: boolean;
-}
-
-interface LiveProductMockupsProps {
-  designUrl: string;
-  designId?: string;
-  onSelectProduct?: (blueprintId: number) => void;
-}
-
-const PRODUCT_LIST = [
-  PRODUCT_PHOTOS.tshirt,
-  PRODUCT_PHOTOS.mug,
-  PRODUCT_PHOTOS.canvas,
-  PRODUCT_PHOTOS.poster,
-  PRODUCT_PHOTOS.hoodie,
-  PRODUCT_PHOTOS.phoneCase,
-  PRODUCT_PHOTOS.toteBag,
-  PRODUCT_PHOTOS.sticker,
-];
-
-/**
- * Renders the user's design on every product using Printify's
- * Mockup Generator API. Falls back to blank product photos with the
- * design URL overlaid if Printify generation fails.
- */
 export function LiveProductMockups({
   designUrl,
   designId,
-  onSelectProduct,
-}: LiveProductMockupsProps) {
-  const [mockupsByBlueprint, setMockupsByBlueprint] = useState<Record<number, BlueprintMockupResult>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fromCache, setFromCache] = useState(false);
-
-  const fetchMockups = async (forceRefresh = false) => {
+  products,
+  onSelectProduct
+}: {
+  designUrl: string;
+  designId?: string;
+  products: MerchProduct[];
+  onSelectProduct?: (blueprintId: number) => void;
+}) {
+  const [artwork, setArtwork] = useState<DesignAsset | null>(null);
+  const [mockups, setMockups] = useState<BlueprintMockupResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const image = new window.Image();
+    image.onload = () => {
+      if (!cancelled) setArtwork({
+        id: designId ?? 'legacy-artwork',
+        version: 'original',
+        url: designUrl,
+        productionUrl: designUrl,
+        alt: 'Your artwork',
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        mimeType: 'image/png',
+        hasTransparency: true
+      });
+    };
+    image.src = designUrl;
+    return () => {
+      cancelled = true;
+    };
+  }, [designId, designUrl]);
+  async function requestOfficialMockups() {
     setLoading(true);
-    setError(null);
+    setFailed(false);
     try {
       const response = await fetch('/api/printify/mockups', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: designUrl, designId, forceRefresh }),
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageUrl: designUrl,
+          designId,
+          blueprintIds: products.map(product => product.printifyBlueprintId)
+        })
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `HTTP ${response.status}`);
-      }
-
-      const data: MockupsResponse = await response.json();
-
-      // Index by blueprintId for fast lookup
-      const indexed: Record<number, BlueprintMockupResult> = {};
-      for (const m of data.mockups) {
-        indexed[m.blueprintId] = m;
-      }
-      setMockupsByBlueprint(indexed);
-      setFromCache(!!data.fromCache);
-    } catch (err) {
-      console.error('Mockup generation failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to generate previews');
+      if (!response.ok) throw new Error('Official preview unavailable');
+      const data = await response.json();
+      setMockups(data.mockups ?? []);
+    } catch {
+      setFailed(true);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (!designUrl) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchMockups();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [designUrl]);
-
-  return (
-    <div>
-      {/* Section header */}
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <div className="inline-block text-xs font-semibold tracking-widest text-indigo-600 uppercase mb-1">
-            Live Preview
-          </div>
-          <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-            Your design on{' '}
-            <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              real products
-            </span>
-          </h3>
-          <p className="text-sm text-slate-600 mt-1">
-            Generated by Printify — exactly what you&apos;ll receive
-          </p>
-        </div>
-
-        {loading && (
-          <div className="flex items-center gap-2 text-sm text-slate-600 bg-white/70 backdrop-blur-md border border-slate-200 rounded-full px-4 py-2">
-            <motion.span
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              className="w-3 h-3 rounded-full border-2 border-indigo-500 border-t-transparent"
-            />
-            <span>Generating mockups…</span>
-          </div>
-        )}
-
-        {!loading && !error && fromCache && (
-          <div className="flex items-center gap-2 text-xs text-slate-600 bg-white/70 backdrop-blur-md border border-slate-200 rounded-full px-3 py-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="tracking-wide">Cached preview</span>
-            <button
-              onClick={() => fetchMockups(true)}
-              className="text-indigo-600 hover:text-indigo-700 font-medium ml-1"
-            >
-              ↻ Refresh
-            </button>
-          </div>
-        )}
-
-        {error && !loading && (
-          <button
-            onClick={() => fetchMockups()}
-            className="text-sm text-slate-700 bg-white border border-slate-200 rounded-full px-4 py-2 hover:bg-slate-50"
-          >
-            🔄 Retry
-          </button>
-        )}
-      </div>
-
-      {/* Product grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {PRODUCT_LIST.map((product, i) => (
-          <ProductMockupCard
-            key={product.name}
-            product={product}
-            mockupData={mockupsByBlueprint[product.blueprintId]}
-            loading={loading}
-            designUrl={designUrl}
-            index={i}
-            onClick={() => onSelectProduct?.(product.blueprintId)}
-          />
-        ))}
-      </div>
+  }
+  return <section data-testid="live-product-mockups">
+    <h3 className="text-2xl font-bold">Your design on our products</h3>
+    <p className="my-3 text-sm">Instant previews show your artwork on clean product templates.</p>
+    <button type="button" onClick={requestOfficialMockups} disabled={loading || !artwork} className="mb-5 rounded-lg border px-4 py-2">{loading ? 'Requesting official previews…' : 'Request Printify previews'}</button>
+    {failed && <p role="status">Printify previews are unavailable. Your instant previews are shown below.</p>}
+    <div className="grid gap-4 sm:grid-cols-3">
+      {artwork && products.map(product => {
+        const variant = product.variants.find(candidate => candidate.available)!;
+        const result = mockups.find(candidate => candidate.blueprintId === product.printifyBlueprintId && candidate.providerId === product.provider.printifyProviderId && candidate.variantId === variant.printifyVariantId && candidate.artworkUrl === designUrl && !candidate.error);
+        const officialUrl = result?.mockups.find(image => image.isDefault)?.src ?? result?.mockups[0]?.src;
+        return <button type="button" key={product.id} onClick={() => onSelectProduct?.(product.printifyBlueprintId)} className="overflow-hidden rounded-xl border bg-white text-left" data-testid={`legacy-preview-${product.id}`}>
+          {officialUrl ? <div className="relative aspect-square"><Image src={officialUrl} alt={`${product.name} rendered by Printify with your artwork`} fill unoptimized className="object-contain" /></div> : <MerchandisePreview design={{
+            id: artwork.id,
+            title: 'Your artwork',
+            description: '',
+            collection: 'Your design',
+            asset: artwork,
+            recommendedProductId: product.id
+          }} product={product} />}
+          <div className="p-4"><h4 className="font-semibold">{product.name}</h4><p>{new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+              }).format(variant.unitPrice / 100)}</p><small>{officialUrl ? 'Rendered by Printify' : 'Instant preview'}</small></div>
+        </button>;
+      })}
     </div>
-  );
-}
-
-interface ProductMockupCardProps {
-  product: (typeof PRODUCT_LIST)[number];
-  mockupData?: BlueprintMockupResult;
-  loading: boolean;
-  designUrl: string;
-  index: number;
-  onClick?: () => void;
-}
-
-function ProductMockupCard({
-  product,
-  mockupData,
-  loading,
-  designUrl,
-  index,
-  onClick,
-}: ProductMockupCardProps) {
-  // Prefer the default Printify-rendered mockup; fall back to blank with overlay
-  const mockupUrl = mockupData?.mockups.find((m) => m.isDefault)?.src
-    || mockupData?.mockups[0]?.src;
-  const hasMockup = !!mockupUrl;
-  const hasFailed = mockupData?.error || (!loading && !hasMockup);
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileHover={{ y: -4 }}
-      onClick={onClick}
-      className="text-left bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 group"
-    >
-      {/* Mockup image area */}
-      <div className="relative aspect-square overflow-hidden bg-slate-50">
-        <AnimatePresence mode="wait">
-          {hasMockup ? (
-            <motion.img
-              key="mockup"
-              src={mockupUrl}
-              alt={`${product.name} with your design`}
-              className="absolute inset-0 w-full h-full object-cover"
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              loading="lazy"
-            />
-          ) : loading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0"
-            >
-              {/* Blank product as base */}
-              <img
-                src={product.image}
-                alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
-              />
-
-              {/* Shimmer overlay */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-              />
-
-              {/* Loading badge */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex items-center gap-2 bg-white/95 backdrop-blur px-3 py-1.5 rounded-full shadow-md">
-                  <motion.span
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                    className="w-3 h-3 rounded-full border-2 border-indigo-500 border-t-transparent"
-                  />
-                  <span className="text-[10px] font-semibold tracking-wide uppercase text-slate-700">
-                    Rendering
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-          ) : (
-            // Failed: show blank product with design URL composited on top via positioning
-            <motion.div
-              key="fallback"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0"
-            >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div
-                className="absolute overflow-hidden rounded-sm shadow-lg ring-1 ring-black/10"
-                style={{
-                  top: product.designArea.top,
-                  left: product.designArea.left,
-                  width: product.designArea.width,
-                  height: product.designArea.height,
-                }}
-              >
-                <img
-                  src={designUrl}
-                  alt="Your design"
-                  className="w-full h-full object-cover mix-blend-multiply"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Live badge once Printify-rendered */}
-        {hasMockup && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-3 left-3 flex items-center gap-1.5 bg-emerald-500/95 text-white text-[10px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full shadow-md"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            Live
-          </motion.div>
-        )}
-
-        {hasFailed && !loading && (
-          <div className="absolute top-3 left-3 bg-amber-500/95 text-white text-[10px] font-semibold tracking-wide uppercase px-2 py-1 rounded-full shadow-md">
-            Preview
-          </div>
-        )}
-
-        {/* Hover overlay */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-        />
-      </div>
-
-      {/* Info row */}
-      <div className="p-4 flex items-center justify-between bg-white border-t border-slate-100">
-        <div className="min-w-0">
-          <h4 className="text-slate-900 font-semibold text-sm tracking-tight truncate">
-            {product.name}
-          </h4>
-          <p className="text-[9px] text-slate-400 tracking-widest uppercase mt-0.5 truncate">
-            {product.subtitle}
-          </p>
-          <p className="text-slate-500 text-xs mt-1">
-            from <span className="font-bold text-slate-900">{product.from}</span>
-          </p>
-        </div>
-        <div className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-gradient-to-br group-hover:from-indigo-600 group-hover:to-purple-600 flex items-center justify-center transition-colors flex-shrink-0">
-          <svg
-            className="w-3.5 h-3.5 text-slate-600 group-hover:text-white transition-colors"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-      </div>
-    </motion.button>
-  );
+  </section>;
 }

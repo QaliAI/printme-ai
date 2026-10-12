@@ -120,6 +120,7 @@ export function HomeCommerceShowcase({
           design={design.asset}
           configuration={configuration}
           showSafeZone={false}
+          presentation="merchandising"
         />
       </div>
       <div className={styles.featuredControls}>

@@ -40,7 +40,7 @@ export function SeasonalEditSection({
     });
   }, [activeTab]);
 
-  const allCards = useMemo(() => getActiveSeasonalTrends(), []);
+  const allCards = useMemo(() => getActiveSeasonalTrends().filter(card => products.some(product => product.id === card.recommendedProductId) && designs.some(design => design.id === card.relatedDesignId)), [products, designs]);
 
   const filteredCards = useMemo(() => {
     if (activeTab === 'all') return allCards;
@@ -52,7 +52,7 @@ export function SeasonalEditSection({
     return (
       products.find(
         (p) => p.id === personalizingCard.recommendedProductId,
-      ) || products[0]
+      )
     );
   }, [personalizingCard, products]);
 
@@ -61,7 +61,7 @@ export function SeasonalEditSection({
     return (
       designs.find(
         (d) => d.id === personalizingCard.relatedDesignId,
-      ) || designs[0]
+      )
     );
   }, [personalizingCard, designs]);
 
@@ -115,6 +115,8 @@ export function SeasonalEditSection({
           <SeasonalTrendCard
             key={card.id}
             card={card}
+            product={products.find(product => product.id === card.recommendedProductId)!}
+            design={designs.find(design => design.id === card.relatedDesignId)!}
             onPersonalize={(selected) => setPersonalizingCard(selected)}
           />
         ))}

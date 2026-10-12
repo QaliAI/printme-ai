@@ -79,7 +79,7 @@ test('Halloween photo input reaches editing, persisted output previews, and a fu
   await expect(page.getByTestId('same-design-sets')).toBeVisible();
   await page.getByTestId('add-set-tee-mug-poster').click();
   await expect(page.getByTestId('cart-item')).toHaveCount(3);
-  const cart = await request.get('http://localhost:3000/api/commerce/cart', { headers: { 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key } });
+  const cart = await request.get('/api/commerce/cart', { headers: { 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key } });
   const { items } = await cart.json();
   expect(new Set(items.map((item: { configuration: { productionAssetUrl: string } }) => item.configuration.productionAssetUrl))).toEqual(new Set([result.productionAssetUrl]));
   await page.getByTestId('begin-checkout').click();
@@ -92,9 +92,9 @@ test('Halloween photo input reaches editing, persisted output previews, and a fu
   } } };
   const body = JSON.stringify(event);
   const signature = new Stripe('sk_test_fixture').webhooks.generateTestHeaderString({ payload: body, secret: 'whsec_local_e2e_only' });
-  const webhook = await request.post('http://localhost:3000/api/webhooks/stripe', { headers: { 'content-type': 'application/json', 'stripe-signature': signature, 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key }, data: body });
+  const webhook = await request.post('/api/webhooks/stripe', { headers: { 'content-type': 'application/json', 'stripe-signature': signature, 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key }, data: body });
   expect(await webhook.json()).toMatchObject({ received: true, fulfillment: 'dry_run_complete' });
-  const status = await request.get(`http://localhost:3000/api/commerce/e2e/status?session_id=${stripeSessionId}`, { headers: { 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key } });
+  const status = await request.get(`/api/commerce/e2e/status?session_id=${stripeSessionId}`, { headers: { 'x-commerce-e2e-secret': secret, 'x-commerce-e2e-session': key } });
   expect(await status.json()).toMatchObject({ cartItemCount: 3, paymentStatus: 'paid', dryRunCount: 1, printifyWriteCount: 0 });
   await page.goto('/halloween');
   const viewport = page.viewportSize()!;

@@ -83,6 +83,7 @@ const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 interface UnifiedCreateExperienceProps {
   products: MerchProduct[];
   initialPhotoStyle?: PhotoStyle;
+  initialArtworkUrl?: string;
 }
 
 type SheetName =
@@ -219,7 +220,9 @@ function BottomSheet({
 export function UnifiedCreateExperience({
   products,
   initialPhotoStyle = 'illustrated',
+  initialArtworkUrl,
 }: UnifiedCreateExperienceProps) {
+  const importedArtwork = useRef<string | null>(null);
   const [asset, setAsset] = useState<DesignAsset | null>(null);
   const [originalBlob, setOriginalBlob] = useState<Blob | null>(null);
   const [designId, setDesignId] = useState<string | null>(null);
@@ -527,6 +530,18 @@ export function UnifiedCreateExperience({
       height: inspected.height,
     });
   }
+
+  useEffect(() => {
+    if (!restored || !initialArtworkUrl || importedArtwork.current === initialArtworkUrl) return;
+    importedArtwork.current = initialArtworkUrl;
+    void fetch(initialArtworkUrl).then(async response => {
+      if (!response.ok) throw new Error('Artwork could not be imported');
+      const blob = await response.blob();
+      await acceptFile(new File([blob], 'Your saved artwork', { type: blob.type }));
+    }).catch(() => setUploadError('Your saved artwork could not be imported. Download it from your design and upload it here.'));
+    // Import once after session restoration, using the existing validated upload path.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored, initialArtworkUrl]);
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();

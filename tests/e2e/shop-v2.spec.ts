@@ -142,7 +142,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
     'x-commerce-e2e-session': sessionKey,
   };
   const verified = await request.post(
-    'http://localhost:3000/api/webhooks/stripe',
+    '/api/webhooks/stripe',
     { headers: webhookHeaders, data: body },
   );
   expect(verified.ok()).toBe(true);
@@ -153,7 +153,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   });
 
   const duplicate = await request.post(
-    'http://localhost:3000/api/webhooks/stripe',
+    '/api/webhooks/stripe',
     { headers: webhookHeaders, data: body },
   );
   expect(await duplicate.json()).toMatchObject({
@@ -169,7 +169,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   ).toBeVisible();
 
   const status = await request.get(
-    `http://localhost:3000/api/commerce/e2e/status?session_id=${encodeURIComponent(stripeSessionId!)}`,
+    `/api/commerce/e2e/status?session_id=${encodeURIComponent(stripeSessionId!)}`,
     {
       headers: {
         'x-commerce-e2e-secret': e2eSecret,

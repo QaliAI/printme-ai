@@ -237,16 +237,12 @@
 }
 
 .heroImage {
-  aspect-ratio: 3 / 2;
+  aspect-ratio: 1;
   overflow: hidden;
   background: var(--home-surface-strong);
 }
 
-.heroImage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+
 
 .heroProductControls {
   display: flex;
@@ -462,13 +458,13 @@
 
 .productGrid {
   display: grid;
-  grid-template-columns: 1.45fr 0.75fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
 .productGrid > a {
   position: relative;
-  min-height: 470px;
+  min-height: 0;
   overflow: hidden;
   border-radius: var(--home-radius);
   color: var(--home-ink);
@@ -476,23 +472,12 @@
   text-decoration: none;
 }
 
-.productGrid img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 260ms ease;
-}
 
-.productGrid a:hover img,
-.productGrid a:focus-visible img {
-  transform: scale(1.018);
-}
+
+
 
 .productGrid a > span {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  left: 16px;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -593,10 +578,7 @@
   background: var(--home-surface-strong);
 }
 
-.sameDesignProducts img {
-  width: 100%;
-  height: auto;
-}
+
 
 .customerPlaceholders {
   display: grid;
@@ -696,6 +678,10 @@
 }
 
 @media (max-width: 980px) {
+  .heroProductControls { flex-direction: column; align-items: stretch; }
+  .heroProductControls > div:last-child { flex-wrap: wrap; width: 100%; }
+  .heroProductControls button { flex: 1; }
+
   .headerPrimary {
     grid-template-columns: 1fr auto;
     gap: 16px;
@@ -806,7 +792,7 @@
   }
 
   .heroImage {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1;
   }
 
   .heroProductControls {
@@ -870,11 +856,11 @@
   }
 
   .productGrid > a {
-    min-height: 390px;
+    min-height: 0;
   }
 
   .productGrid > a:not(.productPrimary) {
-    min-height: 330px;
+    min-height: 0;
   }
 
   .photoPair {

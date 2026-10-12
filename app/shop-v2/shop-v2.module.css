@@ -924,3 +924,7 @@
     grid-template-columns: minmax(0, 0.8fr) minmax(160px, 1.2fr);
   }
 }
+
+.previewMerchandising { width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
+
+.cartItemTitle > div { display: grid; gap: 4px; }

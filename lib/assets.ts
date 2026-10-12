@@ -1,13 +1,5 @@
-/**
- * Centralized asset manifest using REAL Printify product mockup images
- * and REAL AI-generated transformation examples (Pollinations.ai).
- *
- * Product photography: images.printify.com (same photos users see at checkout)
- * Transformation "after" images: AI-generated via Pollinations.ai
- *   (free, deterministic by seed, no API key required)
- */
+/** Source photos and artwork examples. Product previews live in commerce/templates. */
 
-const P = (id: string) => `https://images.printify.com/${id}`;
 
 const U = (id: string, w = 800, q = 85) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&q=${q}&auto=format&fit=crop`;
@@ -27,117 +19,8 @@ const heroPhotoUrl = U('1583337130417-3346a1be7dee', 600);
 export const HERO_PHOTO = heroPhotoUrl;
 export const HERO_IMAGES = {
   phoneScreen: heroPhotoUrl,
-  shirtBlank: P('66d81b70295ea4f038065152'),
   dogCutout: '/landing/hero-dog-cutout.png',
 };
-
-// ============================================================
-// PRODUCT MOCKUPS
-// ============================================================
-
-/**
- * Match a product name to a Printify blueprint ID for mockup lookup.
- */
-export function blueprintIdForProductName(name: string | undefined): number | undefined {
-  if (!name) return undefined;
-  const normalized = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (normalized.includes('tshirt') || normalized === 'tee' || normalized.endsWith('tee')) return 12;
-  if (normalized.includes('hoodie') || normalized.includes('sweatshirt')) return 77;
-  if (normalized.includes('mug')) return 68;
-  if (normalized.includes('canvas') && !normalized.includes('tote')) return 937;
-  if (normalized.includes('poster')) return 282;
-  if (normalized.includes('phonecase') || normalized.includes('case')) return 268;
-  if (normalized.includes('tote') || normalized.includes('bag')) return 553;
-  if (normalized.includes('sticker')) return 400;
-  return undefined;
-}
-
-/**
- * Print area coordinates are tuned to match standard Printify product
- * photography. Each value is a percentage of the container.
- */
-export const PRODUCT_PHOTOS = {
-  tshirt: {
-    blueprintId: 12,
-    image: P('66d81b70295ea4f038065152'),
-    sampleImage: '/landing/mockups/product-tshirt.webp',
-    designArea: { top: '24%', left: '35%', width: '30%', height: '32%' },
-    aspectRatio: '12/14',
-    name: 'T-Shirt',
-    subtitle: 'Bella+Canvas 3001',
-    from: '$24',
-  },
-  mug: {
-    blueprintId: 68,
-    image: P('66c42e5361b2691da8085442'),
-    sampleImage: '/landing/mockups/product-mug.webp',
-    designArea: { top: '30%', left: '33%', width: '30%', height: '32%' },
-    aspectRatio: '3/2',
-    name: 'Mug',
-    subtitle: '11oz Ceramic',
-    from: '$14',
-  },
-  canvas: {
-    blueprintId: 937,
-    image: P('66d954ce622599d9330fe942'),
-    sampleImage: '/landing/mockups/product-canvas.webp',
-    designArea: { top: '15%', left: '15%', width: '70%', height: '70%' },
-    aspectRatio: '1/1',
-    name: 'Canvas',
-    subtitle: 'Matte Stretched',
-    from: '$39',
-  },
-  poster: {
-    blueprintId: 282,
-    image: P('66d868f50709c7f0450662d6'),
-    sampleImage: '/landing/mockups/product-poster.webp',
-    designArea: { top: '8%', left: '20%', width: '60%', height: '84%' },
-    aspectRatio: '2/3',
-    name: 'Poster',
-    subtitle: 'Matte Vertical',
-    from: '$12',
-  },
-  hoodie: {
-    blueprintId: 77,
-    image: P('66dedd239da894140e0af9e2'),
-    sampleImage: '/landing/mockups/product-hoodie.webp',
-    designArea: { top: '28%', left: '35%', width: '30%', height: '30%' },
-    aspectRatio: '1/1',
-    name: 'Hoodie',
-    subtitle: 'Gildan 18500',
-    from: '$44',
-  },
-  phoneCase: {
-    blueprintId: 268,
-    image: P('66fcfda76bf448ffd703a472'),
-    sampleImage: '/landing/mockups/product-phone-case.webp',
-    designArea: { top: '15%', left: '35%', width: '30%', height: '65%' },
-    aspectRatio: '9/19',
-    name: 'Phone Case',
-    subtitle: 'Slim Series',
-    from: '$19',
-  },
-  toteBag: {
-    blueprintId: 553,
-    image: P('66dade985b5ac06ef50ad143'),
-    sampleImage: '/landing/mockups/product-tote-bag.webp',
-    designArea: { top: '28%', left: '30%', width: '40%', height: '42%' },
-    aspectRatio: '1/1',
-    name: 'Tote Bag',
-    subtitle: 'AS Colour 1001',
-    from: '$18',
-  },
-  sticker: {
-    blueprintId: 400,
-    image: P('66c5e3b718c4f0cee80b1e52'),
-    sampleImage: '/landing/mockups/product-sticker.webp',
-    designArea: { top: '12%', left: '12%', width: '76%', height: '76%' },
-    aspectRatio: '1/1',
-    name: 'Sticker',
-    subtitle: 'Kiss-Cut Vinyl',
-    from: '$4',
-  },
-} as const;
 
 // ============================================================
 // TRANSFORMATION EXAMPLES (Real AI-generated "after" images)

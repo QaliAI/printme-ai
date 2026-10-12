@@ -1,3 +1,4 @@
+import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Camera, ShoppingBag } from 'lucide-react';
@@ -15,12 +16,6 @@ function formatPrice(cents: number) {
     maximumFractionDigits: 0,
   }).format(cents / 100);
 }
-
-const productImages: Record<string, string> = {
-  'gallery-poster': '/landing/mockups/product-poster.webp',
-  'everyday-tee': '/landing/mockups/product-tshirt.webp',
-  'keepsake-mug': '/landing/mockups/product-mug.webp',
-};
 
 const studioSamples = [
   {
@@ -73,7 +68,7 @@ export async function HomepageV2() {
             Custom items from {formatPrice(startingPrice)} · $19 Mug, $29 Poster, $34 Tee
           </span>
         </div>
-        <HeroProductSwitcher products={products} />
+        <HeroProductSwitcher products={products} design={showcaseDesigns[0]} />
       </section>
 
       {/* The Seasonal Edit: Curated Seasonal Discovery & Personalization */}
@@ -98,7 +93,7 @@ export async function HomepageV2() {
           <h2>The 3 Anchor Products</h2>
           <p>Crafted for durable color, reliable fit, and guaranteed quality.</p>
         </div>
-        <div className={styles.productGrid}>
+        <div className={styles.productGrid} data-testid="homepage-product-showcase">
           {products.map((product, index) => {
             const price = Math.min(
               ...product.variants
@@ -112,17 +107,7 @@ export async function HomepageV2() {
                 href={`/products/${encodeURIComponent(productSlug)}`}
                 key={product.id}
               >
-                <Image
-                  src={productImages[product.id]}
-                  alt={`${product.name} product preview`}
-                  width={960}
-                  height={960}
-                  sizes={
-                    index === 0
-                      ? '(max-width: 767px) 100vw, 62vw'
-                      : '(max-width: 767px) 100vw, 34vw'
-                  }
-                />
+<MerchandisePreview design={showcaseDesigns[0]} product={product} />
                 <span>
                   <strong>{product.name}</strong>
                   <small>From {formatPrice(price)}</small>
@@ -183,20 +168,7 @@ export async function HomepageV2() {
           <Link href="/create">Make a matching set</Link>
         </div>
         <div className={styles.sameDesignProducts}>
-          <Image
-            src="/landing/mockups/product-poster.webp"
-            alt="Artwork printed as an archival gallery poster"
-            width={960}
-            height={960}
-            sizes="(max-width: 767px) 50vw, 28vw"
-          />
-          <Image
-            src="/landing/mockups/product-tshirt.webp"
-            alt="Artwork printed on an Everyday Tee"
-            width={960}
-            height={960}
-            sizes="(max-width: 767px) 50vw, 28vw"
-          />
+          {products.filter(product => product.id !== 'keepsake-mug').map(product => <MerchandisePreview key={product.id} design={showcaseDesigns[0]} product={product} />)}
         </div>
       </section>
 

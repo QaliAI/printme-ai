@@ -41,7 +41,7 @@ const steps = [
     number: '03',
     title: 'Print on anything',
     description:
-      'Shirts, mugs, posters, phone cases, and more. Choose your favorite. We print, package, and ship it to your door.',
+      'Tees, mugs, and gallery posters. Choose your favorite. We print, package, and ship it to your door.',
     accent: 'from-rose-500 to-amber-500',
     icon: (
       <svg fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" className="w-6 h-6">

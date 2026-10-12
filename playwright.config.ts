@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const localPort = process.env.PLAYWRIGHT_LOCAL_PORT ?? '3100';
+const localURL = `http://localhost:${localPort}`;
+
 export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './output/playwright/test-results',
@@ -11,7 +14,7 @@ export default defineConfig({
     ['html', { outputFolder: './output/playwright/report', open: 'never' }],
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? localURL,
     launchOptions: {
       args: ['--disable-gpu'],
     },
@@ -39,9 +42,9 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000/shop-v2',
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
+    command: `npm run dev -- --port ${localPort}`,
+    url: `${localURL}/shop-v2`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {

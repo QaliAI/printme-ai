@@ -27,8 +27,8 @@ test('Homepage V2 exposes the commerce-first path with real catalog data', async
   await page.getByTestId('home-hero-product-keepsake-mug').click();
   await expect(heroSwitcher).toContainText('Keepsake Mug from $19');
   await expect(
-    heroSwitcher.getByRole('img', { name: /personalized ceramic mug/i }),
-  ).toBeVisible();
+    heroSwitcher.getByTestId('instant-preview'),
+  ).toHaveAttribute('data-product-id', 'keepsake-mug');
 
   const showcase = page.getByTestId('home-commerce-showcase');
   await expect(showcase).toContainText(
