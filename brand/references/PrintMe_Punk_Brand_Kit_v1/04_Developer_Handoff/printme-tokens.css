@@ -1,0 +1,33 @@
+/* PrintMe.ai - provisional design tokens. Final approval required. */
+:root {
+  --pm-ink: #111111;
+  --pm-newsprint: #F4F0E8;
+  --pm-white: #FFFFFF;
+  --pm-punk-pink: #F23D99;
+  --pm-riot-yellow: #F7D431;
+  --pm-signal-orange: #FF5B35;
+  --pm-paste-gray: #96948F;
+  --pm-electric-blue: #3159EF;
+  --pm-shadow: #262323;
+  --pm-font-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --pm-font-display: 'Noto Sans Display', 'Inter', ui-sans-serif, sans-serif;
+  --pm-ease: cubic-bezier(.22,1,.36,1);
+  --pm-motion-fast: 160ms;
+  --pm-motion-base: 320ms;
+  --pm-motion-reveal: 650ms;
+  --pm-space-1: 4px; --pm-space-2: 8px; --pm-space-3: 12px;
+  --pm-space-4: 16px; --pm-space-6: 24px; --pm-space-8: 32px;
+  --pm-space-12: 48px; --pm-space-16: 64px;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .pm-motion, .pm-motion::before, .pm-motion::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* UI states: do not rely on accent color alone. Keep visible keyboard focus. */
+.pm-focus-visible:focus-visible {outline: 3px solid var(--pm-electric-blue); outline-offset: 3px;}
+.pm-button-primary { background: var(--pm-riot-yellow); color: var(--pm-ink); border: 2px solid var(--pm-ink);}
+.pm-button-primary:hover { background: var(--pm-punk-pink); }

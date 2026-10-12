@@ -1,0 +1,10 @@
+Asset,Priority,Usage,Production requirement,Approval gate
+Primary collage logo,P0,Hero and posters,Outlined editable vector plus high res transparent PNG,Brand
+Horizontal collage,P0,Header,SVG readable at >=220px,Brand
+Small icon,P0,Favicon and mobile,Contrast and recognition at 32px,Brand
+Ripped paper masks,P1,Transitions,SVG masks and pre-rendered static alternatives,Motion
+Graffiti robot,P1,Scroll character,Character sheet plus 2D vector or optimized sequence,Motion
+Hero scene,P1,Homepage,Responsive artwork sequence and still fallback,Motion
+Product art P0,P0,Catalog,Actual print-ready artwork separated from advertising mockup,Merchandise
+Photo transformation proof,P0,Create flow,Real before-after image files with provenance,Product
+Holiday takeover assets,P2,Seasonal edits,Versioned CMS-configurable media and dates,Seasonal
