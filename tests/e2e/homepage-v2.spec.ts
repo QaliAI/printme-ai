@@ -35,7 +35,7 @@ test('The Rebel Bot wall sequence ends on a shoppable real tee preview', async (
   const sequence = page.getByTestId('rebel-wall-sequence');
   const { top, travel } = await sequence.evaluate((el) => ({
     top: el.getBoundingClientRect().top + window.scrollY,
-    travel: el.offsetHeight - window.innerHeight,
+    travel: (el as HTMLElement).offsetHeight - window.innerHeight,
   }));
   await page.evaluate((y) => window.scrollTo(0, y), top + travel);
   await expect(sequence.getByRole('link', { name: 'Shop this design' })).toBeVisible();
@@ -52,7 +52,7 @@ test('Reduced motion shows the finished wall composition without pinning', async
   const sequence = page.getByTestId('rebel-wall-sequence');
   await sequence.evaluate((el) => el.scrollIntoView());
   await expect(sequence.getByRole('link', { name: 'Shop this design' })).toBeVisible();
-  const height = await sequence.evaluate((el) => el.offsetHeight);
+  const height = await sequence.evaluate((el) => (el as HTMLElement).offsetHeight);
   expect(height).toBeLessThan(2 * (page.viewportSize()?.height ?? 900));
   await context.close();
 });

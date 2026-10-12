@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import styles from './SiteFooter.module.css';
 
 /**
@@ -26,7 +27,7 @@ export function SiteFooter() {
           <nav className={styles.colNav} aria-label="Make">
             <Link href="/create">Upload a photo</Link>
             <Link href="/create?style=illustrated">AI styles</Link>
-            <Link href="/text-thread">Text-thread designer</Link>
+            {isReviewFeatureEnabled('text-thread') && <Link href="/text-thread">Text-thread designer</Link>}
           </nav>
         </div>
 
