@@ -60,7 +60,7 @@ test('Halloween photo input reaches editing, persisted output previews, and a fu
   await page.route('https://storage.printme.ai/**', route => route.fulfill({ contentType: 'image/png', body: generated }));
   await page.route('https://checkout.stripe.com/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Stripe test Checkout</h1>' }));
   await page.goto('/halloween?utm_source=instagram&utm_campaign=halloween-2026');
-  await page.getByRole('link', { name: /Create my pet art/ }).click();
+  await page.getByRole('link', { name: /Turn my pet into Halloween art/ }).click();
   await page.getByLabel('Upload a photo or artwork').setInputFiles({ name: 'pet.webp', mimeType: 'image/webp', buffer: photo });
   await expect(page.getByLabel('AI photo transformation')).toHaveValue('halloween-pet');
   const original = await page.getByTestId('instant-preview').screenshot();

@@ -466,3 +466,128 @@
   gap: 10px;
   flex-wrap: wrap;
 }
+
+/* ===== Punk brand layer (2026-10-12): newsprint panel, ink rules, square corners ===== */
+.section {
+  --home-ink: #111111;
+  --home-accent: #d6006f;
+  --home-accent-dark: #111111;
+  --home-surface: #fbf9f4;
+  --home-line: #111111;
+  --home-muted: #5e5c57;
+  max-width: none;
+  background: #f3f0e9;
+  padding: clamp(48px, 6vw, 88px) max(16px, calc((100vw - 1360px) / 2));
+}
+
+.sectionHeader {
+  text-align: left;
+  max-width: none;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  background: #111111;
+  color: #f3f0e9;
+  padding: 6px 9px 5px;
+  letter-spacing: 0.08em;
+}
+
+.heading {
+  font-family: var(--font-poster), Impact, sans-serif;
+  font-weight: 400;
+  font-stretch: normal;
+  letter-spacing: 0.01em;
+  font-size: clamp(2.6rem, 6vw, 5rem);
+  line-height: 0.9;
+}
+
+.tabNav {
+  justify-content: flex-start;
+}
+
+.tabButton {
+  border-radius: 0 !important;
+  border: 2px solid #111111 !important;
+  font-weight: 800;
+  text-transform: uppercase;
+  min-height: 44px;
+}
+
+.tabButtonActive {
+  background: #111111 !important;
+  color: #f3f0e9 !important;
+}
+
+.card {
+  border-radius: 0 !important;
+  border: 2px solid #111111 !important;
+  box-shadow: none !important;
+}
+
+.card:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0 #111111 !important;
+}
+
+.cardImageContainer {
+  border-radius: 0 !important;
+  border-bottom: 2px solid #111111;
+}
+
+.categoryBadge {
+  border-radius: 0 !important;
+  font-family: var(--font-mono), monospace;
+  background: #b8f23a !important;
+  color: #111111 !important;
+}
+
+.cardTitle {
+  font-family: var(--font-poster), Impact, sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 1.5rem;
+}
+
+.productPricePill {
+  border-radius: 0 !important;
+}
+
+.shopDesignButton,
+.makeItMineButton,
+.primaryActionButton,
+.secondaryActionButton {
+  border-radius: 0 !important;
+  font-family: var(--font-poster), Impact, sans-serif !important;
+  font-weight: 400 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-height: 44px;
+}
+
+.shopDesignButton,
+.primaryActionButton {
+  background: #ff2b91 !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+}
+
+.makeItMineButton,
+.secondaryActionButton {
+  background: #f3f0e9 !important;
+  color: #111111 !important;
+  border: 2px solid #111111 !important;
+}
+
+.modalContent,
+.modalPreviewFrame,
+.modalCategoryBadge,
+.liveOverlayPill {
+  border-radius: 0 !important;
+}
+
+.modalContent {
+  border: 3px solid #111111;
+}
