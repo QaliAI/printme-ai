@@ -361,3 +361,44 @@
     transition: none;
   }
 }
+
+/* Featured original */
+.featured {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(32px, 5vw, 72px) clamp(16px, 3vw, 40px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 64px);
+  align-items: center;
+}
+
+.featuredMedia {
+  background: #fff;
+  border: 3px solid var(--pm-newsprint);
+  box-shadow: 10px 10px 0 var(--acid);
+}
+
+.featuredCopy h2 {
+  margin: 8px 0 12px;
+  font: 400 clamp(2.6rem, 6vw, 5rem)/0.92 var(--font-poster), Impact, sans-serif;
+  text-transform: uppercase;
+}
+
+.featuredCopy p {
+  margin: 0 0 14px;
+  max-width: 46ch;
+  line-height: 1.5;
+}
+
+.featuredPrice {
+  font: 700 0.85rem/1.4 var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 800px) {
+  .featured {
+    grid-template-columns: 1fr;
+  }
+}

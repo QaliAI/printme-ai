@@ -63,3 +63,11 @@ test('success redirect does not claim payment without a verified webhook', async
   ).toBeVisible();
   await expect(page.getByText(/does not prove payment/i)).toBeVisible();
 });
+
+test('Halloween features the original Carved Under Protest on the real tee', async ({ page }) => {
+  await page.goto('/halloween');
+  const featured = page.getByTestId('halloween-featured-original');
+  await expect(featured.getByRole('heading', { name: 'Carved Under Protest' })).toBeVisible();
+  await expect(featured.getByTestId('instant-preview')).toHaveAttribute('data-product-id', 'everyday-tee');
+  await expect(featured.getByRole('link', { name: 'Get the tee' })).toHaveAttribute('href', '/shop?design=carved-under-protest');
+});
