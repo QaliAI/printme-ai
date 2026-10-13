@@ -6,6 +6,7 @@ import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalo
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
+import { isCheckoutAvailable } from '@/lib/commerce/checkout/availability';
 
 export const metadata: Metadata = {
   title: 'Shop Personalized Gifts & Merch | PrintMe',
@@ -33,6 +34,7 @@ export default async function ShopV2Page({
       designs={designs}
       products={products}
       initialDesignSlug={(await searchParams).design}
+      checkoutAvailable={isCheckoutAvailable(cookieStore.get('printme-e2e-secret')?.value)}
     />
   );
 }

@@ -50,6 +50,8 @@ interface ShopV2ExperienceProps {
   designs: CuratedDesignRecord[];
   products: MerchProduct[];
   initialDesignSlug?: string;
+  /** Server-decided: checkout gates are on (see lib/commerce/checkout/availability.ts). */
+  checkoutAvailable?: boolean;
 }
 
 function formatPrice(cents: number, currency = 'USD') {
@@ -127,6 +129,7 @@ export function ShopV2Experience({
   designs,
   products,
   initialDesignSlug,
+  checkoutAvailable = false,
 }: ShopV2ExperienceProps) {
   const initialDesign = designs.find(
     (design) => design.slug === initialDesignSlug,
@@ -1021,7 +1024,7 @@ export function ShopV2Experience({
               </div>
               {shippingQuote !== null && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '0.86rem', color: '#4b5563', marginBottom: '4px' }}>
-                  <span>Standard US Shipping</span>
+                  <span>Estimated US shipping</span>
                   <span>{formatPrice(shippingQuote.shippingFeeCents)}</span>
                 </div>
               )}
@@ -1031,7 +1034,17 @@ export function ShopV2Experience({
                   <strong>{formatPrice(cartTotal + shippingQuote.shippingFeeCents)}</strong>
                 </div>
               )}
-              {cartItems.length > 0 && (
+              {cartItems.length > 0 && !checkoutAvailable && (
+                <>
+                  <button type="button" className={styles.primaryButton} disabled data-testid="checkout-unavailable">
+                    Checkout opens soon
+                  </button>
+                  <small role="status">
+                    We are not taking orders yet. Your bag stays saved on this device, so nothing is charged and nothing is lost.
+                  </small>
+                </>
+              )}
+              {cartItems.length > 0 && checkoutAvailable && (
                 <button
                   type="button"
                   className={styles.primaryButton}
@@ -1049,8 +1062,8 @@ export function ShopV2Experience({
               )}
               <small>
                 {shippingQuote
-                  ? `Estimated delivery: ${shippingQuote.estimatedDeliveryDays} business days (2–3 days production + carrier transit)`
-                  : 'Standard US shipping calculated at checkout (typically 5–8 business days total)'}
+                  ? `Estimate: about ${shippingQuote.estimatedDeliveryDays} business days to US addresses. Final rates and timing are confirmed at checkout.`
+                  : 'US shipping is calculated at checkout.'}
               </small>
             </footer>
           </aside>
