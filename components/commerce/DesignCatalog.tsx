@@ -11,7 +11,7 @@ import { DesignActivity } from './DesignActivity';
 
 const filters: Array<{ value: DesignFilter; label: string }> = [
   { value: 'new', label: 'New' },
-  { value: 'trending', label: 'Trending' },
+  { value: 'trending', label: 'Staff picks' },
 ];
 
 export function DesignCatalogHeader({

@@ -12,7 +12,7 @@ test('canonical design discovery routes use real classifications', async ({
 
   await page.goto('/designs/trending');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Trending now.' }),
+    page.getByRole('heading', { level: 1, name: 'Staff picks.' }),
   ).toBeVisible();
   await expect(page.locator('article').first()).toBeVisible();
   expect(await page.locator('article').count()).toBeGreaterThanOrEqual(2);
