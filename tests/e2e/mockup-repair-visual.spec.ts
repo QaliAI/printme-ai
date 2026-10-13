@@ -131,7 +131,7 @@ test('sitewide mockup visual audit', async ({
         }
       }
     }
-    if (phase !== 'before' && route.startsWith('/products/')) await checkPreview(page.getByTestId('instant-preview'), route.split('/').at(-1));
+    if (phase !== 'before' && route.startsWith('/products/')) await checkPreview(page.getByTestId('instant-preview').first(), route.split('/').at(-1));
     if (phase !== 'before') expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(page.viewportSize()!.width);
   }
   if (phase !== 'before') {

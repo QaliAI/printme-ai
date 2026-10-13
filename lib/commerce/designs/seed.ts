@@ -98,7 +98,8 @@ const fall2026Metadata: Record<
     slug: 'library-of-lost-hours',
     keywords: ['library of lost hours', 'book club', 'antique library card', 'halloween mug', 'dark academia', 'gothic'],
     compatibleProductIds: ['keepsake-mug', 'gallery-poster', 'everyday-tee'],
-    merchandisingPriority: 104,
+    // Retired from prominent merchandising (owner brief 2026-10-12); still personalizable.
+    merchandisingPriority: 60,
     filters: ['new', 'trending'],
   },
   'design-midnight-hayride': {
@@ -285,7 +286,8 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
         ? 'PrintMe Studio Fall 2026'
         : 'PrintMe development seed',
       rightsStatus: isFall2026 ? 'commercial-print-cleared' : 'internal-demo-cleared',
-      publicationStatus: 'published',
+      // Development seeds (demo photos, internal-demo rights) are archived, not sold.
+      publicationStatus: isFall2026 ? 'published' : 'archived',
       publicationDate: isFall2026
         ? '2026-09-21T00:00:00.000Z'
         : `2026-07-${String(20 + index).padStart(2, '0')}T12:00:00.000Z`,
@@ -322,20 +324,11 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     designIds: ['design-civilized-trash', 'design-carved-under-protest', 'design-professional-rummager'],
   },
   {
-    id: 'collection-issue-01',
-    slug: 'issue-01',
-    title: 'Issue Nº 01',
-    description:
-      'The first PrintMe originals: ransom-note manifestos, 3 AM philosophy, and one very tired monster.',
-    publicationStatus: 'published',
-    designIds: ['design-make-shit-print-shit'],
-  },
-  {
     id: 'collection-halloween',
     slug: 'halloween',
     title: 'Halloween',
     description:
-      'Spooky-cute spirits, friendly ghosts, and festive pumpkin patch favorites.',
+      'Halloween tees, mugs and posters: a pumpkin with objections, friendly ghosts, and haunted designs you can personalize with your family names.',
     publicationStatus: 'published',
     designIds: [
       'design-carved-under-protest',
@@ -377,12 +370,21 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     ],
   },
   {
+    id: 'collection-issue-01',
+    slug: 'issue-01',
+    title: 'Issue Nº 01',
+    description:
+      'The PrintMe manifesto as a ransom-note collage: torn paper, tape and punk pink, printed to order.',
+    publicationStatus: 'published',
+    designIds: ['design-make-shit-print-shit'],
+  },
+  {
     id: 'collection-first-look',
     slug: 'first-look',
     title: 'First Look',
     description:
       'Curated starting prints crafted in the PrintMe studio.',
-    publicationStatus: 'published',
+    publicationStatus: 'archived',
     designIds: [
       'design-pet-pop',
       'design-family-oil',
@@ -396,7 +398,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     slug: 'pets',
     title: 'Pets',
     description: 'Artwork centered on companion portraits.',
-    publicationStatus: 'published',
+    publicationStatus: 'archived',
     designIds: ['design-pet-pop', 'design-pet-photo'],
   },
 ];
@@ -417,7 +419,7 @@ export const developmentDropSeeds: DesignDrop[] = [
     slug: 'issue-01',
     title: 'Issue Nº 01 — Make Shit. Print Shit.',
     description:
-      'Three original PrintMe designs that launch the punk collage studio.',
+      'The PrintMe manifesto tee that launched the punk collage studio.',
     publicationStatus: 'published',
     publicationDate: '2026-10-12T00:00:00.000Z',
     designIds: ['design-make-shit-print-shit'],
@@ -454,7 +456,7 @@ export const developmentDropSeeds: DesignDrop[] = [
     title: 'Studio Seeds',
     description:
       'Curated studio originals prepared for custom physical prints.',
-    publicationStatus: 'published',
+    publicationStatus: 'archived',
     publicationDate: '2026-07-29T12:00:00.000Z',
     designIds: [
       'design-pet-pop',

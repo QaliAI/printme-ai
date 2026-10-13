@@ -260,8 +260,8 @@ const approvedProducts: MerchProduct[] = [
     },
     merchandising: {
       slug: 'everyday-tee',
-      material: 'Soft cotton jersey from the approved provider variant',
-      fit: 'Everyday unisex fit',
+      material: 'Bella+Canvas 3001: 100% Airlume combed and ring-spun cotton, lightweight 4.2 oz/yd² jersey',
+      fit: 'Unisex retail fit, side-seamed, ribbed crew collar',
       printMethod: 'Direct-to-garment front or back print',
       careInstructions: [
         'Wash cold, inside out.',
@@ -373,7 +373,7 @@ const approvedProducts: MerchProduct[] = [
     },
     merchandising: {
       slug: 'keepsake-mug',
-      material: 'Glossy ceramic',
+      material: 'White ceramic, lead- and BPA-free',
       fit: '11 oz handle-safe format',
       printMethod: 'Sublimation',
       careInstructions: [

@@ -44,7 +44,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await expect(
     page.getByRole('heading', { level: 1, name: /(Art worth living with|Your (photo|joke))/i }),
   ).toBeVisible();
-  await page.getByTestId('open-design-design-pet-pop').click();
+  await page.getByTestId('open-design-design-autumn-state-of-mind').click();
 
   const preview = page.getByTestId('instant-preview');
   await expect(preview).toBeVisible();
@@ -72,7 +72,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await expect(drawer).toBeVisible();
   let item = page.getByTestId('cart-item');
   await expect(item).toHaveAttribute('data-render-key', teeRenderKey ?? '');
-  await expect(item).toContainText('Sunday Sidekick');
+  await expect(item).toContainText('Autumn State of Mind');
   await expect(item).toContainText('Everyday Tee');
   await expect(item).toContainText('White');
   await expect(item).toContainText('L');
@@ -83,7 +83,7 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   await page.reload();
   await page.getByTestId('open-cart').click();
   item = page.getByTestId('cart-item');
-  await expect(item).toContainText('Sunday Sidekick');
+  await expect(item).toContainText('Autumn State of Mind');
   await expect(item).toContainText('L');
 
   await page.getByTestId('begin-checkout').click();
@@ -213,7 +213,7 @@ test('cart preserves quantity and adds an exact same-design upsell', async ({
   await page.evaluate(() => window.localStorage.clear());
   await page.reload();
 
-  await page.getByTestId('open-design-design-pet-pop').click();
+  await page.getByTestId('open-design-design-autumn-state-of-mind').click();
   await page.getByTestId('product-switch-everyday-tee').click();
   await page.getByTestId('add-to-cart').click();
 
@@ -234,9 +234,10 @@ test('cart preserves quantity and adds an exact same-design upsell', async ({
 
   await upsell.click();
   await expect(drawer.getByTestId('cart-item')).toHaveCount(2);
-  await expect(drawer).toContainText('Sunday Sidekick');
+  await expect(drawer).toContainText('Autumn State of Mind');
   await expect(drawer).toContainText('Gallery Poster');
-  await expect(drawer.getByTestId('same-design-upsells')).toHaveCount(0);
+  // The poster offer is used up; a mug offer may remain because this design also fits the mug.
+  await expect(drawer.getByTestId('add-upsell-gallery-poster')).toHaveCount(0);
 
   await page.reload();
   await page.getByTestId('open-cart').click();

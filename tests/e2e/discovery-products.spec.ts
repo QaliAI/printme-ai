@@ -51,11 +51,11 @@ test('approved product pages expose pricing and readiness without false promises
 });
 
 test('shareable design URL opens the same configurator', async ({ page }) => {
-  await page.goto('/designs/sunday-sidekick');
+  await page.goto('/designs/autumn-state-of-mind');
   await page.getByRole('link', { name: 'Configure this design' }).click();
-  await expect(page).toHaveURL(/\/shop(?:-v2)?\?design=sunday-sidekick/);
+  await expect(page).toHaveURL(/\/shop(?:-v2)?\?design=autumn-state-of-mind/);
   await expect(page.getByTestId('configurator')).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Sunday Sidekick' }),
+    page.getByRole('heading', { name: 'Autumn State of Mind' }),
   ).toBeVisible();
 });

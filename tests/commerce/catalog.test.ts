@@ -91,7 +91,7 @@ class FakeCatalogSource implements PrintifyCatalogSource {
 }
 
 function approvedSnapshot() {
-  const design = curatedDesigns[0];
+  const design = curatedDesigns.find((item) => item.id === 'design-boo-crew')!;
   const product = getApprovedMerchProducts()[1];
   return createCartSnapshot({
     id: '6a571d0d-003a-4d61-bd98-6b27d62a7990',

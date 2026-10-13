@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
-import { developmentDesignSeeds } from '@/lib/commerce/designs/seed';
+import Image from 'next/image';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { getProductCheckoutReadiness } from '@/lib/commerce/margin';
 import { createProductConfiguration } from '@/lib/commerce/placement';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
@@ -42,16 +43,21 @@ export default async function ProductDetailPage({
 }) {
   const product = findProduct((await params).slug);
   if (!product?.merchandising) notFound();
-  const design =
-    developmentDesignSeeds.find((item) =>
-      item.compatibleProductIds.includes(product.id),
-    ) ?? developmentDesignSeeds[0];
-  const configuration = createProductConfiguration({
-    designId: design.id,
-    design: design.asset,
-    product,
-    template: getPreviewTemplate(product.previewTemplateId),
-  });
+  // Published designs made for this product first, then any compatible ones.
+  const published = await getDesignCatalogService().listPublished();
+  const gallery = [
+    ...published.filter((item) => item.recommendedProductId === product.id),
+    ...published.filter((item) => item.recommendedProductId !== product.id && item.compatibleProductIds.includes(product.id)),
+  ].slice(0, 4);
+  const configure = (item: (typeof gallery)[number]) =>
+    createProductConfiguration({
+      designId: item.id,
+      design: item.asset,
+      product,
+      template: getPreviewTemplate(product.previewTemplateId),
+    });
+  const design = gallery[0];
+  const configuration = design ? configure(design) : null;
   const starting = Math.min(
     ...product.variants
       .filter((variant) => variant.available)
@@ -90,12 +96,31 @@ export default async function ProductDetailPage({
       </nav>
       <div className={styles.detail}>
         <div className={styles.preview}>
-          <InstantPreview
-            design={design.asset}
-            configuration={configuration}
-            showSafeZone={false}
-            presentation="merchandising"
-          />
+          {design && configuration && (
+            <InstantPreview
+              design={design.asset}
+              configuration={configuration}
+              showSafeZone={false}
+              presentation="merchandising"
+            />
+          )}
+          {gallery.length > 1 && (
+            <ul className={styles.gallery} aria-label={`More designs on the ${product.name}`}>
+              {gallery.slice(1).map((item) => (
+                <li key={item.id}>
+                  <Link href={`/designs/${item.slug}`} aria-label={item.title}>
+                    <InstantPreview design={item.asset} configuration={configure(item)} showSafeZone={false} compact presentation="merchandising" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {product.id === 'everyday-tee' && (
+            <div className={styles.gallery} aria-label="The blank, up close">
+              <Image src="/shop-v2/photo/tee-detail-shoulder.webp" alt="Bella+Canvas 3001 shoulder seam, Printify catalog photo" width={900} height={900} sizes="(max-width: 800px) 45vw, 20vw" />
+              <Image src="/shop-v2/photo/tee-detail-collar.webp" alt="Bella+Canvas 3001 ribbed collar, Printify catalog photo" width={900} height={900} sizes="(max-width: 800px) 45vw, 20vw" />
+            </div>
+          )}
         </div>
         <section className={styles.copy}>
           <p>{product.merchandising.printMethod}</p>
@@ -109,7 +134,7 @@ export default async function ProductDetailPage({
           </div>
           {!readiness.ready && (
             <p className={styles.consumerNotice}>
-              Made to order · Instant preview available. Custom orders print in 2–3 business days.
+              Made to order · Instant preview available. Production and shipping estimates are shown at checkout.
             </p>
           )}
           <Link
