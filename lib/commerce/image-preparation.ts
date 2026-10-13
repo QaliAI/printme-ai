@@ -36,47 +36,6 @@ async function drawSource(blob: Blob) {
   return { canvas, context };
 }
 
-function backgroundDistance(
-  red: number,
-  green: number,
-  blue: number,
-  sample: [number, number, number],
-) {
-  return Math.sqrt(
-    (red - sample[0]) ** 2 +
-      (green - sample[1]) ** 2 +
-      (blue - sample[2]) ** 2,
-  );
-}
-
-function cornerSample(
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-): [number, number, number] {
-  const points = [
-    [0, 0],
-    [width - 1, 0],
-    [0, height - 1],
-    [width - 1, height - 1],
-  ];
-  const total = points.reduce(
-    (sum, [x, y]) => {
-      const index = (y * width + x) * 4;
-      sum[0] += pixels[index];
-      sum[1] += pixels[index + 1];
-      sum[2] += pixels[index + 2];
-      return sum;
-    },
-    [0, 0, 0],
-  );
-  return total.map((value) => Math.round(value / points.length)) as [
-    number,
-    number,
-    number,
-  ];
-}
-
 export async function inspectImage(blob: Blob): Promise<PreparedImage> {
   const bitmap = await createImageBitmap(blob);
   const result = {
@@ -97,35 +56,22 @@ export async function prepareImage(
 ): Promise<PreparedImage> {
   if (mode === 'original') return inspectImage(source);
 
-  const { canvas, context } = await drawSource(source);
-  const image = context.getImageData(0, 0, canvas.width, canvas.height);
-
   if (mode === 'background-removed') {
-    const sample = cornerSample(image.data, canvas.width, canvas.height);
-    for (let index = 0; index < image.data.length; index += 4) {
-      const distance = backgroundDistance(
-        image.data[index],
-        image.data[index + 1],
-        image.data[index + 2],
-        sample,
-      );
-      if (distance < 36) image.data[index + 3] = 0;
-      else if (distance < 72) {
-        image.data[index + 3] = Math.round(
-          image.data[index + 3] * ((distance - 36) / 36),
-        );
-      }
-    }
-    context.putImageData(image, 0, 0);
+    // Real subject segmentation (BiRefNet-lite, on-device). Original pixels
+    // are kept; only an alpha channel is added.
+    const { renderCutout, segmentPhoto } = await import('@/lib/segmentation/client');
+    const rendered = await renderCutout(await segmentPhoto(source));
     return {
-      blob: await canvasBlob(canvas, 'image/png'),
-      width: canvas.width,
-      height: canvas.height,
+      blob: rendered.blob,
+      width: rendered.width,
+      height: rendered.height,
       mimeType: 'image/png',
       hasTransparency: true,
     };
   }
 
+  const { canvas, context } = await drawSource(source);
+  const image = context.getImageData(0, 0, canvas.width, canvas.height);
   const levels =
     artStyle === 'poster' ? 5 : artStyle === 'illustrated' ? 7 : 12;
   const contrast = artStyle === 'soft-paint' ? 0.92 : 1.08;

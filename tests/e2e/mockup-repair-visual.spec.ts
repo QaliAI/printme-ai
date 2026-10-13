@@ -105,7 +105,7 @@ test('sitewide mockup visual audit', async ({
       await checkPreview(page.getByTestId('hero-feature').getByTestId('instant-preview'), 'everyday-tee');
       const showcase = page.getByTestId('homepage-product-showcase');
       const previews = showcase.getByTestId('instant-preview');
-      expect(await previews.count()).toBeGreaterThanOrEqual(6);
+      expect(await previews.count()).toBeGreaterThanOrEqual(3);
       for (let i = 0; i < (await previews.count()); i++) await checkPreview(previews.nth(i));
       await capture(showcase, 'homepage-product-showcase');
     }

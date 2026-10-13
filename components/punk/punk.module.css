@@ -1135,9 +1135,7 @@
 /* =====================================================================
    TOOLS
    ===================================================================== */
-.tools {
-  padding-top: 0;
-}
+
 
 .toolGrid {
   list-style: none;
@@ -1173,6 +1171,234 @@
 .toolGrid span {
   font-size: 0.95rem;
   line-height: 1.4;
+}
+
+/* =====================================================================
+   TRY IT — upload, cut out, preview
+   ===================================================================== */
+.tryIt {
+  display: grid;
+  gap: 12px;
+}
+
+.dropzone {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: clamp(24px, 4vw, 48px);
+  border: 3px dashed var(--pm-ink);
+  background:
+    conic-gradient(#ebe8e1 25%, #fbf9f4 0 50%, #ebe8e1 0 75%, #fbf9f4 0) 0 0 / 26px 26px;
+}
+
+.dropTitle {
+  font: 400 clamp(2rem, 4vw, 3rem)/0.95 var(--font-poster), Impact, sans-serif;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.stagePair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.cutoutView {
+  position: relative;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid var(--pm-ink);
+  background:
+    conic-gradient(#e6e3dc 25%, #fbf9f4 0 50%, #e6e3dc 0 75%, #fbf9f4 0) 0 0 / 20px 20px;
+}
+
+.cutoutView img {
+  max-width: 92%;
+  max-height: 92%;
+  object-fit: contain;
+}
+
+.working {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  padding: 8px 10px 12px;
+  background: var(--pm-ink);
+  color: var(--pm-newsprint);
+  font: 700 11px/1.3 var(--font-mono), monospace;
+  text-transform: uppercase;
+  overflow: hidden;
+}
+
+.workingBar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 40%;
+  background: var(--pm-pink);
+  animation: workingSweep 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes workingSweep {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(150%);
+  }
+}
+
+.textButton {
+  font: 800 13px/1 var(--font-sans), sans-serif;
+  text-transform: uppercase;
+  text-decoration: underline 2px var(--pm-pink);
+  text-underline-offset: 4px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.tryItActions button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@media (max-width: 600px) {
+  .stagePair {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+/* =====================================================================
+   HERO — before / after with real cutout output
+   ===================================================================== */
+.heroProofGrid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) auto minmax(0, 1.2fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.heroBefore {
+  margin: 0;
+  background: var(--pm-paper);
+  border: 3px solid var(--pm-ink);
+  padding: 8px 8px 30px;
+  transform: rotate(-3deg);
+  box-shadow: 6px 6px 0 var(--pm-ink);
+  position: relative;
+}
+
+.heroBefore img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.heroBefore figcaption,
+.heroAfterTag {
+  position: absolute;
+  left: 10px;
+  bottom: 7px;
+  font: 700 11px/1.2 var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.heroArrow {
+  font: 400 1.4rem/1 var(--font-marker), cursive;
+  color: var(--pm-pink-ink);
+  transform: rotate(-8deg);
+  white-space: nowrap;
+}
+
+.heroAfter {
+  position: relative;
+  display: block;
+  background: var(--pm-paper);
+  border: 3px solid var(--pm-ink);
+  padding: 8px 8px 34px;
+  box-shadow: 10px 10px 0 var(--pm-pink);
+  color: var(--pm-ink);
+  text-decoration: none;
+  transform: rotate(1.5deg);
+  transition: transform 160ms ease;
+}
+
+.heroAfter:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.heroMugMini {
+  position: absolute;
+  right: -10px;
+  bottom: -34px;
+  width: 30%;
+  border: 3px solid var(--pm-ink);
+  background: var(--pm-paper);
+  padding: 4px;
+  transform: rotate(-4deg);
+  box-shadow: 5px 5px 0 var(--pm-ink);
+}
+
+.productDetail {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: var(--pm-gray-ink);
+}
+
+.detailPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.detailPair figure {
+  margin: 0;
+  overflow: hidden;
+  border: 3px solid var(--pm-newsprint);
+}
+
+.detailPair img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.editorial .editorialCopy {
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .heroProofGrid {
+    grid-template-columns: minmax(0, 0.75fr) auto minmax(0, 1.25fr);
+    margin-bottom: 30px;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroArrow {
+    font-size: 1rem;
+  }
+  .heroMugMini {
+    width: 34%;
+    bottom: -28px;
+    right: -4px;
+  }
+  .heroAfter {
+    box-shadow: 6px 6px 0 var(--pm-pink);
+  }
 }
 
 /* =====================================================================

@@ -3,46 +3,28 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
+import { CutoutRefiner } from '@/components/segmentation/CutoutRefiner';
 import { createProductConfiguration } from '@/lib/commerce/placement';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
+import { renderCutout, segmentPhoto, type Cutout, type SegmentationProgress } from '@/lib/segmentation/client';
 import styles from './punk.module.css';
-
-const SAMPLE: DesignAsset = {
-  id: 'asset-homepage-sample-photo',
-  version: 'sample-v1',
-  url: '/landing/transformations/pet-original.webp',
-  alt: 'Sample photo of a smiling beagle',
-  width: 1200,
-  height: 1200,
-  mimeType: 'image/webp',
-  hasTransparency: false,
-};
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_BYTES = 10 * 1024 * 1024;
+const SAMPLE = { url: '/samples/ginger-cat.jpg', name: 'Sample: ginger cat (CC0)' };
 
-type StepStatus = 'live' | 'studio' | 'soon';
-const steps: { label: string; detail: string; status: StepStatus }[] = [
-  { label: 'Original photo', detail: 'Camera roll, files or camera. JPEG, PNG, WebP up to 10 MB.', status: 'live' },
-  { label: 'Remove background', detail: 'Not available yet. We will not fake it — use a cut-out PNG for now.', status: 'soon' },
-  { label: 'Choose a style', detail: 'AI restyles run in the studio. You see the result before paying.', status: 'studio' },
-  { label: 'Preview on product', detail: 'Real print area, real placement. Try it right here.', status: 'live' },
-  { label: 'Buy', detail: 'Secure checkout, printed to order.', status: 'studio' },
-];
+type Status = 'empty' | 'photo' | 'working' | 'cutout' | 'error';
 
-const statusLabel: Record<StepStatus, string> = {
-  live: 'Works here',
-  studio: 'In the studio',
-  soon: 'Not yet',
-};
+function assetFrom(url: string, width: number, height: number, mimeType: string, alt: string, version: string): DesignAsset {
+  return { id: 'asset-homepage-local', version, url, alt, width, height, mimeType, hasTransparency: mimeType === 'image/png' };
+}
 
 /**
- * ACT III — the most literal demo on the page: drop a photo and see it on the
- * real product templates immediately, using the same InstantPreview +
- * placement engine as the studio. The photo stays on the device (object URL)
- * until the visitor continues into the studio, which imports it through the
- * studio's validated upload path.
+ * Homepage photo studio: UPLOAD → REMOVE BACKGROUND → PREVIEW/REFINE CUTOUT →
+ * CHOOSE PRODUCT → CONTINUE TO STUDIO. The cutout comes from Cloudinary AI
+ * background removal (the source photo is deleted right after); the original
+ * stays in the browser so the visitor can switch back or refine edges.
  */
 export function MakeYourOwnArt({
   products,
@@ -51,87 +33,135 @@ export function MakeYourOwnArt({
   products: MerchProduct[];
   styles: { key: string; label: string }[];
 }) {
-  const [asset, setAsset] = useState<DesignAsset>(SAMPLE);
-  const [productId, setProductId] = useState((products.find((p) => p.id === 'everyday-tee') ?? products[0])?.id);
+  const [status, setStatus] = useState<Status>('empty');
+  const [original, setOriginal] = useState<{ blob: Blob; url: string; width: number; height: number; name: string } | null>(null);
+  const [cutout, setCutout] = useState<Cutout | null>(null);
+  const [cutoutAsset, setCutoutAsset] = useState<DesignAsset | null>(null);
+  const [useCutout, setUseCutout] = useState(true);
+  const [refining, setRefining] = useState(false);
+  const [progress, setProgress] = useState<SegmentationProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const objectUrl = useRef<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [productId, setProductId] = useState((products.find((p) => p.id === 'everyday-tee') ?? products[0])?.id);
+  const urls = useRef<string[]>([]);
 
   useEffect(() => () => {
-    // Revoke only on unmount: the studio hand-off needs the URL during navigation.
-    if (objectUrl.current) setTimeout(() => URL.revokeObjectURL(objectUrl.current!), 60_000);
+    // Keep URLs alive briefly so a studio hand-off can still read them.
+    const list = urls.current;
+    setTimeout(() => list.forEach((url) => URL.revokeObjectURL(url)), 60_000);
   }, []);
 
-  const product = products.find((item) => item.id === productId) ?? products[0];
-  const configuration = useMemo(
-    () =>
-      product &&
-      createProductConfiguration({
-        designId: 'homepage-try-it',
-        design: asset,
-        product,
-        template: getPreviewTemplate(product.previewTemplateId),
-      }),
-    [asset, product],
-  );
+  function track(url: string) {
+    urls.current.push(url);
+    return url;
+  }
 
-  function choose(file: File | undefined) {
+  async function load(blob: Blob, name: string) {
     setError(null);
-    if (!file) return;
-    if (!ACCEPTED.includes(file.type)) {
+    if (!ACCEPTED.includes(blob.type)) {
       setError('That file type is not supported yet. Choose a JPEG, PNG or WebP photo.');
       return;
     }
-    if (file.size > MAX_BYTES) {
+    if (blob.size > MAX_BYTES) {
       setError('That photo is over 10 MB. Choose a smaller one.');
       return;
     }
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
-      objectUrl.current = url;
-      setAsset({
-        id: 'asset-homepage-local',
-        version: String(Date.now()),
-        url,
-        alt: 'Your photo',
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-        mimeType: file.type,
-        hasTransparency: file.type !== 'image/jpeg',
-      });
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      setError('We could not read that photo. Try another one.');
-    };
-    img.src = url;
+    const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    setOriginal({ blob, url: track(URL.createObjectURL(blob)), width: bitmap.width, height: bitmap.height, name });
+    bitmap.close();
+    setCutout(null);
+    setCutoutAsset(null);
+    setRefining(false);
+    setStatus('photo');
   }
 
-  const usingOwnPhoto = asset !== SAMPLE;
-  const lowRes = usingOwnPhoto && Math.min(asset.width, asset.height) < 1200;
-  const studioHref = `/create?product=${encodeURIComponent(product?.id ?? '')}${usingOwnPhoto ? `&artwork=${encodeURIComponent(asset.url)}` : ''}`;
+  async function loadSample() {
+    const response = await fetch(SAMPLE.url);
+    await load(await response.blob(), SAMPLE.name);
+  }
+
+  async function updateCutoutAsset(next: Cutout) {
+    const rendered = await renderCutout(next);
+    setCutoutAsset(assetFrom(track(URL.createObjectURL(rendered.blob)), rendered.width, rendered.height, 'image/png', 'Your cutout', String(Date.now())));
+  }
+
+  async function removeBackground() {
+    if (!original) return;
+    setStatus('working');
+    setError(null);
+    setProgress({ stage: 'upload' });
+    try {
+      const result = await segmentPhoto(original.blob, setProgress);
+      setCutout(result);
+      await updateCutoutAsset(result);
+      setUseCutout(true);
+      setStatus('cutout');
+    } catch (cause) {
+      setStatus('error');
+      setError(cause instanceof Error && cause.message ? `${cause.message} You can also continue with the original photo.` : 'Background removal did not finish. Try again, or continue with the original photo.');
+    } finally {
+      setProgress(null);
+    }
+  }
+
+  const product = products.find((item) => item.id === productId) ?? products[0];
+  const asset = useMemo(() => {
+    if (useCutout && cutoutAsset) return cutoutAsset;
+    if (original) return assetFrom(original.url, original.width, original.height, original.blob.type, 'Your photo', 'original');
+    return null;
+  }, [useCutout, cutoutAsset, original]);
+  const configuration = useMemo(
+    () =>
+      asset && product
+        ? createProductConfiguration({ designId: 'homepage-try-it', design: asset, product, template: getPreviewTemplate(product.previewTemplateId) })
+        : null,
+    [asset, product],
+  );
+
+  // Print sharpness: pixels per inch across the printed width.
+  const printInches = product?.variants.find((v) => v.available)?.placeholders[0]?.printWidthInches;
+  const ppi = asset && printInches ? Math.round(asset.width / printInches) : null;
+  const studioHref = `/create?product=${encodeURIComponent(product?.id ?? '')}${asset ? `&artwork=${encodeURIComponent(asset.url)}` : ''}`;
 
   return (
     <section className={styles.makeAct} id="make" aria-labelledby="make-heading">
       <div className={styles.makeIntro}>
-        <p className={styles.issueTag}>Try it on</p>
+        <p className={styles.issueTag}>Your photo, cut out</p>
         <h2 id="make-heading" className={styles.posterHeading}>
           Make your own <span className={styles.hlYellow}>damn</span> art.
         </h2>
-        <p className={styles.lede}>Your photo. Real products. No design degree, no desktop software, no account to start.</p>
+        <p className={styles.lede}>
+          Upload a photo of your pet, your person or your thing. We cut out the background (hair and fur included), then you put it
+          on a real tee, poster or mug.
+        </p>
         <ol className={styles.pipeline}>
-          {steps.map((step, i) => (
-            <li key={step.label} data-status={step.status}>
-              <span className={styles.pipelineNum}>{String(i + 1).padStart(2, '0')}</span>
-              <span>
-                <strong>{step.label}</strong>
-                <small>{step.detail}</small>
-              </span>
-              <em>{statusLabel[step.status]}</em>
-            </li>
-          ))}
+          <li data-status="live">
+            <span className={styles.pipelineNum}>01</span>
+            <span>
+              <strong>Upload a photo</strong>
+              <small>JPEG, PNG or WebP up to 10 MB, from your camera roll or files.</small>
+            </span>
+          </li>
+          <li data-status="live">
+            <span className={styles.pipelineNum}>02</span>
+            <span>
+              <strong>Remove the background</strong>
+              <small>AI cutout that handles hair and fur. Paint to fix any edge.</small>
+            </span>
+          </li>
+          <li data-status="live">
+            <span className={styles.pipelineNum}>03</span>
+            <span>
+              <strong>Pick a product</strong>
+              <small>Real print area and placement. What you see is what prints.</small>
+            </span>
+          </li>
+          <li data-status="studio">
+            <span className={styles.pipelineNum}>04</span>
+            <span>
+              <strong>Finish in the studio</strong>
+              <small>Resize, add an AI style, then add to cart.</small>
+            </span>
+          </li>
         </ol>
         <div className={styles.styleChips} aria-label="AI styles available in the studio">
           {photoStyleOptions.map((style) => (
@@ -142,42 +172,114 @@ export function MakeYourOwnArt({
         </div>
       </div>
 
-      <div className={styles.tryIt}>
-        <div className={styles.tryItHead}>
-          <span className={styles.microtype}>{usingOwnPhoto ? 'Your photo · stays on this device' : 'Sample photo · swap in yours'}</span>
-          <div className={styles.productSwitch} role="group" aria-label="Preview product">
-            {products.map((item) => (
-              <button key={item.id} type="button" aria-pressed={item.id === product?.id} onClick={() => setProductId(item.id)}>
-                {item.name.replace(/^(Everyday|Gallery|Keepsake) /, '')}
+      <div className={styles.tryIt} data-testid="try-it">
+        {status === 'empty' && (
+          <div className={styles.dropzone}>
+            <p className={styles.dropTitle}>Start with a photo</p>
+            <p className={styles.microtype}>Your photo is only processed to make the cutout, then deleted.</p>
+            <div className={styles.tryItActions}>
+              <label htmlFor="homepage-photo" className={styles.btnPink}>
+                Upload your photo
+              </label>
+              <button type="button" className={styles.btnGhost} onClick={() => void loadSample()} data-testid="use-sample">
+                Try a sample
               </button>
-            ))}
+            </div>
           </div>
-        </div>
-        <div className={styles.tryItStage} data-testid="try-it-preview">
-          {configuration && <InstantPreview design={asset} configuration={configuration} showSafeZone={false} presentation="merchandising" />}
-        </div>
-        {lowRes && <p className={styles.warn}>Heads up: this photo is under 1200 px. It may print soft at large sizes. The studio checks print quality before checkout.</p>}
-        {error && (
-          <p className={styles.warn} role="alert">
-            {error}
-          </p>
         )}
-        <div className={styles.tryItActions}>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className={styles.srOnly}
-            id="homepage-photo"
-            onChange={(event) => choose(event.target.files?.[0])}
-          />
-          <label htmlFor="homepage-photo" className={styles.btnPink}>
-            Upload your photo
-          </label>
-          <Link href={studioHref} className={styles.btnInk} data-testid="continue-to-studio">
-            {usingOwnPhoto ? 'Keep going in the studio' : 'Open the studio'}
-          </Link>
-        </div>
+
+        {original && (
+          <>
+            <div className={styles.tryItHead}>
+              <span className={styles.microtype}>{original.name}</span>
+              {cutoutAsset && (
+                <div className={styles.productSwitch} role="group" aria-label="Artwork">
+                  <button type="button" aria-pressed={useCutout} onClick={() => setUseCutout(true)}>
+                    Cutout
+                  </button>
+                  <button type="button" aria-pressed={!useCutout} onClick={() => setUseCutout(false)}>
+                    Original
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {status === 'cutout' && cutout && refining ? (
+              <CutoutRefiner cutout={cutout} onCommit={() => void updateCutoutAsset(cutout)} />
+            ) : (
+              <div className={styles.stagePair}>
+                <figure className={styles.cutoutView} data-testid="cutout-preview">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
+                  <img src={useCutout && cutoutAsset ? cutoutAsset.url : original.url} alt={useCutout && cutoutAsset ? 'Your cutout' : 'Your photo'} />
+                  {status === 'working' && (
+                    <figcaption className={styles.working} role="status">
+                      {progress?.stage === 'process' ? 'Cutting out your subject…' : 'Sending your photo…'}
+                      <span className={styles.workingBar} />
+                    </figcaption>
+                  )}
+                </figure>
+                {configuration && asset && (
+                  <div className={styles.tryItStage} data-testid="try-it-preview">
+                    <InstantPreview design={asset} configuration={configuration} showSafeZone={false} presentation="merchandising" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className={styles.productSwitch} role="group" aria-label="Preview product">
+              {products.map((item) => (
+                <button key={item.id} type="button" aria-pressed={item.id === product?.id} onClick={() => setProductId(item.id)}>
+                  {item.name.replace(/^(Everyday|Gallery|Keepsake) /, '')}
+                </button>
+              ))}
+            </div>
+
+            {ppi !== null && ppi < 150 && (
+              <p className={styles.warn}>Heads up: about {ppi} pixels per inch at full print width. A larger photo will print sharper.</p>
+            )}
+            {error && (
+              <p className={styles.warn} role="alert">
+                {error}
+              </p>
+            )}
+
+            <div className={styles.tryItActions}>
+              {(status === 'photo' || status === 'error') && (
+                <button type="button" className={styles.btnPink} onClick={() => void removeBackground()} data-testid="remove-background">
+                  Remove background
+                </button>
+              )}
+              {status === 'working' && (
+                <button type="button" className={styles.btnPink} disabled>
+                  Working…
+                </button>
+              )}
+              {status === 'cutout' && (
+                <button type="button" className={styles.btnGhost} onClick={() => setRefining((value) => !value)} data-testid="refine-cutout">
+                  {refining ? 'Done refining' : 'Refine edges'}
+                </button>
+              )}
+              <Link href={studioHref} className={styles.btnInk} data-testid="continue-to-studio">
+                Continue to studio
+              </Link>
+              <label htmlFor="homepage-photo" className={styles.textButton}>
+                Change photo
+              </label>
+            </div>
+          </>
+        )}
+
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className={styles.srOnly}
+          id="homepage-photo"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void load(file, file.name || 'Your photo');
+            event.target.value = '';
+          }}
+        />
       </div>
     </section>
   );

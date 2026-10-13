@@ -1140,7 +1140,7 @@ export function UnifiedCreateExperience({
                 [
                   ['original', 'Original Photo'],
                   ['background-removed', 'Remove Background'],
-                  ['art', 'Illustrated Art'],
+                  ['art', 'Posterize Effect'],
                 ] as const
               ).map(([mode, label]) => (
                 <button

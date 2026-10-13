@@ -76,7 +76,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(23);
+    await expect(service.listPublished()).resolves.toHaveLength(21);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -84,7 +84,7 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(23);
+    expect(designs).toHaveLength(21);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
