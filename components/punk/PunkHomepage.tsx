@@ -8,6 +8,7 @@ import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
 import { photoStyles } from '@/lib/ai/photo-styles';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
+import { AI_STYLES_ENABLED } from '@/lib/ai/availability';
 import { MakeYourOwnArt } from './MakeYourOwnArt';
 import styles from './punk.module.css';
 
@@ -130,7 +131,7 @@ export async function PunkHomepage() {
       </section>
 
       {/* TRY IT — the working pipeline, right after the hero */}
-      <MakeYourOwnArt products={products} styles={Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label }))} />
+      <MakeYourOwnArt products={products} styles={AI_STYLES_ENABLED ? Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label })) : []} />
 
       {/* PICK YOUR CANVAS */}
       <section className={styles.drops} aria-labelledby="canvas-heading" data-testid="homepage-product-showcase">
@@ -212,7 +213,11 @@ export async function PunkHomepage() {
           <h2 id="season-heading" className={styles.posterHeading}>
             Make it <span className={styles.hlAcid}>creepy.</span>
           </h2>
-          <p className={styles.lede}>Upload a photo and turn it into Halloween art in the studio. You see the result before you pay.</p>
+          <p className={styles.lede}>
+            {AI_STYLES_ENABLED
+              ? 'Upload a photo and turn it into Halloween art in the studio. You see the result before you pay.'
+              : 'Put your names on a haunted design, or cut out your pet and give them their own spooky tee.'}
+          </p>
           <div className={styles.seasonActions}>
             <Link href="/halloween" className={styles.btnAcid}>
               Enter the Halloween shop
@@ -220,24 +225,38 @@ export async function PunkHomepage() {
           </div>
         </div>
         <div className={styles.seasonCards}>
-          <Link href="/create?style=halloween-pet" className={styles.seasonCard}>
-            <span className={styles.seasonCardType} aria-hidden="true">
-              Your pet.
-              <br />
-              <em>But spooky.</em>
-            </span>
-            <strong>Halloween pet art</strong>
-            <small>AI style · keeps your pet&apos;s markings</small>
-          </Link>
-          <Link href="/create?style=haunted-portrait" className={styles.seasonCard}>
-            <span className={styles.seasonCardType} aria-hidden="true">
-              Your face.
-              <br />
-              <em>By candlelight.</em>
-            </span>
-            <strong>Gothic portrait</strong>
-            <small>AI style · upload any clear photo</small>
-          </Link>
+          {AI_STYLES_ENABLED ? (
+            <>
+              <Link href="/create?style=halloween-pet" className={styles.seasonCard}>
+                <span className={styles.seasonCardType} aria-hidden="true">
+                  Your pet.
+                  <br />
+                  <em>But spooky.</em>
+                </span>
+                <strong>Halloween pet art</strong>
+                <small>AI style · keeps your pet&apos;s markings</small>
+              </Link>
+              <Link href="/create?style=haunted-portrait" className={styles.seasonCard}>
+                <span className={styles.seasonCardType} aria-hidden="true">
+                  Your face.
+                  <br />
+                  <em>By candlelight.</em>
+                </span>
+                <strong>Gothic portrait</strong>
+                <small>AI style · upload any clear photo</small>
+              </Link>
+            </>
+          ) : (
+            <a href="#make" className={styles.seasonCard}>
+              <span className={styles.seasonCardType} aria-hidden="true">
+                Your pet.
+                <br />
+                <em>Cut out.</em>
+              </span>
+              <strong>Pet photo cutout</strong>
+              <small>Remove the background, put them on merch</small>
+            </a>
+          )}
           <Link href="/halloween#seasonal-edit" className={styles.seasonCard}>
             <span className={styles.seasonCardType} aria-hidden="true">
               Your names.
@@ -262,12 +281,14 @@ export async function PunkHomepage() {
               <span>Remove the background from any photo, fix edges with a brush, put it on merch.</span>
             </a>
           </li>
-          <li>
-            <Link href="/create?style=illustrated">
-              <strong>AI photo styles</strong>
-              <span>{Object.keys(photoStyles).length} styles, from illustrated portraits to Halloween pet art. Preview before you pay.</span>
-            </Link>
-          </li>
+          {AI_STYLES_ENABLED && (
+            <li>
+              <Link href="/create?style=illustrated">
+                <strong>AI photo styles</strong>
+                <span>{Object.keys(photoStyles).length} styles, from illustrated portraits to Halloween pet art. Preview before you pay.</span>
+              </Link>
+            </li>
+          )}
           <li>
             <Link href="/halloween#seasonal-edit">
               <strong>Personalized designs</strong>
