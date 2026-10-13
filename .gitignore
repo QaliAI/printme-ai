@@ -49,3 +49,7 @@ build-output*.txt
 build-output*.txt
 *.legacy.sql.bak
 /screenshots
+/audit
+
+# third-party research captures: keep local, never publish
+/docs/creative-rebuild/research/*.jpg

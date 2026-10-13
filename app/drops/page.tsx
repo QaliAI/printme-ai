@@ -15,7 +15,7 @@ export default async function DropsPage() {
       <DesignCatalogHeader
         eyebrow="Limited edits"
         title="Drops"
-        description="Published design groupings with explicit dates and no fabricated demand signals."
+        description="Limited seasonal releases and curated design drops, printed to order with archival quality."
       />
       <DropLinks drops={drops} />
     </main>

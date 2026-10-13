@@ -1,16 +1,13 @@
 .shop {
-  --paper: #f5f0e6;
-  --ink: #191815;
-  --muted: #6f695f;
-  --line: #cfc6b8;
-  --accent: #d94f2b;
+  --paper: var(--color-paper, #fff9ef);
+  --ink: var(--color-ink, #151512);
+  --muted: #6e6d65;
+  --line: var(--color-border, #ded6c7);
+  --accent: var(--color-orange, #ff4b2b);
   position: relative;
   min-height: 100vh;
   color: var(--ink);
-  background:
-    linear-gradient(rgba(60, 48, 35, 0.035) 1px, transparent 1px),
-    var(--paper);
-  background-size: 100% 28px;
+  background: var(--paper);
 }
 
 .shop button:focus-visible {
@@ -48,11 +45,11 @@
 .hero h1 {
   max-width: 770px;
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(3rem, 8vw, 6.7rem);
-  font-weight: 500;
-  line-height: 0.88;
-  letter-spacing: -0.065em;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
 }
 
 .heroCopy {
@@ -329,11 +326,11 @@
 
 .configScroll h2 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 3.2rem;
-  font-weight: 500;
-  line-height: 0.94;
-  letter-spacing: -0.055em;
+  font-family: var(--font-display, inherit);
+  font-size: 2.8rem;
+  font-weight: 850;
+  line-height: 0.98;
+  letter-spacing: -0.035em;
 }
 
 .designDescription {
@@ -486,9 +483,10 @@
 
 .cartHeader h2 {
   margin: 0;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2rem;
-  font-weight: 500;
+  font-family: var(--font-display, inherit);
+  font-size: 1.85rem;
+  font-weight: 850;
+  letter-spacing: -0.02em;
 }
 
 .cartHeader button {
@@ -643,10 +641,10 @@
 
 .upsellHeading h3 {
   margin: 2px 0 14px;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.7rem;
-  font-weight: 500;
-  letter-spacing: -0.04em;
+  font-family: var(--font-display, inherit);
+  font-size: 1.55rem;
+  font-weight: 850;
+  letter-spacing: -0.025em;
 }
 
 .upsellGrid {
@@ -924,3 +922,7 @@
     grid-template-columns: minmax(0, 0.8fr) minmax(160px, 1.2fr);
   }
 }
+
+.previewMerchandising { width: 100%; margin: 0; border-radius: 0; box-shadow: none; }
+
+.cartItemTitle > div { display: grid; gap: 4px; }

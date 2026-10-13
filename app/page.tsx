@@ -4,7 +4,7 @@ import { ProductShowcase } from '@/components/landing/ProductShowcase';
 import { StylePresets } from '@/components/landing/StylePresets';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { CTASection } from '@/components/landing/CTASection';
-import { HomepageV2 } from '@/components/home-v2/HomepageV2';
+import { PunkHomepage } from '@/components/punk/PunkHomepage';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
@@ -13,7 +13,7 @@ import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
 
 export default async function Home() {
   if (isReviewFeatureEnabled('homepage')) {
-    return <HomepageV2 />;
+    return <PunkHomepage />;
   }
 
   const products = getApprovedMerchProducts();
@@ -22,7 +22,7 @@ export default async function Home() {
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Hero Section with Animated Phone-to-Product Transformation */}
-      <HeroAnimation />
+      <HeroAnimation products={products} design={designs[0]} />
 
       {/* The Seasonal Edit: Curated Trends & Personalization */}
       <SeasonalEditSection products={products} designs={designs} />
@@ -37,7 +37,7 @@ export default async function Home() {
       <FloatingExamples />
 
       {/* Product Showcase with 3D Hover */}
-      <ProductShowcase />
+      <ProductShowcase products={products} design={designs[0]} />
 
       {/* Final CTA */}
       <CTASection />

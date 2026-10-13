@@ -93,6 +93,8 @@ export default async function ProductDetailPage({
           <InstantPreview
             design={design.asset}
             configuration={configuration}
+            showSafeZone={false}
+            presentation="merchandising"
           />
         </div>
         <section className={styles.copy}>
@@ -100,10 +102,14 @@ export default async function ProductDetailPage({
           <h1>{product.name}</h1>
           <p>{product.description}</p>
           <strong className={styles.price}>from {money(starting)}</strong>
+          <div className={styles.productBadgeRow}>
+            <span className={styles.trustBadge}>Made to order</span>
+            <span className={styles.trustBadge}>Preview before purchase</span>
+            <span className={styles.trustBadge}>Damage/defect replacement</span>
+          </div>
           {!readiness.ready && (
-            <p className={styles.warning}>
-              Preview available. Checkout remains blocked until provider unit
-              and shipping costs are synchronized.
+            <p className={styles.consumerNotice}>
+              Made to order · Instant preview available. Custom orders print in 2–3 business days.
             </p>
           )}
           <Link

@@ -12,7 +12,6 @@ import { DesignActivity } from './DesignActivity';
 const filters: Array<{ value: DesignFilter; label: string }> = [
   { value: 'new', label: 'New' },
   { value: 'trending', label: 'Trending' },
-  { value: 'bestsellers', label: 'Bestsellers' },
 ];
 
 export function DesignCatalogHeader({
@@ -26,11 +25,11 @@ export function DesignCatalogHeader({
 }) {
   return (
     <header className={styles.header}>
-      <nav aria-label="Commerce preview">
+      <nav aria-label="Collections and designs">
         <Link href="/designs">Designs</Link>
         <Link href="/drops">Drops</Link>
         <Link href="/collections">Collections</Link>
-        <Link href="/shop-v2">Shop preview</Link>
+        <Link href="/shop">Shop</Link>
       </nav>
       <p>{eyebrow}</p>
       <h1>{title}</h1>
@@ -122,22 +121,34 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
         <div className={styles.detailCopy}>
           <p>{design.description}</p>
           <dl>
+            {design.artistOrSource ? (
+              <div>
+                <dt>Artist / Studio</dt>
+                <dd>{design.artistOrSource}</dd>
+              </div>
+            ) : null}
             <div>
-              <dt>Source</dt>
-              <dd>{design.artistOrSource}</dd>
+              <dt>Personalizable</dt>
+              <dd>Yes — made to order</dd>
             </div>
             <div>
-              <dt>Rights</dt>
-              <dd>{design.rightsStatus}</dd>
+              <dt>Works best on</dt>
+              <dd>
+                {design.recommendedProductId === 'keepsake-mug'
+                  ? 'Keepsake Mug'
+                  : design.recommendedProductId === 'everyday-tee'
+                    ? 'Everyday Tee'
+                    : 'Gallery Poster'}
+              </dd>
             </div>
             <div>
-              <dt>Recommended format</dt>
-              <dd>{design.recommendedProductId}</dd>
+              <dt>Starting at</dt>
+              <dd>$19.00</dd>
             </div>
           </dl>
           <Link
             className={styles.action}
-            href={`/shop-v2?design=${encodeURIComponent(design.slug)}`}
+            href={`/shop?design=${encodeURIComponent(design.slug)}`}
           >
             Configure this design
           </Link>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+
 import Link from 'next/link';
 import {
   Sparkles,
@@ -137,12 +137,7 @@ export default function SeasonalTrendsAdminPage() {
             <div key={card.id} className="p-6 flex flex-col lg:flex-row items-start gap-6 hover:bg-slate-50/50 transition-colors">
               {/* Thumbnail Mockup */}
               <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
-                <Image
-                  src={card.mockupUrl}
-                  alt={card.headline}
-                  fill
-                  className="object-cover"
-                />
+<Link href={`/shop-v2?design=${encodeURIComponent(card.relatedDesignSlug)}`} className="flex h-full items-center justify-center text-center text-xs">View canonical preview</Link>
               </div>
 
               {/* Core Details */}

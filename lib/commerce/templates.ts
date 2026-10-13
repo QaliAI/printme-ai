@@ -172,7 +172,7 @@ export const previewTemplates: PreviewTemplate[] = [
         id: 'mug-left',
         label: 'Left of handle',
         position: 'front',
-        baseProductImage: '/landing/mockups/product-mug.webp',
+        baseProductImage: '/shop-v2/mug-left-base.webp',
         mockupWidth: 800,
         mockupHeight: 800,
         printArea: { x: 218, y: 245, width: 270, height: 248 },
@@ -185,7 +185,7 @@ export const previewTemplates: PreviewTemplate[] = [
         id: 'mug-right',
         label: 'Right of handle',
         position: 'back',
-        baseProductImage: '/landing/mockups/product-mug.webp',
+        baseProductImage: '/shop-v2/mug-right-base.webp',
         mockupWidth: 800,
         mockupHeight: 800,
         printArea: { x: 316, y: 245, width: 270, height: 248 },
@@ -198,9 +198,18 @@ export const previewTemplates: PreviewTemplate[] = [
   },
 ];
 
+/** Only visually verified blank assets may be used as product bases. */
+export const verifiedBlankProductImages = new Set([
+  '/shop-v2/tee-base.svg', '/shop-v2/tee-back.svg', '/shop-v2/poster-base.svg',
+  '/shop-v2/mug-left-base.webp', '/shop-v2/mug-right-base.webp',
+]);
+
 export function getPreviewTemplate(templateId: string) {
   const template = previewTemplates.find((candidate) => candidate.id === templateId);
   if (!template) throw new Error(`Unknown preview template: ${templateId}`);
+  if (template.views.some(view => !verifiedBlankProductImages.has(view.baseProductImage))) {
+    throw new Error('Preview template uses an unverified product base.');
+  }
   return template;
 }
 

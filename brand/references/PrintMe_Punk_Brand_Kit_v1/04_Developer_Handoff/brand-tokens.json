@@ -1,0 +1,71 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "PrintMe.ai Punk Collage v1 - provisional",
+  "colors": {
+    "core": {
+      "ink": "#111111",
+      "newsprint": "#F4F0E8",
+      "white": "#FFFFFF",
+      "punk_pink": "#F23D99",
+      "riot_yellow": "#F7D431",
+      "signal_orange": "#FF5B35",
+      "paste_gray": "#96948F",
+      "electric_blue": "#3159EF",
+      "shadow": "#262323"
+    },
+    "seasonal": {
+      "halloween": {
+        "acid": "#B2EF37",
+        "horror_red": "#E73731"
+      },
+      "winter": {
+        "holiday_green": "#13704C",
+        "winter_red": "#C92A31"
+      },
+      "thanksgiving": {
+        "harvest": "#BC5B28",
+        "cider": "#DCA449"
+      }
+    }
+  },
+  "typography": {
+    "display": "Noto Sans Display Condensed Black (or art-directed collage headings)",
+    "interface": "Inter",
+    "body": "Inter",
+    "microtype": "Inter Medium"
+  },
+  "radii": {
+    "button": 0,
+    "card": 4,
+    "sticker": 0
+  },
+  "spacingPx": [
+    4,
+    8,
+    12,
+    16,
+    24,
+    32,
+    48,
+    64,
+    96,
+    128
+  ],
+  "breakpointsPx": {
+    "mobile": 360,
+    "tablet": 768,
+    "desktop": 1200,
+    "wide": 1440
+  },
+  "motion": {
+    "fastMs": 160,
+    "baseMs": 320,
+    "revealMs": 650,
+    "heroMs": 1200,
+    "spring": "cubic-bezier(.22,1,.36,1)"
+  },
+  "accessibility": {
+    "minimumTouchPx": 44,
+    "reducedMotion": "show completed artwork and no required scroll scrubbing"
+  }
+}

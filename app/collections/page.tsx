@@ -16,7 +16,7 @@ export default async function CollectionsPage() {
       <DesignCatalogHeader
         eyebrow="Curated groupings"
         title="Collections"
-        description="Browse published design families, then configure a compatible product in Shop V2."
+        description="Browse published design families, then configure a compatible product in the PrintMe Shop."
       />
       <CollectionLinks collections={collections} />
     </main>

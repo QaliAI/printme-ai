@@ -150,7 +150,7 @@ export default async function FeaturedDesignsGalleryPage({ searchParams }: Galle
         <DesignCatalogHeader
           eyebrow="Curated by PrintMe"
           title="Choose the art first."
-          description="Published designs with server-controlled product compatibility and purchase-time versioning."
+          description="Curated seasonal artwork and funny originals. Ready to preview and print on tees, mugs, and posters."
         />
         <DesignFilters active={filter} />
         <form className={styles.search} action="/designs">

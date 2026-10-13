@@ -75,7 +75,7 @@ describe('The Seasonal Edit — Trend Registry & Assets', () => {
       familyName: 'THE O\'CONNOR COVEN',
       membersText: 'EMMA • NOAH • BUSTER (DOG)',
     });
-    expect(hhSvg).toContain('THE O\'CONNOR COVEN');
+    expect(hhSvg).toContain('THE O&#39;CONNOR COVEN');
     expect(hhSvg).toContain('EMMA • NOAH • BUSTER (DOG)');
 
     // 2. Library of Lost Hours
@@ -134,11 +134,11 @@ describe('The Seasonal Edit — Trend Registry & Assets', () => {
     }
   });
 
-  it('all 6 realistic product mockups exist in public directory', () => {
+  it('seasonal cards resolve artwork and never refer to flattened product samples', () => {
     for (const card of seasonalTrendCards) {
-      const mockupRelative = card.mockupUrl.replace(/^\//, '');
-      const mockupPath = path.resolve('public', mockupRelative.replace(/^designs\//, 'designs/'));
-      expect(fs.existsSync(mockupPath), `Missing mockup file: ${card.mockupUrl}`).toBe(true);
+      expect(card.relatedDesignId).toBeTruthy();
+      expect(['everyday-tee', 'keepsake-mug', 'gallery-poster']).toContain(card.recommendedProductId);
+      expect(card).not.toHaveProperty('mockupUrl');
     }
   });
 });

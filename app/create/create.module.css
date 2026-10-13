@@ -1,13 +1,13 @@
 .createPage {
-  --create-bg: #eef0f1;
-  --create-panel: #f8f9f9;
+  --create-bg: var(--color-paper, #fff9ef);
+  --create-panel: var(--color-warm-surface, #f0e9dc);
   --create-panel-strong: #ffffff;
-  --create-ink: #171918;
-  --create-muted: #5d625f;
-  --create-line: #cdd1cf;
-  --create-accent: #e54828;
-  --create-accent-hover: #c93a20;
-  --create-good: #17643b;
+  --create-ink: var(--color-ink, #151512);
+  --create-muted: #6e6d65;
+  --create-line: var(--color-border, #ded6c7);
+  --create-accent: var(--color-orange, #ff4b2b);
+  --create-accent-hover: #e03e20;
+  --create-good: var(--color-moss, #667a50);
   min-height: 100dvh;
   background: var(--create-bg);
   color: var(--create-ink);

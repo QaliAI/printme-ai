@@ -1,0 +1,97 @@
+.footer {
+  background: var(--pm-ink, #111);
+  color: var(--pm-newsprint, #f3f0e9);
+  border-top: 6px solid var(--pm-pink, #ff2b91);
+  padding: 56px 24px 32px;
+}
+
+.inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 40px;
+}
+
+.brandCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.logo img {
+  display: block;
+  width: 200px;
+  height: auto;
+  transition: transform 180ms ease;
+}
+
+.logo:hover img {
+  transform: rotate(-3deg) scale(1.03);
+}
+
+.brandBio {
+  font-size: 0.98rem;
+  line-height: 1.55;
+  max-width: 320px;
+  margin: 0;
+}
+
+.colTitle {
+  font: 400 1.6rem/1 var(--font-poster), Impact, sans-serif;
+  text-transform: uppercase;
+  color: var(--pm-yellow, #f8d829);
+  margin: 0 0 12px;
+}
+
+.colNav {
+  display: flex;
+  flex-direction: column;
+}
+
+.colNav a {
+  color: var(--pm-newsprint, #f3f0e9);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 8px 0;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.colNav a:hover {
+  color: var(--pm-pink, #ff2b91);
+  text-decoration: underline 2px;
+  text-underline-offset: 4px;
+}
+
+.bottomBar {
+  max-width: 1360px;
+  margin: 40px auto 0;
+  padding-top: 20px;
+  border-top: 2px dashed rgba(243, 240, 233, 0.4);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  font: 400 13px/1.4 var(--font-mono), monospace;
+}
+
+.bottomBar p {
+  margin: 0;
+}
+
+.sign {
+  font: 400 1.4rem/1 var(--font-marker), cursive;
+  color: var(--pm-pink, #ff2b91);
+  transform: rotate(-3deg);
+}
+
+@media (max-width: 860px) {
+  .inner {
+    grid-template-columns: 1fr 1fr;
+  }
+  .brandCol {
+    grid-column: 1 / -1;
+  }
+}

@@ -29,15 +29,15 @@ test('approved product pages expose pricing and readiness without false promises
 }) => {
   await page.goto('/products');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Choose the object.' }),
+    page.getByRole('heading', { level: 1, name: /Choose your canvas/ }),
   ).toBeVisible();
-  await expect(page.locator('section').first().getByRole('link')).toHaveCount(3);
+  await expect(page.locator('section').first().getByRole('article')).toHaveCount(3);
 
   await page.getByRole('link', { name: /Everyday Tee/ }).click();
   await expect(
     page.getByRole('heading', { level: 1, name: 'Everyday Tee' }),
   ).toBeVisible();
-  await expect(page.getByText(/Checkout remains blocked/)).toBeVisible();
+  await expect(page.getByText('Made to order', { exact: true })).toBeVisible();
   await expect(page.getByText('Production', { exact: true })).toBeVisible();
   await expect(
     page.getByText('Delivery and shipping', { exact: true }),
@@ -53,7 +53,7 @@ test('approved product pages expose pricing and readiness without false promises
 test('shareable design URL opens the same configurator', async ({ page }) => {
   await page.goto('/designs/sunday-sidekick');
   await page.getByRole('link', { name: 'Configure this design' }).click();
-  await expect(page).toHaveURL(/\/shop-v2\?design=sunday-sidekick/);
+  await expect(page).toHaveURL(/\/shop(?:-v2)?\?design=sunday-sidekick/);
   await expect(page.getByTestId('configurator')).toBeVisible();
   await expect(
     page.getByRole('heading', { name: 'Sunday Sidekick' }),

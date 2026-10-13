@@ -3,10 +3,8 @@ import path from 'node:path';
 import sharp from 'sharp';
 
 const outputDir = path.resolve('public/designs/seasonal-edit');
-const mockupDir = path.resolve('public/designs/seasonal-edit/mockups');
 
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-if (!fs.existsSync(mockupDir)) fs.mkdirSync(mockupDir, { recursive: true });
 
 const designs = [
   // 1. The Haunted Household (Tee: 3951x4800)
@@ -18,9 +16,6 @@ const designs = [
     height: 4800,
     previewWidth: 988,
     previewHeight: 1200,
-    mockupFile: 'haunted-household-tee.webp',
-    baseMockup: 'public/landing/mockups/product-tshirt.webp',
-    mockupPlacement: { left: 300, top: 280, width: 360, height: 440 },
     svg: `
 <svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -159,9 +154,6 @@ const designs = [
     height: 1155,
     previewWidth: 638,
     previewHeight: 578,
-    mockupFile: 'library-of-lost-hours-mug.webp',
-    baseMockup: 'public/landing/mockups/product-mug.webp',
-    mockupPlacement: { left: 290, top: 320, width: 320, height: 290 },
     svg: `
 <svg width="1275" height="1155" viewBox="0 0 1275 1155" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -267,9 +259,6 @@ const designs = [
     height: 4800,
     previewWidth: 988,
     previewHeight: 1200,
-    mockupFile: 'midnight-hayride-tee.webp',
-    baseMockup: 'public/landing/mockups/product-tshirt.webp',
-    mockupPlacement: { left: 300, top: 280, width: 360, height: 440 },
     svg: `
 <svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -365,9 +354,6 @@ const designs = [
     height: 7200,
     previewWidth: 900,
     previewHeight: 1200,
-    mockupFile: 'night-garden-society-poster.webp',
-    baseMockup: 'public/landing/mockups/product-poster.webp',
-    mockupPlacement: { left: 240, top: 180, width: 480, height: 640 },
     svg: `
 <svg width="5400" height="7200" viewBox="0 0 5400 7200" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -471,9 +457,6 @@ const designs = [
     height: 7200,
     previewWidth: 900,
     previewHeight: 1200,
-    mockupFile: 'field-notes-after-dark-poster.webp',
-    baseMockup: 'public/landing/mockups/product-poster.webp',
-    mockupPlacement: { left: 240, top: 180, width: 480, height: 640 },
     svg: `
 <svg width="5400" height="7200" viewBox="0 0 5400 7200" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -568,9 +551,6 @@ const designs = [
     height: 4800,
     previewWidth: 988,
     previewHeight: 1200,
-    mockupFile: 'leftovers-league-tee.webp',
-    baseMockup: 'public/landing/mockups/product-tshirt.webp',
-    mockupPlacement: { left: 300, top: 280, width: 360, height: 440 },
     svg: `
 <svg width="3951" height="4800" viewBox="0 0 3951 4800" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -645,7 +625,6 @@ async function generateAll() {
     const pngPath = path.join(outputDir, `${item.slug}.png`);
     const webpPath = path.join(outputDir, `${item.slug}.webp`);
     const svgPath = path.join(outputDir, `${item.slug}.svg`);
-    const mockupPath = path.join(mockupDir, item.mockupFile);
 
     // Save SVG
     fs.writeFileSync(svgPath, item.svg.trim(), 'utf-8');
@@ -664,29 +643,7 @@ async function generateAll() {
       .webp({ quality: 90 })
       .toFile(webpPath);
 
-    // Generate Realistic Mockup
-    if (fs.existsSync(item.baseMockup)) {
-      console.log(`Compositing realistic mockup for ${item.slug}...`);
-      const artworkOverlay = await sharp(Buffer.from(item.svg))
-        .resize(item.mockupPlacement.width, item.mockupPlacement.height, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-        .png()
-        .toBuffer();
-
-      await sharp(item.baseMockup)
-        .composite([
-          {
-            input: artworkOverlay,
-            top: item.mockupPlacement.top,
-            left: item.mockupPlacement.left,
-            blend: 'multiply'
-          }
-        ])
-        .webp({ quality: 90 })
-        .toFile(mockupPath);
-    } else {
-      console.warn(`Base mockup not found: ${item.baseMockup}, falling back to direct preview.`);
-      fs.copyFileSync(webpPath, mockupPath);
-    }
+    // Only artwork is generated here. Product previews use the canonical runtime renderer.
   }
 
   console.log('All 6 Seasonal Edit assets generated successfully!');

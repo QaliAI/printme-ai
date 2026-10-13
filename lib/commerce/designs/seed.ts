@@ -131,8 +131,68 @@ const fall2026Metadata: Record<
   },
 };
 
+/**
+ * Issue Nº 01 originals (creative proof, 2026-10-12). Source artwork lives in
+ * designs/source/*.svg and is rebuilt by scripts/designs/build-merch.mjs.
+ * Deliberately filtered as 'new' only: no trending or best-seller claim
+ * exists for these designs yet.
+ */
+const issue01Metadata: Record<string, { slug: string; keywords: string[]; merchandisingPriority: number }> = {
+  'design-make-shit-print-shit': {
+    slug: 'make-shit-print-shit',
+    keywords: ['punk', 'ransom note', 'collage', 'zine', 'streetwear', 'diy', 'manifesto'],
+    merchandisingPriority: 112,
+  },
+  'design-bad-ideas-club': {
+    slug: 'bad-ideas-club',
+    keywords: ['bad ideas club', 'sarcastic', 'night owl', 'collegiate', 'funny', '3am', 'internet culture'],
+    merchandisingPriority: 111,
+  },
+  'design-creature-of-habit': {
+    slug: 'creature-of-habit',
+    keywords: ['monster', 'coffee', 'horror comedy', 'halloween', 'creature', 'funny monster'],
+    merchandisingPriority: 110,
+  },
+};
+
 export const developmentDesignSeeds: CuratedDesignRecord[] =
   curatedDesigns.map((design, index) => {
+    const issueMeta = issue01Metadata[design.id];
+    if (issueMeta) {
+      return {
+        ...structuredClone(design),
+        slug: issueMeta.slug,
+        artistOrSource: 'PrintMe Studio Issue 01',
+        rightsStatus: 'commercial-print-cleared',
+        publicationStatus: 'published',
+        publicationDate: '2026-10-12T00:00:00.000Z',
+        tags: [design.collection.toLowerCase(), 'issue-01', ...issueMeta.keywords],
+        defaultProductColor: 'White',
+        defaultPlacement: {
+          position: 'front' as const,
+          decorationMethod: 'dtg' as const,
+          normalizedX: 0.5,
+          normalizedY: 0.5,
+          normalizedScale: 0.82,
+          angle: 0,
+          fit: 'contain' as const,
+        },
+        compatibleProductIds: ['everyday-tee', 'gallery-poster', 'keepsake-mug'],
+        incompatibleProductIds: [],
+        merchandisingPriority: issueMeta.merchandisingPriority,
+        seoTitle: `${design.title} | Issue 01 | PrintMe`,
+        seoDescription: design.description,
+        filters: ['new'],
+        asset: {
+          ...structuredClone(design.asset),
+          productionUrl:
+            process.env.NODE_ENV !== 'production' &&
+            process.env.COMMERCE_E2E_TEST_MODE === 'true'
+              ? `https://assets.example.test/production/${design.asset.id}.png`
+              : design.asset.productionUrl ?? design.asset.url,
+        },
+      };
+    }
     const isFall2026 = design.id in fall2026Metadata;
     const fallMeta = fall2026Metadata[design.id];
     const slug = isFall2026 ? fallMeta.slug : legacySlugs[index];
@@ -218,6 +278,19 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
 
 export const developmentCollectionSeeds: DesignCollection[] = [
   {
+    id: 'collection-issue-01',
+    slug: 'issue-01',
+    title: 'Issue Nº 01',
+    description:
+      'The first PrintMe originals: ransom-note manifestos, 3 AM philosophy, and one very tired monster.',
+    publicationStatus: 'published',
+    designIds: [
+      'design-make-shit-print-shit',
+      'design-bad-ideas-club',
+      'design-creature-of-habit',
+    ],
+  },
+  {
     id: 'collection-halloween',
     slug: 'halloween',
     title: 'Halloween',
@@ -267,7 +340,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     slug: 'first-look',
     title: 'First Look',
     description:
-      'Five development-safe starting points used to validate PrintMe commerce.',
+      'Curated starting prints crafted in the PrintMe studio.',
     publicationStatus: 'published',
     designIds: [
       'design-pet-pop',
@@ -288,6 +361,20 @@ export const developmentCollectionSeeds: DesignCollection[] = [
 ];
 
 export const developmentDropSeeds: DesignDrop[] = [
+  {
+    id: 'drop-issue-01',
+    slug: 'issue-01',
+    title: 'Issue Nº 01 — Make Shit. Print Shit.',
+    description:
+      'Three original PrintMe designs that launch the punk collage studio.',
+    publicationStatus: 'published',
+    publicationDate: '2026-10-12T00:00:00.000Z',
+    designIds: [
+      'design-make-shit-print-shit',
+      'design-bad-ideas-club',
+      'design-creature-of-habit',
+    ],
+  },
   {
     id: 'drop-fall-2026',
     slug: 'fall-2026',
@@ -319,7 +406,7 @@ export const developmentDropSeeds: DesignDrop[] = [
     slug: 'studio-seeds',
     title: 'Studio Seeds',
     description:
-      'A development preview drop. No sales or bestseller claims are implied.',
+      'Curated studio originals prepared for custom physical prints.',
     publicationStatus: 'published',
     publicationDate: '2026-07-29T12:00:00.000Z',
     designIds: [

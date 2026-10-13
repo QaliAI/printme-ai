@@ -1,14 +1,14 @@
 import type { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://printme.ai';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.printme.ai';
 
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/checkout/success'],
+        disallow: ['/admin/', '/api/', '/studio/', '/app/', '/cart', '/checkout/'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

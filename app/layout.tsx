@@ -1,21 +1,51 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import Link from 'next/link';
+import { Anton, Archivo, Permanent_Marker, Space_Mono } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
-import { HomepageV2Header } from '@/components/home-v2/HomepageV2Header';
+import { PunkHeader } from '@/components/punk/PunkHeader';
 import { isReviewFeatureEnabled } from '@/lib/feature-flags';
+import { CommerceSessionTracker } from '@/components/commerce/CommerceSessionTracker';
 
-const inter = Inter({ subsets: ['latin'] });
+// Punk collage type system (all SIL Open Font License):
+// Anton = massive condensed headlines, Archivo = grotesk headings + legible UI,
+// Space Mono = editorial microtype, Permanent Marker = graffiti annotations only.
+const anton = Anton({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-poster',
+  display: 'swap',
+});
+
+const archivo = Archivo({
+  subsets: ['latin'],
+  axes: ['wdth'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
+const permanentMarker = Permanent_Marker({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-marker',
+  display: 'swap',
+  preload: false,
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://printme.ai'),
   title: {
-    default: 'PrintMe | Create custom prints from your photos',
-    template: '%s | PrintMe',
+    default: 'PrintMe.ai | Your imagination. No permission required.',
+    template: '%s | PrintMe.ai',
   },
   description:
-    'Upload a photo, prepare the artwork, preview it on an approved product, and create a personalized print from any device.',
+    'Upload a photo or pick an original design, preview it on real products, and get it printed to order. Tees, posters and mugs made your way.',
   keywords: [
     'custom prints',
     'personalized gifts',
@@ -23,20 +53,21 @@ export const metadata: Metadata = {
     'custom poster',
     'custom t-shirt',
     'custom mug',
+    'pet art gifts',
   ],
   openGraph: {
-    title: 'PrintMe | Create custom prints from your photos',
+    title: 'PrintMe.ai | Your imagination. No permission required.',
     description:
-      'Upload once, customize the artwork, and preview it on posters, tees, and mugs.',
+      'Upload a photo or pick an original design, preview it on real products, and get it printed to order.',
     type: 'website',
     url: 'https://printme.ai',
-    siteName: 'PrintMe',
+    siteName: 'PrintMe.ai',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'PrintMe | Create custom prints from your photos',
+    title: 'PrintMe.ai | Your imagination. No permission required.',
     description:
-      'Upload once, customize the artwork, and preview it on posters, tees, and mugs.',
+      'Upload a photo or pick an original design, preview it on real products, and get it printed to order.',
   },
 };
 
@@ -45,45 +76,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const commercePreviewEnabled = isReviewFeatureEnabled('commerce');
   const homepageV2Enabled = isReviewFeatureEnabled('homepage');
-  const isProduction =
-    process.env.VERCEL_ENV === 'production' ||
-    process.env.VERCEL_GIT_COMMIT_REF === 'master';
-  const showReviewNavigation =
-    !isProduction &&
-    process.env.VERCEL_ENV === 'preview' &&
-    commercePreviewEnabled;
 
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} min-h-full flex flex-col bg-gray-50`}>
-        {homepageV2Enabled ? <HomepageV2Header /> : <Navbar />}
-        {showReviewNavigation && (
-          <aside className="border-y border-stone-300 bg-amber-50 px-4 py-3 text-stone-900">
-            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-              <strong className="mr-auto">PrintMe review preview</strong>
-              <nav
-                aria-label="PrintMe review routes"
-                className="flex flex-wrap gap-x-4 gap-y-2"
-              >
-                <Link className="underline underline-offset-4" href="/create">
-                  Create
-                </Link>
-                <Link className="underline underline-offset-4" href="/shop-v2">
-                  Shop
-                </Link>
-                <Link className="underline underline-offset-4" href="/designs">
-                  Designs
-                </Link>
-                <Link className="underline underline-offset-4" href="/products">
-                  Products
-                </Link>
-              </nav>
-            </div>
-          </aside>
-        )}
-        <main className="flex-1">{children}</main>
+      <body
+        className={`${anton.variable} ${archivo.variable} ${spaceMono.variable} ${permanentMarker.variable} font-sans min-h-full flex flex-col bg-[#F3F0E9] text-[#111111]`}
+      >
+        <CommerceSessionTracker />
+        {homepageV2Enabled ? <PunkHeader /> : <Navbar />}
+        <main id="main" className="flex-1">{children}</main>
       </body>
     </html>
   );

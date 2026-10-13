@@ -1,0 +1,35 @@
+.bot {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.idle .body {
+  animation: bob 2.6s ease-in-out infinite;
+}
+
+.mist {
+  transition: opacity 160ms linear;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(-0.6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle .body {
+    animation: none;
+  }
+}

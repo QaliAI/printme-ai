@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PrintMe.ai — Logo usage sheet</title>
+<style>
+  :root { --ink:#111111; --news:#F3F0E9; --pink:#FF2B91; --yellow:#F8D829; --gray:#92908B; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--news); color:var(--ink); font:15px/1.45 "Courier New", monospace; }
+  header { background:var(--ink); color:var(--news); padding:28px 48px; display:flex; justify-content:space-between; align-items:end; }
+  header h1 { font: 900 56px/0.9 Impact, "Anton", sans-serif; margin:0; letter-spacing:.01em; text-transform:uppercase; }
+  header h1 span { background:var(--pink); color:var(--ink); padding:0 .15em; }
+  section { padding:36px 48px; border-bottom:4px solid var(--ink); }
+  h2 { font: 900 30px/1 Impact, sans-serif; text-transform:uppercase; margin:0 0 18px; }
+  h2 small { font: 700 13px "Courier New", monospace; background:var(--yellow); padding:2px 6px; margin-left:10px; vertical-align:middle; }
+  .grid { display:grid; gap:24px; }
+  .g2 { grid-template-columns:1fr 1fr; }
+  .g3 { grid-template-columns:repeat(3,1fr); }
+  .g4 { grid-template-columns:repeat(4,1fr); }
+  .tile { padding:32px; display:flex; align-items:center; justify-content:center; min-height:260px; position:relative; border:2px solid var(--ink); }
+  .tile.dark { background:var(--ink); }
+  .tile.light { background:#fff; }
+  .tile.news { background:var(--news); }
+  .tile.pink { background:var(--pink); }
+  .tile img { max-width:100%; max-height:230px; }
+  .cap { position:absolute; left:10px; bottom:8px; font-size:12px; font-weight:700; background:var(--yellow); color:var(--ink); padding:1px 6px; }
+  .safe { position:relative; display:inline-block; padding:56px; background:repeating-linear-gradient(45deg, rgba(255,43,145,.12) 0 8px, transparent 8px 16px); outline:2px dashed var(--pink); }
+  .safe img { display:block; width:520px; outline:2px solid var(--ink); }
+  .safe i { position:absolute; font-style:normal; font-weight:700; font-size:12px; color:var(--pink); }
+  .sizes { display:flex; gap:28px; align-items:end; flex-wrap:wrap; }
+  .sizes figure { margin:0; text-align:center; font-size:12px; font-weight:700; }
+  .rules li { margin:0 0 6px; }
+  .dont { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  .dont figure { margin:0; border:2px solid var(--ink); background:#fff; padding:18px; position:relative; height:170px; display:flex; align-items:center; justify-content:center; }
+  .dont figure::after { content:"✕"; position:absolute; right:8px; top:2px; font:900 26px Impact; color:var(--pink); }
+  .dont figcaption { position:absolute; bottom:6px; left:8px; font-size:11px; font-weight:700; }
+  .dont img { max-width:90%; max-height:110px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>PrintMe.ai <span>Logo</span> Usage</h1>
+  <div>Issue Nº 01 · Brand system v1 · generated from scripts/brand/build-logo.mjs</div>
+</header>
+
+<section>
+  <h2>Primary lockups <small>full colour · textured</small></h2>
+  <div class="grid g2">
+    <div class="tile news"><img src="logo/printme-logo-horizontal.svg" alt=""><span class="cap">HORIZONTAL — PRIMARY</span></div>
+    <div class="tile news"><img src="logo/printme-logo-stacked.svg" alt=""><span class="cap">STACKED — COMPACT</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Backgrounds <small>light · dark · colour</small></h2>
+  <div class="grid g3">
+    <div class="tile light"><img src="logo/printme-logo-stacked-clean.svg" alt=""><span class="cap">CLEAN ON WHITE</span></div>
+    <div class="tile dark"><img src="logo/printme-logo-stacked-inverse.svg" alt=""><span class="cap">INVERSE ON INK</span></div>
+    <div class="tile pink"><img src="logo/printme-logo-stacked-mono.svg" alt=""><span class="cap">MONO ON PUNK PINK</span></div>
+  </div>
+  <div class="grid g2" style="margin-top:24px">
+    <div class="tile dark"><img src="logo/printme-logo-horizontal-inverse.svg" alt=""><span class="cap">HORIZONTAL INVERSE</span></div>
+    <div class="tile light"><img src="logo/printme-logo-horizontal-mono.svg" alt=""><span class="cap">HORIZONTAL MONO (ONE INK)</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Clear space &amp; minimum size</h2>
+  <div class="grid g2">
+    <div>
+      <div class="safe"><img src="logo/printme-logo-horizontal-clean.svg" alt=""><i style="left:6px;top:20px">X</i><i style="right:6px;bottom:20px">X</i></div>
+      <p>X = height of one letter scrap (≈ the “P” scrap). Keep X clear on all sides of the horizontal and stacked lockups. Splatter and halftone may bleed into the clear space; nothing else may.</p>
+    </div>
+    <div>
+      <ul class="rules">
+        <li><b>Horizontal:</b> min 140 px wide on screen / 35 mm in print.</li>
+        <li><b>Stacked:</b> min 88 px wide on screen / 22 mm in print.</li>
+        <li><b>Below those sizes</b> use the favicon mark (single “P” scrap).</li>
+        <li><b>Textured</b> (grain filter) only above 320 px; use <i>clean</i> files in UI and email.</li>
+        <li><b>Mono</b> is one ink (currentColor): pink + yellow scraps become solid ink with knocked-out letters; other scraps become rough outlines. Use for embroidery, labels, one-colour screen print.</li>
+        <li>Never redraw the letters, re-colour individual scraps, or straighten the rotations — the irregularity is fixed artwork.</li>
+      </ul>
+      <div class="sizes">
+        <figure><img src="logo/printme-logo-horizontal-clean.svg" width="140" alt=""><figcaption>140 px</figcaption></figure>
+        <figure><img src="logo/printme-logo-stacked-clean.svg" width="88" alt=""><figcaption>88 px</figcaption></figure>
+        <figure><img src="logo/printme-favicon.svg" width="32" alt=""><figcaption>32 px</figcaption></figure>
+        <figure><img src="logo/printme-favicon.svg" width="16" alt=""><figcaption>16 px</figcaption></figure>
+        <figure><img src="logo/printme-app-icon.svg" width="96" alt=""><figcaption>App icon</figcaption></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Applications <small>label · packaging · social · email</small></h2>
+  <div class="grid g4">
+    <div class="tile news"><img src="applications/social-post-1080x1350.svg" alt=""><span class="cap">SOCIAL 4:5</span></div>
+    <div class="tile dark"><img src="applications/mailer-sticker.svg" alt=""><span class="cap">MAILER STICKER</span></div>
+    <div class="tile light"><img src="applications/neck-label-mono.svg" alt=""><span class="cap">NECK LABEL (MONO)</span></div>
+    <div class="tile light"><img src="applications/email-header-600x160.svg" alt=""><span class="cap">EMAIL HEADER</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Don’t</h2>
+  <div class="dont">
+    <figure><img src="logo/printme-logo-horizontal-clean.svg" style="filter:hue-rotate(160deg)" alt=""><figcaption>Re-colour scraps</figcaption></figure>
+    <figure><img src="logo/printme-logo-horizontal-clean.svg" style="transform:scaleX(1.5)" alt=""><figcaption>Stretch or squash</figcaption></figure>
+    <figure style="background:linear-gradient(135deg,#6d28d9,#ec4899)"><img src="logo/printme-logo-horizontal-clean.svg" alt=""><figcaption style="color:#fff">Purple AI gradients</figcaption></figure>
+    <figure><img src="logo/printme-logo-horizontal-clean.svg" style="filter:blur(1.5px) drop-shadow(0 0 12px #7cf)" alt=""><figcaption>Glows / blur / effects</figcaption></figure>
+  </div>
+</section>
+</body>
+</html>

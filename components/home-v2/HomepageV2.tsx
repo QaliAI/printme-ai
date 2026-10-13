@@ -1,9 +1,11 @@
+import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Camera, ShoppingBag } from 'lucide-react';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
+import { SiteFooter } from '@/components/brand/SiteFooter';
 import { HeroProductSwitcher } from './HeroProductSwitcher';
 import { HomeCommerceShowcase } from './HomeCommerceShowcase';
 import styles from '@/app/home-v2.module.css';
@@ -15,12 +17,6 @@ function formatPrice(cents: number) {
     maximumFractionDigits: 0,
   }).format(cents / 100);
 }
-
-const productImages: Record<string, string> = {
-  'gallery-poster': '/landing/mockups/product-poster.webp',
-  'everyday-tee': '/landing/mockups/product-tshirt.webp',
-  'keepsake-mug': '/landing/mockups/product-mug.webp',
-};
 
 const studioSamples = [
   {
@@ -56,49 +52,72 @@ export async function HomepageV2() {
 
   return (
     <div className={styles.homeV2}>
+      {/* 1. HERO */}
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>Fall 2026 Launch · Made to Order</p>
-          <h1>Turn your photo into art or shop our Fall Collection.</h1>
+          <p className={styles.eyebrow}>Personalized gifts that don&apos;t feel generic.</p>
+          <h1>Your photo. Your joke. Your merch.</h1>
           <p>
-            Upload from your phone to customize a keepsake, or choose from our
-            curated Halloween, Fall, and Thanksgiving merchandise ready to print
-            on tees, mugs, and posters.
+            Turn pets, people, and inside jokes into one-of-a-kind art you can print on
+            gifts you&apos;ll actually want to give.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/create">Create with Your Photo</Link>
-            <Link href="/designs">Shop Fall Designs</Link>
+            <Link href="/create">Make Something</Link>
+            <Link href="/halloween">Shop Halloween</Link>
           </div>
           <span className={styles.startingPrice}>
             Custom items from {formatPrice(startingPrice)} · $19 Mug, $29 Poster, $34 Tee
           </span>
+          <div className={styles.heroTrustStrip}>
+            <span>✓ Preview before you buy</span>
+            <span>✓ Made to order</span>
+            <span>✓ Damage/defect replacement</span>
+          </div>
         </div>
-        <HeroProductSwitcher products={products} />
+        <HeroProductSwitcher products={products} design={showcaseDesigns[0]} />
       </section>
 
-      {/* The Seasonal Edit: Curated Seasonal Discovery & Personalization */}
+      {/* 2. HALLOWEEN / CURRENT DROP */}
       <SeasonalEditSection products={products} designs={designs} />
 
-      <section className={styles.featuredSection}>
+      {/* 3. HOW IT WORKS — 3 simple steps */}
+      <section className={styles.howItWorksSection} aria-label="How PrintMe Works">
         <div className={styles.sectionHeading}>
-          <h2>Fall 2026 Featured Collection</h2>
-          <p>
-            Explore new seasonal designs for Halloween, Fall, and Thanksgiving,
-            or customize any approved product directly.
-          </p>
+          <h2>Zero guesswork. 100% yours.</h2>
+          <p>From camera roll snap to tangible gift in three simple steps.</p>
         </div>
-        <HomeCommerceShowcase
-          designs={showcaseDesigns}
-          products={products}
-        />
+        <div className={styles.stepsGrid}>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNum}>1</div>
+            <h3>Upload</h3>
+            <p>
+              Drop a photo of your pet, best friend, or favorite inside joke from any phone or computer.
+            </p>
+          </div>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNum}>2</div>
+            <h3>Preview</h3>
+            <p>
+              See it rendered live on real approved blanks with pixel-accurate print bounds and realistic draping.
+            </p>
+          </div>
+          <div className={styles.stepCard}>
+            <div className={styles.stepNum}>3</div>
+            <h3>Print</h3>
+            <p>
+              Crafted to order with archival inks. Delivered straight to your doorstep ready to gift.
+            </p>
+          </div>
+        </div>
       </section>
 
+      {/* 4. PERSONALIZED BEST SELLERS (3 Anchor Products + Interactive Customizer) */}
       <section className={styles.productsSection} id="products">
         <div className={styles.sectionHeading}>
           <h2>The 3 Anchor Products</h2>
-          <p>Crafted for durable color, reliable fit, and guaranteed quality.</p>
+          <p>Curated for durable color, reliable fit, and guaranteed print quality.</p>
         </div>
-        <div className={styles.productGrid}>
+        <div className={styles.productGrid} data-testid="homepage-product-showcase">
           {products.map((product, index) => {
             const price = Math.min(
               ...product.variants
@@ -112,17 +131,7 @@ export async function HomepageV2() {
                 href={`/products/${encodeURIComponent(productSlug)}`}
                 key={product.id}
               >
-                <Image
-                  src={productImages[product.id]}
-                  alt={`${product.name} product preview`}
-                  width={960}
-                  height={960}
-                  sizes={
-                    index === 0
-                      ? '(max-width: 767px) 100vw, 62vw'
-                      : '(max-width: 767px) 100vw, 34vw'
-                  }
-                />
+                <MerchandisePreview design={showcaseDesigns[0]} product={product} />
                 <span>
                   <strong>{product.name}</strong>
                   <small>From {formatPrice(price)}</small>
@@ -131,8 +140,34 @@ export async function HomepageV2() {
             );
           })}
         </div>
+
+        {/* Interactive Try-It Showcase */}
+        <div style={{ marginTop: '48px' }}>
+          <HomeCommerceShowcase
+            designs={showcaseDesigns}
+            products={products}
+          />
+        </div>
       </section>
 
+      {/* 5. SAME DESIGN / MATCHING SET */}
+      <section className={styles.sameDesignSection}>
+        <div>
+          <h2>One design. Matching set.</h2>
+          <p>
+            Keep your artwork consistent across matching gifts. PrintMe adapts
+            scale and placement for each approved item automatically.
+          </p>
+          <Link href="/create">Make a matching set</Link>
+        </div>
+        <div className={styles.sameDesignProducts}>
+          {products.filter(product => product.id !== 'keepsake-mug').map(product => (
+            <MerchandisePreview key={product.id} design={showcaseDesigns[0]} product={product} />
+          ))}
+        </div>
+      </section>
+
+      {/* 6. REAL BEFORE → AFTER EXAMPLES */}
       <section className={styles.photoSection} id="gifts">
         <div className={styles.photoCopy}>
           <Camera aria-hidden="true" size={28} strokeWidth={1.6} />
@@ -143,10 +178,10 @@ export async function HomepageV2() {
           </p>
           <div className={styles.photoActions}>
             <Link href="/create">
-              Create with Your Photo
+              Make Something
               <ArrowRight aria-hidden="true" size={18} strokeWidth={1.8} />
             </Link>
-            <Link href="/designs">Shop Fall Designs</Link>
+            <Link href="/halloween">Shop Halloween</Link>
           </div>
         </div>
         <div className={styles.photoPair}>
@@ -170,33 +205,6 @@ export async function HomepageV2() {
             />
             <figcaption>Your finished artwork</figcaption>
           </figure>
-        </div>
-      </section>
-
-      <section className={styles.sameDesignSection}>
-        <div>
-          <h2>One design. Multiple formats.</h2>
-          <p>
-            Keep your artwork consistent across matching gifts. PrintMe adapts
-            scale and placement for each approved item automatically.
-          </p>
-          <Link href="/create">Make a matching set</Link>
-        </div>
-        <div className={styles.sameDesignProducts}>
-          <Image
-            src="/landing/mockups/product-poster.webp"
-            alt="Artwork printed as an archival gallery poster"
-            width={960}
-            height={960}
-            sizes="(max-width: 767px) 50vw, 28vw"
-          />
-          <Image
-            src="/landing/mockups/product-tshirt.webp"
-            alt="Artwork printed on an Everyday Tee"
-            width={960}
-            height={960}
-            sizes="(max-width: 767px) 50vw, 28vw"
-          />
         </div>
       </section>
 
@@ -224,6 +232,7 @@ export async function HomepageV2() {
         </div>
       </section>
 
+      {/* 7. TRUST / SHIPPING / REPRINT SUPPORT */}
       <section className={styles.assuranceSection}>
         <article id="shipping">
           <h2>Clear production and delivery estimates</h2>
@@ -245,24 +254,17 @@ export async function HomepageV2() {
         </article>
       </section>
 
-      <footer className={styles.homeFooter}>
-        <strong>PrintMe</strong>
-        <nav aria-label="Footer">
-          <Link href="/#shipping">Shipping</Link>
-          <Link href="/#guarantee">Order Support</Link>
-          <Link href="/designs">Fall Designs</Link>
-          <Link href="/collections">Collections</Link>
-          <Link href="/products">Products</Link>
-        </nav>
-      </footer>
+      {/* 8. UNIVERSAL CONSUMER FOOTER */}
+      <SiteFooter />
 
+      {/* Mobile Sticky Action Bar */}
       <nav
         className={styles.mobileCommerceBar}
         aria-label="Quick commerce actions"
         data-testid="home-mobile-commerce-bar"
       >
-        <Link href="/create">Create Yours</Link>
-        <Link href="/shop-v2">
+        <Link href="/create">Make Something</Link>
+        <Link href="/shop">
           <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
           Bag
         </Link>

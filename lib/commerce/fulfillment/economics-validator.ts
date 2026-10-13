@@ -4,6 +4,7 @@ import { getApprovedMerchProduct } from '../catalog/approved-catalog';
 import { AUTHORITATIVE_PRINTIFY_COSTS } from '../catalog/economics-report';
 import { DEFAULT_PRICING_POLICY, type PricingPolicyConfig } from '../pricing-engine';
 import type { CartConfigurationSnapshot } from '../types';
+import { peakShippingSurchargeCents } from '../holiday-shipping';
 
 export interface ItemEconomicsEvaluation {
   itemExternalId: string;
@@ -42,6 +43,7 @@ export interface OrderEconomicsAudit {
   passesMarginFloor: boolean;
   itemEvaluations: ItemEconomicsEvaluation[];
   blockingReasons: string[];
+  peakShippingSurchargeCents: number;
 }
 
 /**
@@ -52,6 +54,7 @@ export function evaluateOrderEconomics(
   items: CartConfigurationSnapshot[],
   shippingPaidCents: number = 0,
   policy: PricingPolicyConfig = DEFAULT_PRICING_POLICY,
+  shippingContext: { now?: Date; country?: string; alreadyIncluded?: boolean } = {},
 ): OrderEconomicsAudit {
   const itemEvaluations: ItemEconomicsEvaluation[] = [];
   const blockingReasons: string[] = [];
@@ -166,12 +169,14 @@ export function evaluateOrderEconomics(
     });
   }
 
+  const peakSurcharge = items.length ? peakShippingSurchargeCents(shippingContext) : 0;
+  totalFulfillmentShipping += peakSurcharge;
   const grossRevenue = itemsTotalRetail + shippingPaidCents;
   const totalCost =
     totalProductCost +
     (policy.shippingModel === 'merchant-paid' ? totalFulfillmentShipping : 0) +
     totalStripeFee +
-    totalSupportReserve;
+    totalSupportReserve + (policy.shippingModel === 'customer-paid' ? peakSurcharge : 0);
 
   const netProfit = itemsTotalRetail - totalCost;
   const overallMargin =
@@ -200,5 +205,6 @@ export function evaluateOrderEconomics(
     passesMarginFloor: orderPassesFloor,
     itemEvaluations,
     blockingReasons,
+    peakShippingSurchargeCents: peakSurcharge,
   };
 }

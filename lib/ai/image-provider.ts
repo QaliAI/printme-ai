@@ -1,7 +1,9 @@
 // Abstract interface for image generation/editing
 
 export interface ImageProviderOptions {
-  imageUrl: string;
+  imageUrl?: string;
+  workflow?: 'photo-edit' | 'text-generation';
+  background?: 'transparent' | 'opaque';
   promptTemplate: string;
   negativePrompt?: string;
   imageContext?: string;
@@ -11,6 +13,9 @@ export interface ImageProviderResult {
   imageUrl: string;
   requestId?: string;
   prompt: string;
+  model?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface ImageProvider {
@@ -20,14 +25,23 @@ export interface ImageProvider {
 }
 
 export async function getImageProvider(): Promise<ImageProvider> {
-  const provider = process.env.AI_PROVIDER || 'mock';
+  const provider = process.env.AI_PROVIDER || 'openai';
 
   if (provider === 'openai') {
     const { OpenAIImageProvider } = await import('./openai-image-provider');
     return new OpenAIImageProvider();
   }
 
-  // Default to mock
-  const { MockImageProvider } = await import('./mock-image-provider');
-  return new MockImageProvider();
+  if (provider === 'mock' && process.env.NODE_ENV !== 'production') {
+    const { MockImageProvider } = await import('./mock-image-provider');
+    return new MockImageProvider();
+  }
+  throw new ImageProviderError('Image generation is temporarily unavailable.', 'PROVIDER_UNAVAILABLE', 503);
+}
+
+export class ImageProviderError extends Error {
+  constructor(message: string, readonly code: string, readonly status = 502) {
+    super(message);
+    this.name = 'ImageProviderError';
+  }
 }

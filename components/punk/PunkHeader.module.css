@@ -1,0 +1,223 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--pm-newsprint);
+  border-bottom: 4px solid var(--pm-ink);
+}
+
+.skip {
+  position: absolute;
+  left: 8px;
+  top: -60px;
+  z-index: 60;
+  background: var(--pm-yellow);
+  color: var(--pm-ink);
+  font-weight: 800;
+  padding: 10px 14px;
+  border: 3px solid var(--pm-ink);
+}
+
+.skip:focus {
+  top: 8px;
+}
+
+.ticker {
+  background: var(--pm-ink);
+  color: var(--pm-newsprint);
+  font: 700 12px/1 var(--font-mono), monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+.ticker > div {
+  display: inline-flex;
+  animation: tick 38s linear infinite;
+}
+
+.ticker span {
+  padding-right: 2em;
+}
+
+@keyframes tick {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 24px;
+}
+
+.logo {
+  display: block;
+  transition: transform 160ms ease;
+}
+
+.logo img {
+  display: block;
+  width: 196px;
+  height: auto;
+}
+
+.logo:hover {
+  transform: rotate(-2deg) scale(1.03);
+}
+
+.nav {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.nav a,
+.mobileNav a {
+  font: 800 15px/1 var(--font-sans), sans-serif;
+  font-stretch: 118%;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--pm-ink);
+  text-decoration: none;
+  padding: 10px 12px;
+  border: 2px solid transparent;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.nav a:hover,
+.nav a[aria-current='page'] {
+  background: var(--pm-yellow);
+  border-color: var(--pm-ink);
+  transform: rotate(-2deg);
+}
+
+.nav a:nth-child(2n):hover {
+  background: var(--pm-pink);
+  transform: rotate(2deg);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconLink,
+.bag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  justify-content: center;
+  color: var(--pm-ink);
+  text-decoration: none;
+  font: 800 14px/1 var(--font-sans), sans-serif;
+  text-transform: uppercase;
+  position: relative;
+  padding: 0 8px;
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: -2px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--pm-pink);
+  color: var(--pm-ink);
+  border: 2px solid var(--pm-ink);
+  font: 800 11px/16px var(--font-sans), sans-serif;
+  text-align: center;
+}
+
+.make {
+  font: 400 19px/1 var(--font-poster), Impact, sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--pm-pink);
+  color: var(--pm-ink);
+  border: 3px solid var(--pm-ink);
+  box-shadow: 4px 4px 0 var(--pm-ink);
+  padding: 11px 16px 10px;
+  text-decoration: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.make:hover {
+  transform: translate(-2px, -2px) rotate(-1deg);
+  box-shadow: 6px 6px 0 var(--pm-ink);
+}
+
+.make:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--pm-ink);
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .nav {
+    display: none;
+  }
+  .bar {
+    grid-template-columns: 1fr auto;
+    padding: 8px 14px;
+    gap: 10px;
+  }
+  .logo img {
+    width: 150px;
+  }
+  .bag span:not(.badge) {
+    display: none;
+  }
+  .make {
+    font-size: 16px;
+    padding: 9px 11px 8px;
+    box-shadow: 3px 3px 0 var(--pm-ink);
+  }
+  .mobileNav {
+    display: flex;
+    overflow-x: auto;
+    gap: 2px;
+    padding: 0 10px 8px;
+    scrollbar-width: none;
+  }
+  .mobileNav a {
+    flex: none;
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+  .mobileNav a[aria-current='page'] {
+    background: var(--pm-yellow);
+    border-color: var(--pm-ink);
+  }
+}
+
+@media (max-width: 380px) {
+  .logo img {
+    width: 128px;
+  }
+  .iconLink {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker > div {
+    animation: none;
+  }
+}

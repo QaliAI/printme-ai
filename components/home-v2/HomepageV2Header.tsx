@@ -7,12 +7,13 @@ import { useEffect, useState } from 'react';
 import styles from '@/app/home-v2.module.css';
 import { Navbar } from '@/components/Navbar';
 import { readLocalCart } from '@/lib/commerce/local-cart';
+import { PrintMeWordmark } from '@/components/brand/PrintMeWordmark';
 
 const navigation = [
-  { href: '/designs', label: 'Shop Fall Designs' },
-  { href: '/create', label: 'Create with Your Photo' },
-  { href: '/collections', label: 'Collections' },
-  { href: '/products', label: 'Products' },
+  { href: '/shop', label: 'Shop' },
+  { href: '/create', label: 'Create' },
+  { href: '/halloween', label: 'Halloween' },
+  { href: '/collections', label: 'Gifts & Collections' },
 ];
 
 const legacyApplicationPrefixes = [
@@ -57,8 +58,7 @@ export function HomepageV2Header() {
     <header className={styles.siteHeader}>
       <div className={styles.headerPrimary}>
         <Link className={styles.wordmark} href="/" aria-label="PrintMe home">
-          <span aria-hidden="true">P</span>
-          PrintMe
+          <PrintMeWordmark size="md" />
         </Link>
         <nav className={styles.desktopNav} aria-label="Primary navigation">
           {navigation.map((item) => (
@@ -72,7 +72,7 @@ export function HomepageV2Header() {
             <Search aria-hidden="true" size={18} strokeWidth={1.8} />
             <span>Search</span>
           </Link>
-          <Link href="/shop-v2" aria-label={`Open bag with ${cartCount} items`}>
+          <Link href="/shop" aria-label={`Open bag with ${cartCount} items`}>
             <ShoppingBag aria-hidden="true" size={18} strokeWidth={1.8} />
             <span>Bag</span>
             {cartCount > 0 && (
@@ -90,7 +90,7 @@ export function HomepageV2Header() {
           </Link>
         ))}
         <Link href="/designs">Search</Link>
-        <Link href="/shop-v2">
+        <Link href="/shop">
           Bag{cartCount > 0 ? ` (${cartCount})` : ''}
         </Link>
       </nav>

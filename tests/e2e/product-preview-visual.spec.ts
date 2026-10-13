@@ -21,6 +21,13 @@ test('approved product previews remain visually stable', async ({
 
   const preview = page.getByTestId('instant-preview');
   const verifyPreviewImage = async (name: string) => {
+    await preview.locator('img').evaluateAll(async images => {
+      await Promise.all(images.map(async image => {
+        if (!(image instanceof HTMLImageElement)) return;
+        image.loading = 'eager';
+        await image.decode();
+      }));
+    });
     if (process.platform === 'win32') {
       await expect(preview).toHaveScreenshot(name, {
         animations: 'disabled',

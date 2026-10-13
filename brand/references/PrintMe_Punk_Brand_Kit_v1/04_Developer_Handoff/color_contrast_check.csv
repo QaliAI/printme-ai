@@ -1,0 +1,7 @@
+Pair,Text,Background,ContrastRatio,AA_normal_text
+Ink on Newsprint,#111111,#F4F0E8,16.61,PASS
+Ink on Yellow,#111111,#F7D431,12.96,PASS
+Ink on Pink,#111111,#F23D99,5.31,PASS
+White on Ink,#FFFFFF,#111111,18.88,PASS
+Pink on Newsprint,#F23D99,#F4F0E8,3.13,FAIL
+Orange on Newsprint,#FF5B35,#F4F0E8,2.72,FAIL

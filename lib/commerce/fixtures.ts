@@ -371,6 +371,63 @@ export const curatedDesigns: CuratedDesign[] = [
       hasTransparency: true,
     },
   },
+  {
+    id: 'design-make-shit-print-shit',
+    title: 'Make Shit. Print Shit.',
+    description:
+      'The PrintMe manifesto as a ransom-note collage: torn paper, tape, and punk-pink scraps on a heavy ink slab.',
+    collection: 'Streetwear Graphics',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-make-shit-print-shit',
+      version: 'issue-01-v1',
+      url: '/designs/issue-01/make-shit-print-shit.webp',
+      productionUrl: '/designs/issue-01/make-shit-print-shit.png',
+      alt: 'MAKE SHIT. PRINT SHIT. ransom-note collage lettering on torn paper scraps over a black slab',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
+  {
+    id: 'design-bad-ideas-club',
+    title: 'Bad Ideas Club',
+    description:
+      'A distressed collegiate crest for the 3 AM thinkers: halftone crescent moon, varsity lettering, and a marker footnote.',
+    collection: 'Funny as Hell',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-bad-ideas-club',
+      version: 'issue-01-v1',
+      url: '/designs/issue-01/bad-ideas-club.webp',
+      productionUrl: '/designs/issue-01/bad-ideas-club.png',
+      alt: 'BAD IDEAS CLUB EST. 3AM collegiate lettering over a pink halftone crescent moon with a “no regrets (some regrets)” scrawl',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
+  {
+    id: 'design-creature-of-habit',
+    title: 'Creature of Habit',
+    description:
+      'An original one-eyed horned monster running on coffee and spite, printed in a three-colour screen-print style.',
+    collection: 'Halloween / Horror',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-creature-of-habit',
+      version: 'issue-01-v1',
+      url: '/designs/issue-01/creature-of-habit.webp',
+      productionUrl: '/designs/issue-01/creature-of-habit.png',
+      alt: 'Orange one-eyed horned monster grinning with a #1 coffee mug under dripping CREATURE OF HABIT lettering',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
 ];
 
 export const merchProducts: MerchProduct[] = [
