@@ -24,7 +24,7 @@ import {
 import type { CartConfigurationSnapshot } from '@/lib/commerce/types';
 
 function snapshot() {
-  const design = curatedDesigns[0];
+  const design = curatedDesigns.find((item) => item.id === 'design-boo-crew')!;
   const product = getApprovedMerchProducts()[1];
   return createCartSnapshot({
     id: '3cb5afe4-ff4d-4a98-8069-2d5fd1142f4a',

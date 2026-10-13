@@ -7,36 +7,39 @@ test('server-rendered design, collection, and drop routes use published seed dat
   await expect(
     page.getByRole('heading', { level: 1, name: 'Choose the art first.' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /Sunday Sidekick/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Civilized Trash/ })).toBeVisible();
 
   await page.goto('/collections');
   await expect(
     page.getByRole('heading', { level: 1, name: 'Collections' }),
   ).toBeVisible();
 
-  await page.goto('/designs/sunday-sidekick');
+  await page.goto('/designs/civilized-trash');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Sunday Sidekick' }),
+    page.getByRole('heading', { level: 1, name: 'Civilized Trash' }),
   ).toBeVisible();
 
-  await page.goto('/collections/pets');
+  await page.goto('/collections/specimen-plates');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Pets' }),
+    page.getByRole('heading', { level: 1, name: 'Specimen Plates' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /Quiet Company/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Carved Under Protest/ })).toBeVisible();
 
-  await page.goto('/drops/studio-seeds');
+  await page.goto('/drops/specimen-plates');
   await expect(
-    page.getByRole('heading', { level: 1, name: 'Studio Seeds' }),
+    page.getByRole('heading', { level: 1, name: /Specimen Plates/ }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: /Coastal Air/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Professional Rummager/ })).toBeVisible();
+
+  // Archived development seeds are not sold.
+  expect((await page.goto('/designs/sunday-sidekick'))?.status()).toBe(404);
 });
 
 test('Shop V2 configurator traps focus and restores it on close', async ({
   page,
 }) => {
   await page.goto('/shop-v2');
-  const trigger = page.getByTestId('open-design-design-pet-pop');
+  const trigger = page.getByTestId('open-design-design-autumn-state-of-mind');
   await trigger.focus();
   await trigger.press('Enter');
 

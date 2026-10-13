@@ -19,9 +19,10 @@ import {
 
 describe('curated design catalog', () => {
   it('filters to published designs and excludes drafts', () => {
-    const published = developmentDesignSeeds[0];
+    // boo-crew is published and filtered 'new' + 'trending' (editorial staff pick).
+    const published = developmentDesignSeeds.find((design) => design.slug === 'boo-crew')!;
     const draft = {
-      ...developmentDesignSeeds[1],
+      ...published,
       id: 'draft-design',
       slug: 'draft-design',
       publicationStatus: 'draft' as const,
@@ -36,10 +37,10 @@ describe('curated design catalog', () => {
 
   it('resolves published slugs and collection membership', async () => {
     const repository = new SeedDesignRepository();
-    const design = await repository.findPublishedBySlug('sunday-sidekick');
-    const collection = await repository.findCollectionBySlug('pets');
+    const design = await repository.findPublishedBySlug('civilized-trash');
+    const collection = await repository.findCollectionBySlug('specimen-plates');
 
-    expect(design?.title).toBe('Sunday Sidekick');
+    expect(design?.title).toBe('Civilized Trash');
     expect(collection?.designIds).toContain(design?.id);
     await expect(
       repository.findPublishedBySlug('missing-design'),
@@ -79,7 +80,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(24);
+    await expect(service.listPublished()).resolves.toHaveLength(19);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -87,7 +88,7 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(24);
+    expect(designs).toHaveLength(19);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
@@ -135,6 +136,16 @@ describe('curated design catalog', () => {
 
     const poster = await repository.findPublishedBySlug('autumn-state-of-mind');
     expect(poster?.recommendedProductId).toBe('gallery-poster');
+  });
+});
+
+describe('development seeds', () => {
+  it('keeps demo-photo seeds and their collections out of the storefront', async () => {
+    const repository = new SeedDesignRepository();
+    await expect(repository.findPublishedBySlug('sunday-sidekick')).resolves.toBeNull();
+    await expect(repository.findCollectionBySlug('pets')).resolves.toBeNull();
+    const published = await repository.listPublished();
+    expect(published.every((design) => design.rightsStatus === 'commercial-print-cleared')).toBe(true);
   });
 });
 
