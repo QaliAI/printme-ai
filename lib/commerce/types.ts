@@ -107,6 +107,8 @@ export interface PreviewTemplateView {
   productMask?: string;
   shadowOverlay?: string;
   highlightOverlay?: string;
+  /** Grayscale multiply map from the product photo: transfers folds/curvature onto the print. */
+  shadeOverlay?: string;
   productColor?: string;
 }
 

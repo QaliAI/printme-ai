@@ -11,7 +11,7 @@ import styles from './RebelBot.module.css';
  * can pose the head and spray arm (pivot transforms) without new artwork.
  *
  * Poses: pass static angles, or pass refs and drive the `transform`
- * attribute from a scroll timeline (see RebelWallSequence).
+ * attribute from an animation timeline.
  */
 export interface RebelBotProps {
   className?: string;

@@ -248,6 +248,7 @@
 
 .preview {
   position: relative;
+  isolation: isolate;
   width: min(100%, 440px);
   aspect-ratio: 4 / 5;
   overflow: hidden;
@@ -264,6 +265,14 @@
 
 .previewOverlay {
   z-index: 3;
+}
+
+/* Photo-derived fabric/ceramic shading: folds and curvature fall across the print. */
+.previewShade {
+  z-index: 3;
+  object-fit: contain;
+  pointer-events: none;
+  mix-blend-mode: multiply;
 }
 
 .artworkClip {

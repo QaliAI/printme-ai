@@ -1,18 +1,16 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
-import { CollageLogo } from '@/components/brand/CollageLogo';
 import { SiteFooter } from '@/components/brand/SiteFooter';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import type { CuratedDesignRecord } from '@/lib/commerce/designs/models';
-import { getActiveSeasonalTrends, type EvidenceType } from '@/lib/commerce/seasonal-trends';
 import type { MerchProduct } from '@/lib/commerce/types';
 import { photoStyles } from '@/lib/ai/photo-styles';
+import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { MakeYourOwnArt } from './MakeYourOwnArt';
-import { PrintFactory, type FactoryProduct } from './PrintFactory';
 import { RebelBot } from './RebelBot';
-import { RebelWallSequence } from './RebelWallSequence';
-import { RevealOnView, type RevealVariant } from './RevealOnView';
+import { RevealOnView } from './RevealOnView';
 import styles from './punk.module.css';
 
 const usd = (cents: number) =>
@@ -21,18 +19,6 @@ const usd = (cents: number) =>
 function fromPrice(product: MerchProduct) {
   return Math.min(...product.variants.filter((v) => v.available).map((v) => v.unitPrice));
 }
-
-const shortName: Record<string, string> = { 'everyday-tee': 'Tee', 'gallery-poster': 'Poster', 'keepsake-mug': 'Mug' };
-const methodLabel: Record<string, string> = {
-  dtg: 'Direct-to-garment (DTG)',
-  'digital-printing': 'Digital print, archival matte paper',
-  sublimation: 'Dye sublimation',
-};
-const evidenceLabel: Record<EvidenceType, string> = {
-  'keyword-demand': 'Search interest',
-  'marketplace-listings': 'Marketplace listings',
-  'editorial-forecast': 'Editorial forecast',
-};
 
 const headline: { word: string; tone: 'paper' | 'pink' | 'yellow' | 'ink' | 'photocopy' }[] = [
   { word: 'Your', tone: 'paper' },
@@ -43,66 +29,45 @@ const headline: { word: string; tone: 'paper' | 'pink' | 'yellow' | 'ink' | 'pho
 ];
 
 /**
- * PrintMe.ai homepage — "Issue Nº 01", six acts.
- * Every product, price, preview, trend source and style below is read from the
- * existing commerce engine; nothing on this page is a mock-up.
+ * PrintMe.ai homepage. Every product, price and preview comes from the
+ * existing commerce engine. Lifestyle photos are clearly labelled styled
+ * photos; the purchasable preview is always the InstantPreview render.
  */
 export async function PunkHomepage() {
   const products = getApprovedMerchProducts();
   const productById = new Map(products.map((p) => [p.id, p]));
-  const designs = await getDesignCatalogService().listPublished();
+  const service = getDesignCatalogService();
+  const designs = await service.listPublished();
   const bySlug = new Map(designs.map((d) => [d.slug, d]));
   const tee = productById.get('everyday-tee') ?? products[0];
-  const poster = productById.get('gallery-poster');
-  const mug = productById.get('keepsake-mug');
+  const poster = productById.get('gallery-poster') ?? products[0];
+  const mug = productById.get('keepsake-mug') ?? products[0];
   const startingPrice = Math.min(...products.map(fromPrice));
 
   const manifesto = bySlug.get('make-shit-print-shit') ?? designs[0];
-  const badIdeas = bySlug.get('bad-ideas-club') ?? designs[1] ?? designs[0];
-  const creature = bySlug.get('creature-of-habit') ?? designs[2] ?? designs[0];
+  const badIdeas = bySlug.get('bad-ideas-club') ?? designs[0];
+  const creature = bySlug.get('creature-of-habit') ?? designs[0];
+  const library = bySlug.get('library-of-lost-hours');
 
-  // Wall of Drops: Issue Nº 01 first, then the highest-priority published designs.
-  const issue = designs.filter((d) => d.tags.includes('issue-01')).sort((a, b) => b.merchandisingPriority - a.merchandisingPriority);
-  const rest = designs
-    .filter((d) => !d.tags.includes('issue-01') && d.tags.includes('fall-2026'))
-    .sort((a, b) => b.merchandisingPriority - a.merchandisingPriority);
-  const wall = [...issue, ...rest].slice(0, 8);
-  const variants: RevealVariant[] = ['slap', 'tear', 'peel', 'flip'];
-  const collections = (await getDesignCatalogService().listCollections()).filter(
-    (c) => c.publicationStatus === 'published' && c.designIds.length > 0 && c.slug !== 'first-look',
-  );
+  // Featured: the strongest original art across the three approved products.
+  const featured: { design: CuratedDesignRecord; product: MerchProduct; isNew: boolean }[] = [
+    { design: manifesto, product: tee, isNew: true },
+    { design: badIdeas, product: tee, isNew: true },
+    { design: creature, product: tee, isNew: true },
+    { design: creature, product: mug, isNew: true },
+    ...(library ? [{ design: library, product: mug, isNew: false }] : []),
+    { design: badIdeas, product: poster, isNew: true },
+  ].filter((item) => item.design.compatibleProductIds.includes(item.product.id));
 
-  const trends = getActiveSeasonalTrends().slice(0, 4);
-
-  const productFor = (design: CuratedDesignRecord) =>
-    productById.get(design.recommendedProductId) ?? tee;
-
-  const factoryProducts: FactoryProduct[] = [tee, poster, mug]
-    .filter((p): p is MerchProduct => Boolean(p))
-    .filter((p) => badIdeas.compatibleProductIds.includes(p.id))
-    .map((p) => {
-      const ph = p.variants.find((v) => v.available)?.placeholders.find((x) => x.position === 'front');
-      return {
-        id: p.id,
-        name: p.name,
-        price: usd(fromPrice(p)),
-        method: methodLabel[p.provider.decorationMethods[0]] ?? p.provider.decorationMethods[0],
-        printArea: ph
-          ? `${ph.width} × ${ph.height} px${ph.printWidthInches ? ` · ${ph.printWidthInches} × ${ph.printHeightInches} in` : ''}`
-          : 'Set by the product template',
-        href: `/designs/${badIdeas.slug}`,
-        preview: <MerchandisePreview design={badIdeas} product={p} />,
-      };
-    });
+  const remix = [manifesto, badIdeas, creature, library].filter((d): d is CuratedDesignRecord => Boolean(d));
+  const textThread = isReviewFeatureEnabled('text-thread');
 
   return (
     <div className={styles.home}>
-      {/* ACT I — THE REBELLION */}
+      {/* HERO */}
       <section className={styles.hero} aria-labelledby="hero-heading">
         <div className={styles.heroCopy}>
-          <div className={styles.heroLogo}>
-            <CollageLogo variant="stacked" title="PrintMe.ai" />
-          </div>
+          <p className={styles.issueTag}>Issue Nº 01 · New drop</p>
           <h1 id="hero-heading" className={styles.ransom}>
             {headline.map((part, i) => (
               <span key={part.word} className={styles.ransomWord} data-tone={part.tone} style={{ ['--i' as string]: i }}>
@@ -111,179 +76,277 @@ export async function PunkHomepage() {
             ))}
           </h1>
           <p className={styles.heroLede}>
-            Upload a photo or grab an original design. Preview it on a real tee, poster or mug. We print it to order.
+            Original streetwear graphics, or your own photo, printed to order on premium blanks. See the exact product before you pay.
           </p>
           <div className={styles.heroActions}>
             <Link href="/create" className={styles.btnPink} data-testid="hero-make">
-              Make something
+              Upload your photo
             </Link>
             <Link href="/shop" className={styles.btnInk}>
-              Shop the chaos
+              Shop the drops
             </Link>
           </div>
-          <p className={styles.heroPrice}>
-            Custom items from {usd(startingPrice)} · {products.map((p) => `${shortName[p.id] ?? p.name} ${usd(fromPrice(p))}`).join(' · ')}
-          </p>
+          <ul className={styles.heroFacts}>
+            <li>Bella+Canvas 3001 tees</li>
+            <li>Museum-grade posters</li>
+            <li>Ceramic mugs</li>
+            <li>From {usd(startingPrice)}</li>
+          </ul>
         </div>
 
-        <div className={styles.heroCollage} aria-label="Issue Nº 01 merchandise">
-          <span className={styles.sticker} aria-hidden="true">
-            Make shit.
-            <br />
-            Print shit.
-          </span>
-          <Link href={`/designs/${manifesto.slug}`} className={styles.heroTee} data-testid="hero-feature">
-            <span className={styles.tape} aria-hidden="true" />
-            <MerchandisePreview design={manifesto} product={tee} />
-            <span className={styles.heroTag}>
-              {manifesto.title} · Tee {usd(fromPrice(tee))}
+        <div className={styles.heroMedia}>
+          <figure className={styles.heroPhoto}>
+            <Image
+              src="/lifestyle/bad-ideas-club-model.webp"
+              alt="Model wearing the Bad Ideas Club tee in white"
+              width={1200}
+              height={1500}
+              priority
+              sizes="(max-width: 900px) 100vw, 46vw"
+            />
+            <figcaption>Styled photo</figcaption>
+          </figure>
+          <Link href={`/designs/${badIdeas.slug}`} className={styles.heroProof} data-testid="hero-feature">
+            <span className={styles.heroProofPreview}>
+              <MerchandisePreview design={badIdeas} product={tee} />
+            </span>
+            <span className={styles.heroProofText}>
+              <small>Exact print preview</small>
+              <strong>{badIdeas.title}</strong>
+              <span>
+                {tee.name} · {usd(fromPrice(tee))}
+              </span>
             </span>
           </Link>
-          {mug && (
-            <Link href={`/designs/${creature.slug}`} className={styles.heroMug}>
-              <MerchandisePreview design={creature} product={mug} />
-              <span className={styles.heroTag}>Mug {usd(fromPrice(mug))}</span>
-            </Link>
-          )}
           <div className={styles.heroBot} aria-hidden="true">
             <RebelBot armAngle={-30} freeArmAngle={40} headTilt={-6} spraying />
           </div>
         </div>
       </section>
 
-      {/* SIGNATURE SEQUENCE — bridges Act I into the product wall */}
-      <RebelWallSequence
-        art={{ url: creature.asset.url, alt: creature.asset.alt, title: creature.title, href: `/designs/${creature.slug}` }}
-        product={{ name: tee.name, price: usd(fromPrice(tee)), href: `/products/${tee.merchandising?.slug ?? tee.id}` }}
-        teeSlot={<MerchandisePreview design={creature} product={tee} />}
-      />
-
-      {/* ACT II — THE WALL OF DROPS */}
-      <section className={styles.dropsWall} aria-labelledby="drops-heading" data-testid="homepage-product-showcase">
-        <header className={styles.dropsHead}>
-          <p className={styles.issueTag}>Act II · Fresh off the press</p>
-          <h2 id="drops-heading" className={styles.posterHeading}>
-            The wall of <span className={styles.hlPink}>drops</span>
-          </h2>
-          <nav className={styles.collectionChips} aria-label="Collections">
-            {collections.map((c) => (
-              <Link key={c.id} href={`/collections/${c.slug}`}>
-                {c.title}
-              </Link>
-            ))}
-          </nav>
-        </header>
-        <ul className={styles.dropsGrid}>
-          {wall.map((design, i) => {
-            const product = productFor(design);
-            return (
-              <RevealOnView as="li" key={design.id} variant={variants[i % variants.length]} className={styles.dropItem}>
-                <Link href={`/designs/${design.slug}`} className={styles.dropCard} style={{ ['--tilt' as string]: `${[-2.5, 1.8, -1, 2.6, 1.2, -2, 2.2, -1.6][i % 8]}deg` }}>
-                  <span className={styles.dropCollection}>{design.collection}</span>
-                  {design.tags.includes('issue-01') && <span className={styles.dropNew}>New drop</span>}
-                  <span className={styles.dropMedia}>
-                    <span className={styles.dropProduct}>
-                      <MerchandisePreview design={design} product={product} />
-                    </span>
-                    <span className={styles.dropArt} aria-hidden="true">
-                      {/* eslint-disable-next-line @next/next/no-img-element -- alternate artwork view, lazy */}
-                      <img src={design.asset.url} alt="" loading="lazy" decoding="async" width={988} height={1200} />
-                    </span>
-                  </span>
-                  <span className={styles.dropMeta}>
-                    <strong>{design.title}</strong>
-                    <small>
-                      {product.name} · {usd(fromPrice(product))}
-                    </small>
-                  </span>
-                </Link>
-              </RevealOnView>
-            );
-          })}
-        </ul>
-        <div className={styles.dropsFoot}>
-          <Link href="/shop" className={styles.btnPink}>
-            Shop all drops
+      {/* FEATURED DROPS — straight after the hero */}
+      <section className={styles.drops} aria-labelledby="drops-heading" data-testid="homepage-product-showcase">
+        <header className={styles.sectionHead}>
+          <div>
+            <p className={styles.issueTag}>Fresh off the press</p>
+            <h2 id="drops-heading" className={styles.posterHeading}>
+              The <span className={styles.hlPink}>drops</span>
+            </h2>
+          </div>
+          <Link href="/shop" className={styles.textLink}>
+            Shop everything →
           </Link>
-          <p className={styles.microtype}>Hover or focus a poster to see the raw artwork.</p>
+        </header>
+        <ul className={styles.productGrid}>
+          {featured.map(({ design, product, isNew }, i) => (
+            <RevealOnView as="li" key={`${design.id}-${product.id}`} variant="slap" className={styles.productItem}>
+              <Link href={`/designs/${design.slug}`} className={styles.productCard} style={{ ['--d' as string]: `${i * 60}ms` }}>
+                <span className={styles.productMedia}>
+                  <MerchandisePreview design={design} product={product} />
+                  {isNew && <span className={styles.productBadge}>New</span>}
+                </span>
+                <span className={styles.productMeta}>
+                  <strong>{design.title}</strong>
+                  <span>
+                    {product.name}
+                    <b>{usd(fromPrice(product))}</b>
+                  </span>
+                </span>
+              </Link>
+            </RevealOnView>
+          ))}
+        </ul>
+      </section>
+
+      {/* EDITORIAL / QUALITY */}
+      <section className={styles.editorial} aria-labelledby="editorial-heading">
+        <figure className={styles.editorialMain}>
+          <Image
+            src="/lifestyle/make-shit-print-shit-model.webp"
+            alt="Model sitting on a stool wearing the Make Shit. Print Shit. tee"
+            width={1200}
+            height={1500}
+            sizes="(max-width: 900px) 100vw, 40vw"
+          />
+        </figure>
+        <div className={styles.editorialCopy}>
+          <p className={styles.issueTag}>Made like real merch</p>
+          <h2 id="editorial-heading" className={styles.posterHeading}>
+            Heavy ink.
+            <br />
+            <span className={styles.hlYellow}>Soft cotton.</span>
+          </h2>
+          <dl className={styles.specList}>
+            <div>
+              <dt>Tee</dt>
+              <dd>Bella+Canvas 3001 unisex jersey, ribbed collar, side-seamed. Direct-to-garment print.</dd>
+            </div>
+            <div>
+              <dt>Poster</dt>
+              <dd>Museum-grade archival matte paper, 189 g/m², pigment inks. 12×18 or 18×24 in.</dd>
+            </div>
+            <div>
+              <dt>Mug</dt>
+              <dd>11 oz white ceramic, lead- and BPA-free, sublimation printed.</dd>
+            </div>
+            <div>
+              <dt>Every order</dt>
+              <dd>Printed when you order. Damaged or misprinted items are reviewed and reprinted.</dd>
+            </div>
+          </dl>
+          <figure className={styles.editorialDetail}>
+            <Image
+              src="/lifestyle/creature-of-habit-detail-640.webp"
+              alt="Close-up of the Creature of Habit print on cotton"
+              width={640}
+              height={800}
+              sizes="(max-width: 900px) 50vw, 18vw"
+            />
+          </figure>
+          <p className={styles.photoNote}>Styled photos on the actual blanks. Your product page shows the exact print preview.</p>
         </div>
       </section>
 
-      {/* ACT III — MAKE YOUR OWN DAMN ART */}
+      {/* PERSONALIZE */}
       <MakeYourOwnArt
         products={products}
         styles={Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label }))}
       />
 
-      {/* ACT IV — TREND RADAR */}
-      <section className={styles.radar} aria-labelledby="radar-heading">
-        <div className={styles.radarTicker} aria-hidden="true">
-          <div>
-            {[...trends, ...trends].map((t, i) => (
-              <span key={`${t.id}-${i}`}>#{t.theme.replace(/\s+/g, '')}</span>
-            ))}
-          </div>
-        </div>
-        <header className={styles.radarHead}>
-          <p className={styles.issueTag}>Act IV · Trend radar</p>
-          <h2 id="radar-heading" className={styles.posterHeading}>
-            What the internet&apos;s <span className={styles.hlYellow}>into</span>
+      {/* SEASONAL */}
+      <section className={styles.season} aria-labelledby="season-heading">
+        <div className={styles.seasonCopy}>
+          <p className={styles.seasonTag}>Halloween · The Slasher Shop</p>
+          <h2 id="season-heading" className={styles.posterHeading}>
+            Make it <span className={styles.hlAcid}>creepy.</span>
           </h2>
           <p className={styles.lede}>
-            Signals we watched, with receipts. These are public listings and forecasts we reviewed — not our sales numbers and not a
-            live ranking.
+            Turn your pet into gothic Halloween art, put your name on a haunted library card, or grab the monster that runs on coffee.
           </p>
-        </header>
-        <div className={styles.radarBoard}>
-          {trends.map((trend, i) => {
-            const design = bySlug.get(trend.relatedDesignSlug);
-            const source = trend.sources[0];
-            return (
-              <RevealOnView key={trend.id} as="article" variant={i % 2 ? 'peel' : 'tear'} className={styles.clipping}>
-                <span className={styles.pin} aria-hidden="true" />
-                <p className={styles.clippingIssue}>
-                  Nº {String(i + 1).padStart(2, '0')} · {trend.categoryLabel}
-                </p>
-                {design && (
-                  // eslint-disable-next-line @next/next/no-img-element -- small lazy clipping thumbnail
-                  <img src={design.asset.url} alt="" loading="lazy" decoding="async" width={988} height={1200} className={styles.clippingArt} />
-                )}
-                <h3>{trend.headline}</h3>
-                <p>{trend.description}</p>
-                {source && (
-                  <p className={styles.receipt}>
-                    <span>{evidenceLabel[trend.evidenceType]}</span>{' '}
-                    <a href={source.url} target="_blank" rel="noopener noreferrer">
-                      {source.name}
-                    </a>{' '}
-                    · seen {source.observedDate}
-                  </p>
-                )}
-                <Link href={`/designs/${trend.relatedDesignSlug}`} className={styles.clippingCta}>
-                  {trend.isPersonalizationSupported ? 'Make your version' : 'See the design'} →
-                </Link>
-              </RevealOnView>
-            );
-          })}
+          <div className={styles.seasonActions}>
+            <Link href="/halloween" className={styles.btnAcid}>
+              Enter the Halloween shop
+            </Link>
+            <Link href="/create?style=halloween-pet" className={styles.btnPaper}>
+              Halloween pet art
+            </Link>
+          </div>
+        </div>
+        <div className={styles.seasonCards}>
+          <Link href="/create?style=haunted-portrait" className={styles.seasonCard}>
+            <span className={styles.seasonCardType} aria-hidden="true">
+              Your pet.
+              <br />
+              <em>But haunted.</em>
+            </span>
+            <strong>Gothic haunted portrait</strong>
+            <small>AI style · upload a photo</small>
+          </Link>
+          {library && (
+            <Link href="/halloween" className={styles.seasonCard}>
+              <span className={styles.seasonCardPreview}>
+                <MerchandisePreview design={library} product={mug} />
+              </span>
+              <strong>{library.title}</strong>
+              <small>Personalize the name · {usd(fromPrice(mug))}</small>
+            </Link>
+          )}
+          <Link href={`/designs/${creature.slug}`} className={styles.seasonCard}>
+            <span className={styles.seasonCardPreview}>
+              <MerchandisePreview design={creature} product={tee} />
+            </span>
+            <strong>{creature.title}</strong>
+            <small>
+              {tee.name} · {usd(fromPrice(tee))}
+            </small>
+          </Link>
         </div>
       </section>
 
-      {/* ACT V — THE PRINT FACTORY */}
-      <PrintFactory products={factoryProducts} artTitle={badIdeas.title} />
+      {/* REMIX THE INTERNET */}
+      <section className={styles.remix} aria-labelledby="remix-heading">
+        <header className={styles.sectionHead}>
+          <div>
+            <p className={styles.issueTag}>Remix the internet</p>
+            <h2 id="remix-heading" className={styles.posterHeading}>
+              Steal like an <span className={styles.hlPink}>artist.</span>
+            </h2>
+          </div>
+          <p className={styles.remixNote}>Original art made for group chats. Pick a piece, swap the product, make it yours.</p>
+        </header>
+        <ul className={styles.remixGrid}>
+          {remix.map((design, i) => (
+            <li key={design.id}>
+              <Link href={`/shop?design=${encodeURIComponent(design.slug)}`} className={styles.remixTile} data-tone={['pink', 'yellow', 'ink', 'paper'][i % 4]}>
+                <span className={styles.remixArt}>
+                  <Image src={design.asset.url} alt={design.asset.alt} width={988} height={1200} sizes="(max-width: 700px) 45vw, 22vw" />
+                </span>
+                <span className={styles.remixMeta}>
+                  <strong>{design.title}</strong>
+                  <em>Remix it →</em>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-      {/* ACT VI — THE FINAL ENCORE */}
+      {/* WHAT YOU CAN MAKE TODAY */}
+      <section className={styles.tools} aria-labelledby="tools-heading">
+        <h2 id="tools-heading" className={styles.posterHeading}>
+          What you can <span className={styles.hlYellow}>make today</span>
+        </h2>
+        <ul className={styles.toolGrid}>
+          <li>
+            <Link href="/create">
+              <strong>Your photo on merch</strong>
+              <span>Upload from your phone, place it on the real print area, order.</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/create?style=illustrated">
+              <strong>AI photo styles</strong>
+              <span>{Object.keys(photoStyles).length} styles, from illustrated portraits to Halloween pet art. Preview before you pay.</span>
+            </Link>
+          </li>
+          <li>
+            <Link href="/halloween">
+              <strong>Personalized designs</strong>
+              <span>Add family, pet and reader names to seasonal designs.</span>
+            </Link>
+          </li>
+          <li>
+            <Link href={`/shop?design=${encodeURIComponent(badIdeas.slug)}`}>
+              <strong>Matching sets</strong>
+              <span>Put one design on a tee, mug and poster in a single checkout.</span>
+            </Link>
+          </li>
+          {textThread && (
+            <li>
+              <Link href="/text-thread">
+                <strong>Text-thread designer</strong>
+                <span>Turn a group-chat moment into a print.</span>
+              </Link>
+            </li>
+          )}
+        </ul>
+      </section>
+
+      {/* ENCORE */}
       <section className={styles.encore} aria-labelledby="encore-heading">
         <div className={styles.encoreWall} aria-hidden="true" />
         <div className={styles.encoreBot} aria-hidden="true">
           <RebelBot armAngle={-46} freeArmAngle={-60} headTilt={8} spraying />
         </div>
-        <h2 id="encore-heading" className={styles.encoreType}>
-          <span data-tone="paper">Stop</span> <span data-tone="pink">scrolling.</span> <span data-tone="yellow">Start</span>{' '}
-          <span data-tone="ink">making.</span>
-        </h2>
+        <RevealOnView variant="slap">
+          <h2 id="encore-heading" className={styles.encoreType}>
+            <span data-tone="paper">Stop</span> <span data-tone="pink">scrolling.</span> <span data-tone="yellow">Start</span>{' '}
+            <span data-tone="ink">making.</span>
+          </h2>
+        </RevealOnView>
         <div className={styles.encoreActions}>
           <Link href="/create" className={styles.btnPink}>
-            Create your design
+            Upload your photo
           </Link>
           <Link href="/shop" className={styles.btnPaper}>
             Shop the drops
@@ -312,8 +375,8 @@ export async function PunkHomepage() {
       <SiteFooter />
 
       <nav className={styles.mobileBar} aria-label="Quick actions" data-testid="home-mobile-commerce-bar">
-        <Link href="/create">Make something</Link>
-        <Link href="/shop">Shop</Link>
+        <Link href="/create">Upload photo</Link>
+        <Link href="/shop">Shop drops</Link>
       </nav>
     </div>
   );

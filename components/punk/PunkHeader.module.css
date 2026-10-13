@@ -170,6 +170,9 @@
 }
 
 @media (max-width: 960px) {
+  .ticker {
+    display: none;
+  }
   .nav {
     display: none;
   }
