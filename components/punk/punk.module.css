@@ -1210,11 +1210,42 @@
 }
 
 @media (max-width: 600px) {
-  .heroActions > * {
-    flex: 1 1 100%;
+  .hero {
+    padding-top: 12px;
+    gap: 18px;
   }
   .ransom {
-    font-size: 3.4rem;
+    font-size: 3.1rem;
+    margin-bottom: 14px;
+  }
+  .heroLede {
+    font-size: 1.02rem;
+    margin-bottom: 16px;
+  }
+  .heroActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .heroActions > * {
+    padding: 14px 6px 12px;
+    font-size: 1.02rem;
+    box-shadow: 3px 3px 0 var(--pm-ink);
+  }
+  .heroActions > .btnInk {
+    box-shadow: 3px 3px 0 var(--pm-pink);
+  }
+  .heroFacts {
+    font-size: 10.5px;
+    gap: 4px 12px;
+  }
+  .heroPhoto {
+    aspect-ratio: 1 / 1;
+    box-shadow: 6px 6px 0 var(--pm-ink);
+  }
+  .heroPhoto img {
+    object-position: 50% 12%;
   }
   .heroProof {
     grid-template-columns: 76px 1fr;
