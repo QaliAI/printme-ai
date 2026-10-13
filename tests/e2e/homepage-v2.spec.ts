@@ -60,6 +60,26 @@ test('upload → remove background → preview cutout → choose product → con
   await expect(page.getByTestId('instant-preview').locator('img[src^="blob:"]').first()).toBeVisible({ timeout: 15_000 });
 });
 
+test('a cutout becomes a personalized specimen plate at print size and continues to the studio', async ({ page, context }) => {
+  await context.addCookies([e2eCookie]);
+  await page.goto('/');
+  await page.getByTestId('use-sample').click();
+  await page.getByTestId('remove-background').click();
+  await expect(page.getByTestId('refine-cutout')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('mode-plate').click();
+  const form = page.getByTestId('plate-form');
+  await form.getByLabel('Pet name').fill('Maple');
+  await form.getByLabel('Species').selectOption('cat');
+  await form.getByLabel('Title').selectOption('professional napper');
+  const plate = page.getByTestId('cutout-preview').locator('img[alt="Your specimen plate"]');
+  await expect(plate).toBeVisible({ timeout: 20_000 });
+  const size = await plate.evaluate((img: HTMLImageElement) => [img.naturalWidth, img.naturalHeight]);
+  expect(size).toEqual([3951, 4800]);
+  await expect(page.getByTestId('try-it-preview').getByTestId('instant-preview')).toHaveAttribute('data-product-id', 'everyday-tee');
+  await page.getByTestId('continue-to-studio').click();
+  await expect(page).toHaveURL(/\/create\?product=everyday-tee&artwork=blob/, { timeout: 30_000 });
+});
+
 test('the sample photo works without an upload', async ({ page, context }) => {
   await context.addCookies([e2eCookie]);
   await page.goto('/');

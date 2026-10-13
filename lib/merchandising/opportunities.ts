@@ -63,6 +63,8 @@ export const opportunitySchema = z.object({
     notes: z.string(),
   }),
   designIds: z.array(z.string()),
+  /** Where a non-catalog opportunity (e.g. a personalization tool) is live. */
+  liveSurface: z.string().optional(),
 });
 
 export type MerchOpportunity = z.infer<typeof opportunitySchema>;

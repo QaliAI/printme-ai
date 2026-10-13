@@ -1216,8 +1216,9 @@
 }
 
 .cutoutView img {
-  max-width: 92%;
-  max-height: 92%;
+  /* Explicit box: percentage max-height does not resolve in the aspect-ratio grid. */
+  width: 92%;
+  height: 92%;
   object-fit: contain;
 }
 
@@ -1570,5 +1571,50 @@
   .seasonCardType,
   .heroProof {
     transition: none;
+  }
+}
+
+/* Personalized specimen plate fields */
+.plateForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.plateForm label {
+  display: grid;
+  gap: 4px;
+  font: 700 11px/1.2 var(--font-mono), monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.plateForm input,
+.plateForm select {
+  font: 600 16px/1.2 var(--font-sans), sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 2px solid var(--pm-ink);
+  border-radius: 0;
+  background: var(--pm-paper);
+  color: var(--pm-ink);
+  width: 100%;
+}
+
+.plateForm input:focus-visible,
+.plateForm select:focus-visible {
+  outline: 3px solid var(--pm-pink);
+  outline-offset: 1px;
+}
+
+@media (max-width: 600px) {
+  .plateForm {
+    grid-template-columns: 1fr 1fr;
+  }
+  .plateForm label:first-of-type {
+    grid-column: 1 / -1;
   }
 }

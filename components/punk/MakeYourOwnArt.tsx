@@ -8,6 +8,8 @@ import { createProductConfiguration } from '@/lib/commerce/placement';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
 import { renderCutout, segmentPhoto, type Cutout, type SegmentationProgress } from '@/lib/segmentation/client';
+import { plateSpecies, plateTitles, renderSpecimenPlate, type PlateSpecies, type PlateTitle } from '@/lib/segmentation/specimen-plate';
+import { plateMono, plateSerif } from './specimenFonts';
 import styles from './punk.module.css';
 
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
@@ -15,6 +17,9 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const SAMPLE = { url: '/samples/ginger-cat.jpg', name: 'Sample: ginger cat (CC0)' };
 
 type Status = 'empty' | 'photo' | 'working' | 'cutout' | 'error';
+type ArtMode = 'cutout' | 'plate' | 'original';
+
+const speciesLabels: Record<PlateSpecies, string> = { cat: 'Cat', dog: 'Dog', rabbit: 'Rabbit', other: 'Other' };
 
 function assetFrom(url: string, width: number, height: number, mimeType: string, alt: string, version: string): DesignAsset {
   return { id: 'asset-homepage-local', version, url, alt, width, height, mimeType, hasTransparency: mimeType === 'image/png' };
@@ -37,7 +42,10 @@ export function MakeYourOwnArt({
   const [original, setOriginal] = useState<{ blob: Blob; url: string; width: number; height: number; name: string } | null>(null);
   const [cutout, setCutout] = useState<Cutout | null>(null);
   const [cutoutAsset, setCutoutAsset] = useState<DesignAsset | null>(null);
-  const [useCutout, setUseCutout] = useState(true);
+  const [mode, setMode] = useState<ArtMode>('cutout');
+  const [plate, setPlate] = useState<{ name: string; species: PlateSpecies; title: PlateTitle }>({ name: '', species: 'cat', title: 'certified menace' });
+  const [plateAsset, setPlateAsset] = useState<DesignAsset | null>(null);
+  const [plating, setPlating] = useState(false);
   const [refining, setRefining] = useState(false);
   const [progress, setProgress] = useState<SegmentationProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,6 +78,8 @@ export function MakeYourOwnArt({
     bitmap.close();
     setCutout(null);
     setCutoutAsset(null);
+    setPlateAsset(null);
+    setMode('cutout');
     setRefining(false);
     setStatus('photo');
   }
@@ -93,7 +103,7 @@ export function MakeYourOwnArt({
       const result = await segmentPhoto(original.blob, setProgress);
       setCutout(result);
       await updateCutoutAsset(result);
-      setUseCutout(true);
+      setMode('cutout');
       setStatus('cutout');
     } catch (cause) {
       setStatus('error');
@@ -103,12 +113,44 @@ export function MakeYourOwnArt({
     }
   }
 
+  // Personalized specimen plate: redrawn at print size shortly after the inputs settle.
+  useEffect(() => {
+    if (mode !== 'plate' || !cutoutAsset) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setPlating(true);
+      try {
+        const subject = await createImageBitmap(await (await fetch(cutoutAsset.url)).blob());
+        const rendered = await renderSpecimenPlate({
+          subject,
+          ...plate,
+          serifFamily: plateSerif.style.fontFamily,
+          monoFamily: plateMono.style.fontFamily,
+        });
+        subject.close();
+        if (cancelled) return;
+        const url = URL.createObjectURL(rendered.blob);
+        urls.current.push(url);
+        setPlateAsset(assetFrom(url, rendered.width, rendered.height, 'image/png', 'Your specimen plate', String(Date.now())));
+      } catch {
+        if (!cancelled) setError('The specimen plate could not be drawn. Your cutout still works.');
+      } finally {
+        if (!cancelled) setPlating(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mode, cutoutAsset, plate]);
+
   const product = products.find((item) => item.id === productId) ?? products[0];
   const asset = useMemo(() => {
-    if (useCutout && cutoutAsset) return cutoutAsset;
+    if (mode === 'plate' && plateAsset) return plateAsset;
+    if (mode !== 'original' && cutoutAsset) return cutoutAsset;
     if (original) return assetFrom(original.url, original.width, original.height, original.blob.type, 'Your photo', 'original');
     return null;
-  }, [useCutout, cutoutAsset, original]);
+  }, [mode, plateAsset, cutoutAsset, original]);
   const configuration = useMemo(
     () =>
       asset && product
@@ -145,7 +187,7 @@ export function MakeYourOwnArt({
             <span className={styles.pipelineNum}>02</span>
             <span>
               <strong>Remove the background</strong>
-              <small>AI cutout that handles hair and fur. Paint to fix any edge.</small>
+              <small>AI cutout that handles hair and fur. Paint to fix any edge, or set your pet in a named specimen plate.</small>
             </span>
           </li>
           <li data-status="live">
@@ -196,15 +238,54 @@ export function MakeYourOwnArt({
               <span className={styles.microtype}>{original.name}</span>
               {cutoutAsset && (
                 <div className={styles.productSwitch} role="group" aria-label="Artwork">
-                  <button type="button" aria-pressed={useCutout} onClick={() => setUseCutout(true)}>
+                  <button type="button" aria-pressed={mode === 'cutout'} onClick={() => setMode('cutout')}>
                     Cutout
                   </button>
-                  <button type="button" aria-pressed={!useCutout} onClick={() => setUseCutout(false)}>
+                  <button type="button" aria-pressed={mode === 'plate'} onClick={() => { setMode('plate'); setRefining(false); }} data-testid="mode-plate">
+                    Specimen plate
+                  </button>
+                  <button type="button" aria-pressed={mode === 'original'} onClick={() => setMode('original')}>
                     Original
                   </button>
                 </div>
               )}
             </div>
+
+            {mode === 'plate' && cutoutAsset && (
+              <div className={styles.plateForm} data-testid="plate-form">
+                <span className={`${plateSerif.className} ${plateMono.className}`} hidden />
+                <label>
+                  <span>Pet name</span>
+                  <input
+                    value={plate.name}
+                    maxLength={16}
+                    placeholder="Maple"
+                    autoComplete="off"
+                    onChange={(event) => setPlate((value) => ({ ...value, name: event.target.value }))}
+                  />
+                </label>
+                <label>
+                  <span>Species</span>
+                  <select value={plate.species} onChange={(event) => setPlate((value) => ({ ...value, species: event.target.value as PlateSpecies }))}>
+                    {(Object.keys(plateSpecies) as PlateSpecies[]).map((key) => (
+                      <option key={key} value={key}>
+                        {speciesLabels[key]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>Title</span>
+                  <select value={plate.title} onChange={(event) => setPlate((value) => ({ ...value, title: event.target.value as PlateTitle }))}>
+                    {plateTitles.map((title) => (
+                      <option key={title} value={title}>
+                        {title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
 
             {status === 'cutout' && cutout && refining ? (
               <CutoutRefiner cutout={cutout} onCommit={() => void updateCutoutAsset(cutout)} />
@@ -212,7 +293,13 @@ export function MakeYourOwnArt({
               <div className={styles.stagePair}>
                 <figure className={styles.cutoutView} data-testid="cutout-preview">
                   {/* eslint-disable-next-line @next/next/no-img-element -- local object URL */}
-                  <img src={useCutout && cutoutAsset ? cutoutAsset.url : original.url} alt={useCutout && cutoutAsset ? 'Your cutout' : 'Your photo'} />
+                  <img src={asset?.url ?? original.url} alt={asset?.alt ?? 'Your photo'} />
+                  {plating && (
+                    <figcaption className={styles.working} role="status">
+                      Drawing your plate…
+                      <span className={styles.workingBar} />
+                    </figcaption>
+                  )}
                   {status === 'working' && (
                     <figcaption className={styles.working} role="status">
                       {progress?.stage === 'process' ? 'Cutting out your subject…' : 'Sending your photo…'}
@@ -256,7 +343,7 @@ export function MakeYourOwnArt({
                   Working…
                 </button>
               )}
-              {status === 'cutout' && (
+              {status === 'cutout' && mode !== 'plate' && (
                 <button type="button" className={styles.btnGhost} onClick={() => setRefining((value) => !value)} data-testid="refine-cutout">
                   {refining ? 'Done refining' : 'Refine edges'}
                 </button>
