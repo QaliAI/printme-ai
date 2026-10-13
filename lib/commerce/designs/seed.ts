@@ -137,7 +137,9 @@ const fall2026Metadata: Record<
  * Deliberately filtered as 'new' only: no trending or best-seller claim
  * exists for these designs yet.
  */
-const issue01Metadata: Record<string, { slug: string; keywords: string[]; merchandisingPriority: number }> = {
+// 2026-10-12: Bad Ideas Club and Creature of Habit were rejected by the owner
+// and archived (assets kept in public/designs/issue-01 and designs/source).
+const issue01Metadata: Record<string, { slug: string; keywords: string[]; merchandisingPriority: number; archived?: boolean }> = {
   'design-make-shit-print-shit': {
     slug: 'make-shit-print-shit',
     keywords: ['punk', 'ransom note', 'collage', 'zine', 'streetwear', 'diy', 'manifesto'],
@@ -147,11 +149,13 @@ const issue01Metadata: Record<string, { slug: string; keywords: string[]; mercha
     slug: 'bad-ideas-club',
     keywords: ['bad ideas club', 'sarcastic', 'night owl', 'collegiate', 'funny', '3am', 'internet culture'],
     merchandisingPriority: 111,
+    archived: true,
   },
   'design-creature-of-habit': {
     slug: 'creature-of-habit',
     keywords: ['monster', 'coffee', 'horror comedy', 'halloween', 'creature', 'funny monster'],
     merchandisingPriority: 110,
+    archived: true,
   },
 };
 
@@ -164,7 +168,7 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
         slug: issueMeta.slug,
         artistOrSource: 'PrintMe Studio Issue 01',
         rightsStatus: 'commercial-print-cleared',
-        publicationStatus: 'published',
+        publicationStatus: issueMeta.archived ? 'archived' : 'published',
         publicationDate: '2026-10-12T00:00:00.000Z',
         tags: [design.collection.toLowerCase(), 'issue-01', ...issueMeta.keywords],
         defaultProductColor: 'White',
@@ -284,11 +288,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
     description:
       'The first PrintMe originals: ransom-note manifestos, 3 AM philosophy, and one very tired monster.',
     publicationStatus: 'published',
-    designIds: [
-      'design-make-shit-print-shit',
-      'design-bad-ideas-club',
-      'design-creature-of-habit',
-    ],
+    designIds: ['design-make-shit-print-shit'],
   },
   {
     id: 'collection-halloween',
@@ -369,11 +369,7 @@ export const developmentDropSeeds: DesignDrop[] = [
       'Three original PrintMe designs that launch the punk collage studio.',
     publicationStatus: 'published',
     publicationDate: '2026-10-12T00:00:00.000Z',
-    designIds: [
-      'design-make-shit-print-shit',
-      'design-bad-ideas-club',
-      'design-creature-of-habit',
-    ],
+    designIds: ['design-make-shit-print-shit'],
   },
   {
     id: 'drop-fall-2026',

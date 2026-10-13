@@ -1,19 +1,17 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
-import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
 import type { MerchProduct } from '@/lib/commerce/types';
 import styles from './seasonal-landing.module.css';
 
 export const metadata: Metadata = {
   title: 'Halloween · The Slasher Shop',
   description:
-    'Gothic pet portraits, personalized haunted designs and original horror-comedy merch. Preview the exact product before you buy.',
+    'Halloween pet art and gothic portraits from your own photo, plus personalized haunted designs. Preview the exact product before you buy.',
   alternates: { canonical: '/halloween' },
 };
 
@@ -26,19 +24,9 @@ export default async function HalloweenPage() {
   const cookieStore = await cookies();
   const products = applyCommerceE2EReviewEconomics(getApprovedMerchProducts(), cookieStore.get('printme-e2e-secret')?.value);
   const designs = await getDesignCatalogService().listPublished();
-  const bySlug = new Map(designs.map((d) => [d.slug, d]));
   const tee = products.find((p) => p.id === 'everyday-tee') ?? products[0];
   const mug = products.find((p) => p.id === 'keepsake-mug') ?? products[0];
   const poster = products.find((p) => p.id === 'gallery-poster') ?? products[0];
-  const creature = bySlug.get('creature-of-habit') ?? designs[0];
-  const library = bySlug.get('library-of-lost-hours') ?? designs[0];
-
-  const lineup = [
-    { design: creature, product: tee, note: 'Original art' },
-    { design: creature, product: mug, note: 'Original art' },
-    { design: library, product: mug, note: 'Add your name' },
-    { design: creature, product: poster, note: 'Original art' },
-  ].filter((item) => item.design.compatibleProductIds.includes(item.product.id));
 
   return (
     <div className={styles.page}>
@@ -49,7 +37,7 @@ export default async function HalloweenPage() {
             <span>The</span> <span data-tone="acid">Slasher</span> <span data-tone="paper">Shop</span>
           </h1>
           <p className={styles.lead}>
-            Spooky stuff, but make it yours: your pet as gothic Halloween art, your name on a haunted library card, or a monster that runs on coffee.
+            Spooky stuff, but make it yours: your pet as Halloween art, your face as a candlelit gothic portrait, or your family&apos;s names on a haunted design.
           </p>
           <div className={styles.actions}>
             <Link href="/create?style=halloween-pet&product=everyday-tee" className={styles.btnAcid}>
@@ -65,47 +53,7 @@ export default async function HalloweenPage() {
             <li>Tees {usd(fromPrice(tee))} · Mugs {usd(fromPrice(mug))} · Posters {usd(fromPrice(poster))}</li>
           </ul>
         </div>
-        <figure className={styles.heroPhoto}>
-          <Image
-            src="/lifestyle/creature-of-habit-detail.webp"
-            alt="Close-up of the Creature of Habit print on a white tee"
-            width={1200}
-            height={1500}
-            priority
-            sizes="(max-width: 900px) 100vw, 42vw"
-          />
-          <figcaption>Styled photo</figcaption>
-        </figure>
-      </header>
-
-      <section className={styles.lineup} id="lineup" aria-labelledby="lineup-heading">
-        <div className={styles.sectionHead}>
-          <h2 id="lineup-heading">The lineup</h2>
-          <p>Exact print previews on the approved products.</p>
-        </div>
-        <ul className={styles.grid}>
-          {lineup.map(({ design, product, note }) => (
-            <li key={`${design.id}-${product.id}`}>
-              <Link href={`/shop?design=${encodeURIComponent(design.slug)}`} className={styles.card}>
-                <span className={styles.cardMedia}>
-                  <MerchandisePreview design={design} product={product} />
-                </span>
-                <span className={styles.cardMeta}>
-                  <small>{note}</small>
-                  <strong>{design.title}</strong>
-                  <span>
-                    {product.name} <b>{usd(fromPrice(product))}</b>
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className={styles.ai} aria-labelledby="ai-heading">
-        <h2 id="ai-heading">Bring your own victim</h2>
-        <div className={styles.aiGrid}>
+        <div className={styles.aiGrid} aria-label="AI Halloween styles">
           <Link href="/create?style=halloween-pet" className={styles.aiCard}>
             <span className={styles.aiType} aria-hidden="true">
               Your pet.
@@ -123,7 +71,7 @@ export default async function HalloweenPage() {
             <small>AI style · upload any clear photo · preview on a tee, mug or poster</small>
           </Link>
         </div>
-      </section>
+      </header>
 
       <SeasonalEditSection products={products} designs={designs} />
 
