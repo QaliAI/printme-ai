@@ -129,8 +129,8 @@ export const opportunityQueue: MerchOpportunity[] = [
     id: 'opp-personalized-pet',
     title: 'Personalized pet portrait apparel',
     category: 'personalized-pet',
-    status: 'approved',
-    decision: { by: 'Claude (owner brief, standing authorization)', at: '2026-10-12', note: 'Build a personalized "specimen plate" from the customer\'s own pet cutout plus pet name. Needs product work in the cutout flow before publishing.' },
+    status: 'published',
+    decision: { by: 'Claude (owner brief, standing authorization)', at: '2026-10-13', note: 'Live as the "Specimen plate" option after background removal on the homepage: the customer\'s own pet cutout, pet name, species line and title, drawn at 3951×4800 for print.' },
     persona: 'Pet owners buying for themselves or as gifts ("cat mom", "dog dad").',
     hook: 'Your actual pet, named, in a premium layout, not a generic breed graphic.',
     signals: [
@@ -181,6 +181,7 @@ export const opportunityQueue: MerchOpportunity[] = [
     productNotes: 'Competitor items are embroidered sweatshirts; PrintMe sells printed tees, posters and mugs, so it must not imply embroidery.',
     unitEconomics: { retailPriceCents: TEE_PRICE_CENTS, unitCostCents: null, notes: COST_NOTE },
     designIds: [],
+    liveSurface: 'Homepage photo studio (/#make) → Specimen plate',
   },
   {
     id: 'opp-october-pink',

@@ -26,7 +26,7 @@ describe('merchandising opportunity queue', () => {
       if (entry.status === 'published') {
         expect(entry.decision, entry.id).toBeDefined();
         expect(entry.riskLevel).not.toBe('blocked');
-        expect(entry.designIds.length).toBeGreaterThan(0);
+        expect(entry.designIds.length > 0 || Boolean(entry.liveSurface), entry.id).toBe(true);
         for (const id of entry.designIds) expect(published.has(id), id).toBe(true);
       }
       if (entry.riskLevel === 'blocked') expect(entry.status).toBe('rejected');

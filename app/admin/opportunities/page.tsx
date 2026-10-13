@@ -114,6 +114,7 @@ export default function OpportunityQueuePage() {
                 ))}
               </tbody>
             </table>
+            {entry.liveSurface && <p className="mt-4 text-sm">Live at: {entry.liveSurface}</p>}
             {entry.designIds.length > 0 && (
               <p className="mt-4 text-sm">
                 Designs:{' '}
