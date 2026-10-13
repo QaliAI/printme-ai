@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { MerchandisePreview } from '@/components/commerce/MerchandisePreview';
 import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
 import { AI_STYLES_ENABLED } from '@/lib/ai/availability';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
@@ -28,6 +29,7 @@ export default async function HalloweenPage() {
   const tee = products.find((p) => p.id === 'everyday-tee') ?? products[0];
   const mug = products.find((p) => p.id === 'keepsake-mug') ?? products[0];
   const poster = products.find((p) => p.id === 'gallery-poster') ?? products[0];
+  const featured = designs.find((design) => design.slug === 'carved-under-protest');
 
   return (
     <div className={styles.page}>
@@ -107,6 +109,30 @@ export default async function HalloweenPage() {
           </div>
         )}
       </header>
+
+      {featured && (
+        <section className={styles.featured} aria-labelledby="featured-heading" data-testid="halloween-featured-original">
+          <div className={styles.featuredMedia}>
+            <MerchandisePreview design={featured} product={tee} />
+          </div>
+          <div className={styles.featuredCopy}>
+            <p className={styles.tag}>New original · Specimen Plates</p>
+            <h2 id="featured-heading">{featured.title}</h2>
+            <p>{featured.description}</p>
+            <p className={styles.featuredPrice}>
+              {tee.name} {usd(fromPrice(tee))} · also on posters
+            </p>
+            <div className={styles.actions}>
+              <Link href={`/shop?design=${featured.slug}`} className={styles.btnAcid}>
+                Get the tee
+              </Link>
+              <Link href="/collections/specimen-plates" className={styles.btnPaper}>
+                See the collection
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       <SeasonalEditSection products={products} designs={designs} />
 
