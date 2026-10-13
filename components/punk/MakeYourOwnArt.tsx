@@ -159,10 +159,11 @@ export function MakeYourOwnArt({
             <span className={styles.pipelineNum}>04</span>
             <span>
               <strong>Finish in the studio</strong>
-              <small>Resize, add an AI style, then add to cart.</small>
+              <small>Resize and position it, then add to cart.</small>
             </span>
           </li>
         </ol>
+        {photoStyleOptions.length > 0 && (
         <div className={styles.styleChips} aria-label="AI styles available in the studio">
           {photoStyleOptions.map((style) => (
             <Link key={style.key} href={`/create?style=${encodeURIComponent(style.key)}`}>
@@ -170,6 +171,7 @@ export function MakeYourOwnArt({
             </Link>
           ))}
         </div>
+        )}
       </div>
 
       <div className={styles.tryIt} data-testid="try-it">

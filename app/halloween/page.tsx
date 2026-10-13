@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { SeasonalEditSection } from '@/components/seasonal/SeasonalEditSection';
+import { AI_STYLES_ENABLED } from '@/lib/ai/availability';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { applyCommerceE2EReviewEconomics } from '@/lib/commerce/testing/review-economics';
@@ -40,12 +41,25 @@ export default async function HalloweenPage() {
             Spooky stuff, but make it yours: your pet as Halloween art, your face as a candlelit gothic portrait, or your family&apos;s names on a haunted design.
           </p>
           <div className={styles.actions}>
-            <Link href="/create?style=halloween-pet&product=everyday-tee" className={styles.btnAcid}>
-              Turn my pet into Halloween art
-            </Link>
-            <Link href="/create?style=haunted-portrait" className={styles.btnPaper}>
-              Gothic portrait from a photo
-            </Link>
+            {AI_STYLES_ENABLED ? (
+              <>
+                <Link href="/create?style=halloween-pet&product=everyday-tee" className={styles.btnAcid}>
+                  Turn my pet into Halloween art
+                </Link>
+                <Link href="/create?style=haunted-portrait" className={styles.btnPaper}>
+                  Gothic portrait from a photo
+                </Link>
+              </>
+            ) : (
+              <>
+                <a href="#seasonal-edit" className={styles.btnAcid}>
+                  Personalize a Halloween design
+                </a>
+                <Link href="/#make" className={styles.btnPaper}>
+                  Cut out your pet photo
+                </Link>
+              </>
+            )}
           </div>
           <ul className={styles.facts}>
             <li>Preview before you buy</li>
@@ -53,24 +67,45 @@ export default async function HalloweenPage() {
             <li>Tees {usd(fromPrice(tee))} · Mugs {usd(fromPrice(mug))} · Posters {usd(fromPrice(poster))}</li>
           </ul>
         </div>
-        <div className={styles.aiGrid} aria-label="AI Halloween styles">
-          <Link href="/create?style=halloween-pet" className={styles.aiCard}>
-            <span className={styles.aiType} aria-hidden="true">
-              Your pet.
-              <em>But spooky.</em>
-            </span>
-            <strong>Halloween pet art</strong>
-            <small>AI style · keeps your pet&apos;s markings · you see the result before paying</small>
-          </Link>
-          <Link href="/create?style=haunted-portrait" className={styles.aiCard}>
-            <span className={styles.aiType} aria-hidden="true">
-              Your face.
-              <em>By candlelight.</em>
-            </span>
-            <strong>Gothic haunted portrait</strong>
-            <small>AI style · upload any clear photo · preview on a tee, mug or poster</small>
-          </Link>
-        </div>
+        {AI_STYLES_ENABLED ? (
+          <div className={styles.aiGrid} aria-label="AI Halloween styles">
+            <Link href="/create?style=halloween-pet" className={styles.aiCard}>
+              <span className={styles.aiType} aria-hidden="true">
+                Your pet.
+                <em>But spooky.</em>
+              </span>
+              <strong>Halloween pet art</strong>
+              <small>AI style · keeps your pet&apos;s markings · you see the result before paying</small>
+            </Link>
+            <Link href="/create?style=haunted-portrait" className={styles.aiCard}>
+              <span className={styles.aiType} aria-hidden="true">
+                Your face.
+                <em>By candlelight.</em>
+              </span>
+              <strong>Gothic haunted portrait</strong>
+              <small>AI style · upload any clear photo · preview on a tee, mug or poster</small>
+            </Link>
+          </div>
+        ) : (
+          <div className={styles.aiGrid} aria-label="Make it yours">
+            <a href="#seasonal-edit" className={styles.aiCard}>
+              <span className={styles.aiType} aria-hidden="true">
+                Your names.
+                <em>Haunted.</em>
+              </span>
+              <strong>Personalized Halloween designs</strong>
+              <small>Add family or pet names · preview on a tee, mug or poster</small>
+            </a>
+            <Link href="/#make" className={styles.aiCard}>
+              <span className={styles.aiType} aria-hidden="true">
+                Your pet.
+                <em>Cut out clean.</em>
+              </span>
+              <strong>Pet photo cutout</strong>
+              <small>Background removed in seconds · refine the edges · print it on anything</small>
+            </Link>
+          </div>
+        )}
       </header>
 
       <SeasonalEditSection products={products} designs={designs} />

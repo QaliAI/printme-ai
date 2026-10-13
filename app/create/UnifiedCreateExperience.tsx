@@ -75,6 +75,7 @@ import type {
 } from '@/lib/commerce/types';
 import styles from './create.module.css';
 import { photoStyles, type PhotoStyle } from '@/lib/ai/photo-styles';
+import { AI_STYLES_ENABLED } from '@/lib/ai/availability';
 import { persistBrowserArtwork } from '@/lib/commerce/artwork-client';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -1159,13 +1160,17 @@ export function UnifiedCreateExperience({
                 </button>
               ))}
             </div>
-            <label htmlFor="ai-photo-style">AI photo transformation</label>
-            <select id="ai-photo-style" value={artStyle} onChange={event => setArtStyle(event.target.value as PhotoStyle)} disabled={preparing}>
-              {Object.entries(photoStyles).map(([key, style]) => <option key={key} value={key}>{style.label}</option>)}
-            </select>
-            <button type="button" className={styles.moreStyles} onClick={() => void applyPreparation('ai')} disabled={preparing || adding} data-testid="generate-ai-photo">
-              {preparing ? 'Preparing artwork…' : 'Transform my photo with AI'}
-            </button>
+            {AI_STYLES_ENABLED && (
+              <>
+                <label htmlFor="ai-photo-style">AI photo transformation</label>
+                <select id="ai-photo-style" value={artStyle} onChange={event => setArtStyle(event.target.value as PhotoStyle)} disabled={preparing}>
+                  {Object.entries(photoStyles).map(([key, style]) => <option key={key} value={key}>{style.label}</option>)}
+                </select>
+                <button type="button" className={styles.moreStyles} onClick={() => void applyPreparation('ai')} disabled={preparing || adding} data-testid="generate-ai-photo">
+                  {preparing ? 'Preparing artwork…' : 'Transform my photo with AI'}
+                </button>
+              </>
+            )}
             <button
               type="button"
               className={styles.moreStyles}
