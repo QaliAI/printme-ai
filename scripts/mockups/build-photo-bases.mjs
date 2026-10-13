@@ -11,7 +11,7 @@
  * real fabric folds and ceramic curvature. Print-area geometry lives in
  * lib/commerce/templates.ts; keep the boxes below in sync with it.
  *
- * Run: node --env-file=.env.local scripts/mockups/build-photo-bases.mjs [--calibrate <outDir>]
+ * Run: node --env-file=.env.local scripts/mockups/build-photo-bases.mjs [--calibrate <outDir>] [--only <view-id>]
  */
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -22,11 +22,13 @@ import sharp from 'sharp';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const outDir = join(root, 'public', 'shop-v2', 'photo');
 const calibrateDir = process.argv.includes('--calibrate') ? process.argv[process.argv.indexOf('--calibrate') + 1] : null;
+const onlyView = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 const SIZE = 800;
 
 /** Source photos (Printify catalog image URLs for the approved blueprints). */
 const sources = {
   teeFront: { blueprintId: 12, url: 'https://images.printify.com/66d81b7f295ea4f038065153' },
+  teeFrontAlt: { blueprintId: 12, url: 'https://images.printify.com/66d81b70295ea4f038065152' },
   teeBack: { blueprintId: 12, url: 'https://images.printify.com/66d81b8d0482d2ef57061f34' },
   poster: { blueprintId: 282, url: 'https://images.printify.com/66d868d28aeee92f550445e7' },
   mug: { blueprintId: 68, url: 'https://images.printify.com/66c42e5361b2691da8085442' },
@@ -38,6 +40,9 @@ const sources = {
  */
 export const photoViews = [
   { id: 'tee-front', src: 'teeFront', crop: [420, 380, 1300], box: { x: 242, y: 268, width: 275, height: 334 } },
+  // Second model. Her torso measures ~0.82x the tee-front model's at the same rows, so the
+  // smaller crop keeps one print box = the same inches per pixel as tee-front.
+  { id: 'tee-front-alt', src: 'teeFrontAlt', crop: [541, 437, 1067], box: { x: 242, y: 268, width: 275, height: 334 } },
   { id: 'tee-back', src: 'teeBack', crop: [268, 207, 1506], box: { x: 248, y: 250, width: 275, height: 334 } },
   { id: 'poster-12x18', src: 'poster', crop: [35, 35, 1981], box: { x: 178, y: 62, width: 462, height: 693 }, noShade: true },
   { id: 'poster-18x24', src: 'poster', crop: [35, 35, 1981], box: { x: 148, y: 62, width: 520, height: 693 }, paintSheet: true, noShade: true },
@@ -102,6 +107,7 @@ mkdirSync(outDir, { recursive: true });
 const cache = {};
 const provenance = [];
 for (const view of photoViews) {
+  if (onlyView && view.id !== onlyView) continue;
   const source = sources[view.src];
   let base;
   if (view.existing) {

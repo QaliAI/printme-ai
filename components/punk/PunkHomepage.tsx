@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { InstantPreview } from '@/components/commerce/InstantPreview';
 import { SiteFooter } from '@/components/brand/SiteFooter';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
+import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { createProductConfiguration } from '@/lib/commerce/placement';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
@@ -54,14 +55,29 @@ const productCopy: Record<string, { spec: string; detail: string }> = {
   },
 };
 
-function SamplePreview({ product }: { product: MerchProduct }) {
-  const configuration = createProductConfiguration({
-    designId: 'homepage-sample',
-    design: SAMPLE_CUTOUT,
+function SamplePreview({
+  product,
+  design = SAMPLE_CUTOUT,
+  designId = 'homepage-sample',
+  altModel = false,
+}: {
+  product: MerchProduct;
+  design?: DesignAsset;
+  designId?: string;
+  /** Show the tee on the second Printify catalog model (same print geometry). */
+  altModel?: boolean;
+}) {
+  let configuration = createProductConfiguration({
+    designId,
+    design,
     product,
     template: getPreviewTemplate(product.previewTemplateId),
   });
-  return <InstantPreview design={SAMPLE_CUTOUT} configuration={configuration} showSafeZone={false} presentation="merchandising" />;
+  const altView = configuration.previewViewId.replace(/-front$/, '-alt-front');
+  if (altModel && getPreviewTemplate('tee-alt-v2').views.some((view) => view.id === altView)) {
+    configuration = { ...configuration, previewTemplateId: 'tee-alt-v2', previewViewId: altView };
+  }
+  return <InstantPreview design={design} configuration={configuration} showSafeZone={false} presentation="merchandising" />;
 }
 
 /**
@@ -77,6 +93,7 @@ export async function PunkHomepage() {
   const startingPrice = Math.min(...products.map(fromPrice));
   const ordered = ['everyday-tee', 'gallery-poster', 'keepsake-mug'].map((id) => productById.get(id)).filter((p): p is MerchProduct => Boolean(p));
   const textThread = isReviewFeatureEnabled('text-thread');
+  const plates = (await getDesignCatalogService().listPublished()).filter((design) => design.tags.includes('specimen-plates'));
 
   return (
     <div className={styles.home}>
@@ -132,6 +149,41 @@ export async function PunkHomepage() {
 
       {/* TRY IT — the working pipeline, right after the hero */}
       <MakeYourOwnArt products={products} styles={AI_STYLES_ENABLED ? Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label })) : []} />
+
+      {/* ORIGINALS — PrintMe's own designs, previewed on the real tee */}
+      {plates.length > 0 && (
+        <section className={styles.drops} aria-labelledby="plates-heading" data-testid="homepage-specimen-plates">
+          <header className={styles.sectionHead}>
+            <div>
+              <p className={styles.issueTag}>New originals · drawn for PrintMe</p>
+              <h2 id="plates-heading" className={styles.posterHeading}>
+                Specimen <span className={styles.hlPink}>Plates</span>
+              </h2>
+            </div>
+            <Link href="/collections/specimen-plates" className={styles.textLink}>
+              See the collection →
+            </Link>
+          </header>
+          <ul className={styles.productGrid}>
+            {plates.map((design, index) => (
+              <li key={design.id} className={styles.productItem}>
+                <Link href={`/designs/${design.slug}`} className={styles.productCard}>
+                  <span className={styles.productMedia}>
+                    <SamplePreview product={tee} design={design.asset} designId={design.id} altModel={index % 2 === 0} />
+                  </span>
+                  <span className={styles.productMeta}>
+                    <strong>{design.title}</strong>
+                    <span>
+                      {tee.name}
+                      <b>{usd(fromPrice(tee))}</b>
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* PICK YOUR CANVAS */}
       <section className={styles.drops} aria-labelledby="canvas-heading" data-testid="homepage-product-showcase">

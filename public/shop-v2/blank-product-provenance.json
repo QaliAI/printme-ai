@@ -102,6 +102,22 @@
       "transformation": "luminance multiply map inside print area",
       "blueprintId": 68,
       "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/tee-front-alt-shade.png",
+      "sha256": "0d049a506a359141f6349f4fc0498b762e140af375c0e42d19ea95b2f687ac1c",
+      "source": "https://images.printify.com/66d81b70295ea4f038065152",
+      "transformation": "luminance multiply map inside print area",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/tee-front-alt.webp",
+      "sha256": "186d2df7fa94587480997d7252f59b99e3ec491e92040a3598103f39ea55c064",
+      "source": "https://images.printify.com/66d81b70295ea4f038065152",
+      "transformation": "crop 541,437,1067 to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
     }
   ],
   "notes": [

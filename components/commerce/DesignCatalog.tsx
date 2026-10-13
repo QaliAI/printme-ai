@@ -7,7 +7,15 @@ import type {
   DesignFilter,
 } from '@/lib/commerce/designs/models';
 import styles from '@/app/designs/designs.module.css';
+import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
+import { createProductConfiguration } from '@/lib/commerce/placement';
+import { personalizedDesignSlugs } from '@/lib/commerce/personalized-designs';
+import { getPreviewTemplate } from '@/lib/commerce/templates';
 import { DesignActivity } from './DesignActivity';
+import { InstantPreview } from './InstantPreview';
+
+const usd = (cents: number) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 
 const filters: Array<{ value: DesignFilter; label: string }> = [
   { value: 'new', label: 'New' },
@@ -100,6 +108,12 @@ export function DesignGrid({
 }
 
 export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
+  const products = getApprovedMerchProducts().filter((product) => design.compatibleProductIds.includes(product.id));
+  const recommended = products.find((product) => product.id === design.recommendedProductId) ?? products[0];
+  const prices = products.flatMap((product) => product.variants.filter((variant) => variant.available).map((variant) => variant.unitPrice));
+  const configuration = recommended
+    ? createProductConfiguration({ designId: design.id, design: design.asset, product: recommended, template: getPreviewTemplate(recommended.previewTemplateId) })
+    : null;
   return (
     <main className={styles.shell}>
       <DesignCatalogHeader
@@ -108,16 +122,22 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
         description={design.seoDescription}
       />
       <section className={styles.detail}>
-        <div className={styles.detailImage}>
-          <Image
-            src={design.asset.url}
-            alt={design.asset.alt}
-            fill
-            sizes="(max-width: 800px) 92vw, 50vw"
-            priority
-            unoptimized={design.asset.url.startsWith('/api/studio/e2e/')}
-          />
-        </div>
+        {configuration ? (
+          <div className={styles.detailPreview}>
+            <InstantPreview design={design.asset} configuration={configuration} showSafeZone={false} presentation="merchandising" />
+          </div>
+        ) : (
+          <div className={styles.detailImage}>
+            <Image
+              src={design.asset.url}
+              alt={design.asset.alt}
+              fill
+              sizes="(max-width: 800px) 92vw, 50vw"
+              priority
+              unoptimized={design.asset.url.startsWith('/api/studio/e2e/')}
+            />
+          </div>
+        )}
         <div className={styles.detailCopy}>
           <p>{design.description}</p>
           <dl>
@@ -129,21 +149,15 @@ export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
             ) : null}
             <div>
               <dt>Personalizable</dt>
-              <dd>Yes — made to order</dd>
+              <dd>{personalizedDesignSlugs.has(design.slug) ? 'Yes, add your names' : 'No, printed as shown'}</dd>
             </div>
             <div>
-              <dt>Works best on</dt>
-              <dd>
-                {design.recommendedProductId === 'keepsake-mug'
-                  ? 'Keepsake Mug'
-                  : design.recommendedProductId === 'everyday-tee'
-                    ? 'Everyday Tee'
-                    : 'Gallery Poster'}
-              </dd>
+              <dt>Printed on</dt>
+              <dd>{products.map((product) => product.name).join(', ')}</dd>
             </div>
             <div>
               <dt>Starting at</dt>
-              <dd>$19.00</dd>
+              <dd>{prices.length ? usd(Math.min(...prices)) : 'Not available yet'}</dd>
             </div>
           </dl>
           <Link
