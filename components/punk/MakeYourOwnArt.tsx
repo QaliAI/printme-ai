@@ -116,7 +116,7 @@ export function MakeYourOwnArt({
   return (
     <section className={styles.makeAct} id="make" aria-labelledby="make-heading">
       <div className={styles.makeIntro}>
-        <p className={styles.issueTag}>Act III · The studio</p>
+        <p className={styles.issueTag}>Try it on</p>
         <h2 id="make-heading" className={styles.posterHeading}>
           Make your own <span className={styles.hlYellow}>damn</span> art.
         </h2>

@@ -38,6 +38,70 @@
       "blueprintId": 68,
       "providerId": 1,
       "variantId": 33719
+    },
+    {
+      "path": "/shop-v2/photo/tee-front-shade.png",
+      "sha256": "cfc0bdd6944cc7241ef6145a1faace30bdeadc936356ad265578ff6fbf829152",
+      "source": "https://images.printify.com/66d81b7f295ea4f038065153",
+      "transformation": "luminance multiply map inside print area",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/tee-front.webp",
+      "sha256": "0dbfe98343a4fbb51e8e17ff1c4ae5645a5966246af51051f5bcb3d75f64d669",
+      "source": "https://images.printify.com/66d81b7f295ea4f038065153",
+      "transformation": "crop 420,380,1300 to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/tee-back-shade.png",
+      "sha256": "c41f76e8ac7469f55d655c8f14440c05f4b7cfe2fa9ba36a63cb5df002c922bc",
+      "source": "https://images.printify.com/66d81b8d0482d2ef57061f34",
+      "transformation": "luminance multiply map inside print area",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/tee-back.webp",
+      "sha256": "5e8be79a11f24aec83e3058f9350f35820e2ed6935a5c9b2ad325a620b67186f",
+      "source": "https://images.printify.com/66d81b8d0482d2ef57061f34",
+      "transformation": "crop 268,207,1506 to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/poster-12x18.webp",
+      "sha256": "d3f019fe63313323a745cc6430792564591a5daa53932c9e2072d108525d7868",
+      "source": "https://images.printify.com/66d868d28aeee92f550445e7",
+      "transformation": "crop 35,35,1981 to 800px",
+      "blueprintId": 282,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/poster-18x24.webp",
+      "sha256": "3af8bb3c83bac497babe402008a473f6c2246822ca071052b10a1352b465e3f5",
+      "source": "https://images.printify.com/66d868d28aeee92f550445e7",
+      "transformation": "crop 35,35,1981 to 800px, 3:4 sheet painted over original sheet",
+      "blueprintId": 282,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/mug-left-shade.png",
+      "sha256": "004b338299c48c3782c1368bae35393255333f50509f16a61ed7d73c6f49cbbe",
+      "source": "https://images.printify.com/66c42e5361b2691da8085442",
+      "transformation": "luminance multiply map inside print area",
+      "blueprintId": 68,
+      "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/photo/mug-right-shade.png",
+      "sha256": "004b338299c48c3782c1368bae35393255333f50509f16a61ed7d73c6f49cbbe",
+      "source": "https://images.printify.com/66c42e5361b2691da8085442",
+      "transformation": "luminance multiply map inside print area",
+      "blueprintId": 68,
+      "verifiedAt": "2026-10-12"
     }
   ],
   "notes": [

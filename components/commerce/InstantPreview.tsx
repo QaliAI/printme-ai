@@ -61,6 +61,7 @@ export function InstantPreview({
     }}>
           <span>Safe print area</span>
         </div>}
+      {view.shadeOverlay && <Image src={view.shadeOverlay} alt="" fill unoptimized sizes={compact ? '160px' : '(max-width: 700px) 92vw, 520px'} className={styles.previewShade} />}
       {view.shadowOverlay && <Image src={view.shadowOverlay} alt="" fill sizes={compact ? '160px' : '(max-width: 700px) 92vw, 520px'} className={styles.previewOverlay} />}
       {view.highlightOverlay && <Image src={view.highlightOverlay} alt="" fill sizes={compact ? '160px' : '(max-width: 700px) 92vw, 520px'} className={styles.previewOverlay} />}
       {presentation === 'editor' && !compact && <figcaption className={styles.previewStatus}>
