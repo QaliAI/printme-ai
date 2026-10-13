@@ -428,6 +428,63 @@ export const curatedDesigns: CuratedDesign[] = [
       hasTransparency: true,
     },
   },
+  {
+    id: 'design-civilized-trash',
+    title: 'Civilized Trash',
+    description:
+      'A very polite opossum takes tea in a Victorian engraving, standing on the word it was born to be. Will play dead to avoid small talk.',
+    collection: 'Specimen Plates',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-civilized-trash',
+      version: 'specimen-plates-v1',
+      url: '/designs/originals/civilized-trash.webp',
+      productionUrl: '/designs/originals/civilized-trash.png',
+      alt: 'Engraved opossum holding a teacup between CIVILIZED in black serif capitals and trash in pink italics',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
+  {
+    id: 'design-carved-under-protest',
+    title: 'Carved Under Protest',
+    description:
+      'An engraved jack-o\'-lantern with the face of someone who did not agree to any of this. October\'s most reluctant decoration.',
+    collection: 'Specimen Plates',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-carved-under-protest',
+      version: 'specimen-plates-v1',
+      url: '/designs/originals/carved-under-protest.webp',
+      productionUrl: '/designs/originals/carved-under-protest.png',
+      alt: 'Engraved grumpy jack-o\'-lantern between CARVED in black serif capitals and under protest in orange italics',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
+  {
+    id: 'design-professional-rummager',
+    title: 'Professional Rummager',
+    description:
+      'An engraved raccoon hoisting a tin can like a trophy. Open to opportunities. And lids.',
+    collection: 'Specimen Plates',
+    recommendedProductId: 'everyday-tee',
+    asset: {
+      id: 'asset-professional-rummager',
+      version: 'specimen-plates-v1',
+      url: '/designs/originals/professional-rummager.webp',
+      productionUrl: '/designs/originals/professional-rummager.png',
+      alt: 'Engraved raccoon lifting a tin can between PROFESSIONAL in black serif capitals and rummager in teal italics',
+      width: 3951,
+      height: 4800,
+      mimeType: 'image/png',
+      hasTransparency: true,
+    },
+  },
 ];
 
 export const merchProducts: MerchProduct[] = [

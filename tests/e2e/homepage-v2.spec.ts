@@ -29,6 +29,18 @@ test('the page scrolls naturally and shows no retired designs or unsupported cla
   await expect(page.getByTestId('homepage-product-showcase')).toContainText(/lightweight 4.2 oz/i);
 });
 
+test('Specimen Plates originals are previewed on the real tee and open their design pages', async ({ page }) => {
+  await page.goto('/');
+  const plates = page.getByTestId('homepage-specimen-plates');
+  await expect(plates.getByRole('heading', { name: /Specimen Plates/i })).toBeVisible();
+  const cards = plates.getByRole('listitem');
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first().getByTestId('instant-preview')).toHaveAttribute('data-product-id', 'everyday-tee');
+  await cards.filter({ hasText: 'Civilized Trash' }).getByRole('link').click();
+  await expect(page).toHaveURL(/\/designs\/civilized-trash$/, { timeout: 30_000 });
+  await expect(page.getByRole('heading', { level: 1, name: /Civilized Trash/i })).toBeVisible();
+});
+
 test('upload → remove background → preview cutout → choose product → continue to studio', async ({ page, context }) => {
   await context.addCookies([e2eCookie]);
   await page.goto('/');

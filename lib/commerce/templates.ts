@@ -155,6 +155,42 @@ export const previewTemplates: PreviewTemplate[] = [
     ],
   },
   {
+    // Merchandising-only alternate model with the same M/L print geometry (homepage cards).
+    id: 'tee-alt-v2',
+    kind: 'apparel',
+    supportedPrintPositions: ['front'],
+    views: [
+      {
+        id: 'tee-m-alt-front',
+        label: 'Front',
+        position: 'front',
+        baseProductImage: '/shop-v2/photo/tee-front-alt.webp',
+        mockupWidth: 800,
+        mockupHeight: 800,
+        printArea: { x: 242, y: 268, width: 275, height: 334 },
+        safeZoneInset: 12,
+        placeholderWidth: 3591,
+        placeholderHeight: 4364,
+        productColor: 'White',
+        shadeOverlay: '/shop-v2/photo/tee-front-alt-shade.png',
+      },
+      {
+        id: 'tee-l-alt-front',
+        label: 'Front',
+        position: 'front',
+        baseProductImage: '/shop-v2/photo/tee-front-alt.webp',
+        mockupWidth: 800,
+        mockupHeight: 800,
+        printArea: { x: 229, y: 252, width: 302, height: 367 },
+        safeZoneInset: 12,
+        placeholderWidth: 3951,
+        placeholderHeight: 4800,
+        productColor: 'White',
+        shadeOverlay: '/shop-v2/photo/tee-front-alt-shade.png',
+      },
+    ],
+  },
+  {
     id: 'mug-11oz-v1',
     kind: 'drinkware',
     supportedPrintPositions: ['front', 'back'],
@@ -196,7 +232,7 @@ export const verifiedBlankProductImages = new Set([
   '/shop-v2/tee-base.svg', '/shop-v2/tee-back.svg', '/shop-v2/poster-base.svg',
   '/shop-v2/mug-left-base.webp', '/shop-v2/mug-right-base.webp',
   // Official Printify catalog photography of the approved blanks (scripts/mockups/build-photo-bases.mjs)
-  '/shop-v2/photo/tee-front.webp', '/shop-v2/photo/tee-back.webp',
+  '/shop-v2/photo/tee-front.webp', '/shop-v2/photo/tee-back.webp', '/shop-v2/photo/tee-front-alt.webp',
   '/shop-v2/photo/poster-12x18.webp', '/shop-v2/photo/poster-18x24.webp',
 ]);
 

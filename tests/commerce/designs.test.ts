@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import sharp from 'sharp';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import {
   assertDesignProductCompatible,
@@ -76,7 +79,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(21);
+    await expect(service.listPublished()).resolves.toHaveLength(24);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -84,7 +87,7 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(21);
+    expect(designs).toHaveLength(24);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
@@ -100,6 +103,7 @@ describe('curated design catalog', () => {
     ]);
 
     expect(halloween?.designIds).toEqual([
+      'design-carved-under-protest',
       'design-boo-crew',
       'design-here-for-the-boos',
       'design-little-pumpkin',
@@ -131,5 +135,29 @@ describe('curated design catalog', () => {
 
     const poster = await repository.findPublishedBySlug('autumn-state-of-mind');
     expect(poster?.recommendedProductId).toBe('gallery-poster');
+  });
+});
+
+describe('Specimen Plates originals', () => {
+  const slugs = ['civilized-trash', 'carved-under-protest', 'professional-rummager'];
+
+  it('publishes the collection without sales or trend claims', async () => {
+    const repository = new SeedDesignRepository();
+    const collection = await repository.findCollectionBySlug('specimen-plates');
+    expect(collection?.designIds).toHaveLength(3);
+    for (const slug of slugs) {
+      const design = await repository.findPublishedBySlug(slug);
+      expect(design?.artistOrSource).toBe('PrintMe Studio Originals');
+      expect(design?.filters).toEqual(['new']);
+      expect(design?.compatibleProductIds).toEqual(['everyday-tee', 'gallery-poster']);
+    }
+  });
+
+  it('ships transparent print files at the tee print-area size', async () => {
+    for (const slug of slugs) {
+      const file = path.join(process.cwd(), 'public', 'designs', 'originals', `${slug}.png`);
+      const meta = await sharp(readFileSync(file)).metadata();
+      expect([meta.width, meta.height, meta.hasAlpha]).toEqual([3951, 4800, true]);
+    }
   });
 });

@@ -159,18 +159,49 @@ const issue01Metadata: Record<string, { slug: string; keywords: string[]; mercha
   },
 };
 
+/**
+ * Specimen Plates (2026-10-12): original engraved-animal humor tees built by
+ * scripts/designs/build-specimen-plates.mjs. Each concept answers a category
+ * with recorded marketplace evidence (lib/merchandising/opportunity-queue.ts, admin-only);
+ * the artwork and slogans are PrintMe's own. Filtered 'new' only: no sales
+ * history exists for these designs yet.
+ */
+const specimenPlateMetadata: Record<string, { slug: string; keywords: string[]; merchandisingPriority: number }> = {
+  'design-civilized-trash': {
+    slug: 'civilized-trash',
+    keywords: ['opossum', 'possum', 'funny animal', 'vintage engraving', 'introvert', 'tea', 'trash'],
+    merchandisingPriority: 122,
+  },
+  'design-carved-under-protest': {
+    slug: 'carved-under-protest',
+    keywords: ['jack-o-lantern', 'pumpkin', 'funny halloween', 'vintage engraving', 'grumpy', 'october'],
+    merchandisingPriority: 121,
+  },
+  'design-professional-rummager': {
+    slug: 'professional-rummager',
+    keywords: ['raccoon', 'trash panda', 'funny animal', 'vintage engraving', 'snacks', 'night owl'],
+    merchandisingPriority: 120,
+  },
+};
+
 export const developmentDesignSeeds: CuratedDesignRecord[] =
   curatedDesigns.map((design, index) => {
     const issueMeta = issue01Metadata[design.id];
-    if (issueMeta) {
+    const plateMeta = specimenPlateMetadata[design.id];
+    const original = issueMeta
+      ? { ...issueMeta, source: 'PrintMe Studio Issue 01', tag: 'issue-01', line: 'Issue 01', products: ['everyday-tee', 'gallery-poster', 'keepsake-mug'] }
+      : plateMeta
+        ? { ...plateMeta, archived: false, source: 'PrintMe Studio Originals', tag: 'specimen-plates', line: 'Specimen Plates', products: ['everyday-tee', 'gallery-poster'] }
+        : undefined;
+    if (original) {
       return {
         ...structuredClone(design),
-        slug: issueMeta.slug,
-        artistOrSource: 'PrintMe Studio Issue 01',
+        slug: original.slug,
+        artistOrSource: original.source,
         rightsStatus: 'commercial-print-cleared',
-        publicationStatus: issueMeta.archived ? 'archived' : 'published',
+        publicationStatus: original.archived ? 'archived' : 'published',
         publicationDate: '2026-10-12T00:00:00.000Z',
-        tags: [design.collection.toLowerCase(), 'issue-01', ...issueMeta.keywords],
+        tags: [design.collection.toLowerCase(), original.tag, ...original.keywords],
         defaultProductColor: 'White',
         defaultPlacement: {
           position: 'front' as const,
@@ -181,10 +212,10 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
           angle: 0,
           fit: 'contain' as const,
         },
-        compatibleProductIds: ['everyday-tee', 'gallery-poster', 'keepsake-mug'],
+        compatibleProductIds: original.products,
         incompatibleProductIds: [],
-        merchandisingPriority: issueMeta.merchandisingPriority,
-        seoTitle: `${design.title} | Issue 01 | PrintMe`,
+        merchandisingPriority: original.merchandisingPriority,
+        seoTitle: `${design.title} | ${original.line} | PrintMe`,
         seoDescription: design.description,
         filters: ['new'],
         asset: {
@@ -282,6 +313,15 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
 
 export const developmentCollectionSeeds: DesignCollection[] = [
   {
+    id: 'collection-specimen-plates',
+    slug: 'specimen-plates',
+    title: 'Specimen Plates',
+    description:
+      'Victorian engravings of animals with no manners and excellent posture. Funny tees, drawn like a natural-history book.',
+    publicationStatus: 'published',
+    designIds: ['design-civilized-trash', 'design-carved-under-protest', 'design-professional-rummager'],
+  },
+  {
     id: 'collection-issue-01',
     slug: 'issue-01',
     title: 'Issue Nº 01',
@@ -298,6 +338,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
       'Spooky-cute spirits, friendly ghosts, and festive pumpkin patch favorites.',
     publicationStatus: 'published',
     designIds: [
+      'design-carved-under-protest',
       'design-boo-crew',
       'design-here-for-the-boos',
       'design-little-pumpkin',
@@ -361,6 +402,16 @@ export const developmentCollectionSeeds: DesignCollection[] = [
 ];
 
 export const developmentDropSeeds: DesignDrop[] = [
+  {
+    id: 'drop-specimen-plates',
+    slug: 'specimen-plates',
+    title: 'Specimen Plates — Fig. 04, 07 & 31',
+    description:
+      'Three original engraved tees: an opossum with manners, a raccoon with ambition and a pumpkin with objections.',
+    publicationStatus: 'published',
+    publicationDate: '2026-10-12T00:00:00.000Z',
+    designIds: ['design-civilized-trash', 'design-carved-under-protest', 'design-professional-rummager'],
+  },
   {
     id: 'drop-issue-01',
     slug: 'issue-01',
