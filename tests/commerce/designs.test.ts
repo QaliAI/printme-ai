@@ -80,7 +80,7 @@ describe('curated design catalog', () => {
       new SeedDesignRepository(),
     );
 
-    await expect(service.listPublished()).resolves.toHaveLength(19);
+    await expect(service.listPublished()).resolves.toHaveLength(26);
   });
 
   it('provides Shop V2 with server-repository designs and valid products', async () => {
@@ -88,7 +88,7 @@ describe('curated design catalog', () => {
     const designs = await service.listPublished();
     const products = getApprovedMerchProducts();
 
-    expect(designs).toHaveLength(19);
+    expect(designs).toHaveLength(26);
     for (const design of designs) {
       expect(() => getRecommendedProduct(design, products)).not.toThrow();
       expect(design.asset.productionUrl).toBeTruthy();
@@ -120,6 +120,7 @@ describe('curated design catalog', () => {
       'design-field-notes-after-dark',
     ]);
     expect(thanksgiving?.designIds).toEqual([
+      'design-second-helping-athletics',
       'design-feast-mode',
       'design-thankful-grateful-caffeinated',
       'design-thanksgiving-social-club',

@@ -43,12 +43,14 @@ class FakeCatalogSource implements PrintifyCatalogSource {
       _providerId: number,
       includeOutOfStock = false
     ) => {
-      const approvedIds =
-        blueprintId === 12
-          ? [18541, 18542]
-          : blueprintId === 68
-            ? [33719]
-            : [43138, 43144];
+      // Mirrors the approved catalog so a sync dry-run sees no drift.
+      const approvedIds = [
+        ...new Set(
+          getApprovedMerchProducts()
+            .filter((product) => product.printifyBlueprintId === blueprintId)
+            .flatMap((product) => product.variants.map((variant) => variant.printifyVariantId)),
+        ),
+      ];
       const ids = includeOutOfStock
         ? [...approvedIds, blueprintId * 100_000]
         : approvedIds;
@@ -63,11 +65,11 @@ class FakeCatalogSource implements PrintifyCatalogSource {
             {
               position: 'front',
               decoration_method:
-                blueprintId === 12
-                  ? 'dtg'
-                  : blueprintId === 68
-                    ? 'sublimation'
-                    : 'digital-printing',
+                blueprintId === 68
+                  ? 'sublimation'
+                  : blueprintId === 282
+                    ? 'digital-printing'
+                    : 'dtg',
               width: 1000,
               height: 1000,
             },
@@ -206,11 +208,12 @@ describe('validated curated catalog', () => {
 
     const report = await service.dryRunSync();
 
-    expect(report.productsChecked).toBe(3);
-    expect(report.newVariants).toHaveLength(3);
+    const approved = getApprovedMerchProducts().length;
+    expect(report.productsChecked).toBe(approved);
+    expect(report.newVariants).toHaveLength(approved);
     expect(report.removedVariants).toEqual([]);
     expect(report.changedAvailability).toEqual([]);
     expect(report.retailPricesChanged).toBe(false);
-    expect(source.getShippingInformation).toHaveBeenCalledTimes(3);
+    expect(source.getShippingInformation).toHaveBeenCalledTimes(approved);
   });
 });

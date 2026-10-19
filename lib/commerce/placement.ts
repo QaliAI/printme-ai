@@ -229,8 +229,13 @@ export function createProductConfiguration(input: {
   product: MerchProduct;
   template: PreviewTemplate;
   previous?: ProductConfiguration;
+  /** Preferred garment colour when there is no previous configuration (e.g. a design's default). */
+  color?: string | null;
 }): ProductConfiguration {
-  const variant = getSelectedVariant(input.product, input.previous);
+  const variant = getSelectedVariant(
+    input.product,
+    input.previous ?? (input.color ? { selectedColor: input.color, selectedSize: null } : undefined),
+  );
   const resolved = resolvePreviewTemplate({
     product: input.product,
     variant,

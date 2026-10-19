@@ -10,6 +10,7 @@ import styles from '@/app/designs/designs.module.css';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { createProductConfiguration } from '@/lib/commerce/placement';
 import { personalizedDesignSlugs } from '@/lib/commerce/personalized-designs';
+import { preferredGarmentColor, productsForDesign } from '@/lib/commerce/designs/garment-colors';
 import { getPreviewTemplate } from '@/lib/commerce/templates';
 import { DesignActivity } from './DesignActivity';
 import { InstantPreview } from './InstantPreview';
@@ -108,11 +109,11 @@ export function DesignGrid({
 }
 
 export function DesignDetail({ design }: { design: CuratedDesignRecord }) {
-  const products = getApprovedMerchProducts().filter((product) => design.compatibleProductIds.includes(product.id));
+  const products = productsForDesign(getApprovedMerchProducts().filter((product) => design.compatibleProductIds.includes(product.id)), design);
   const recommended = products.find((product) => product.id === design.recommendedProductId) ?? products[0];
   const prices = products.flatMap((product) => product.variants.filter((variant) => variant.available).map((variant) => variant.unitPrice));
   const configuration = recommended
-    ? createProductConfiguration({ designId: design.id, design: design.asset, product: recommended, template: getPreviewTemplate(recommended.previewTemplateId) })
+    ? createProductConfiguration({ designId: design.id, design: design.asset, product: recommended, template: getPreviewTemplate(recommended.previewTemplateId), color: preferredGarmentColor(recommended, design) })
     : null;
   return (
     <main className={styles.shell}>

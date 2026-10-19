@@ -1,3 +1,4 @@
+import { cozyCrewneck, extraTeeColours, heavyHoodie } from './flat-garments';
 import 'server-only';
 
 import type { MerchProduct } from '../types';
@@ -407,6 +408,14 @@ const approvedProducts: MerchProduct[] = [
     },
   },
 ];
+
+// Extra tee colours and the crewneck/hoodie come from measured Printify data (flat-garments.ts).
+const everydayTee = approvedProducts.find((product) => product.id === 'everyday-tee');
+if (everydayTee) {
+  everydayTee.variants.push(...extraTeeColours.variants);
+  everydayTee.previewBindings = [...(everydayTee.previewBindings ?? []), ...extraTeeColours.bindings];
+}
+approvedProducts.push(cozyCrewneck, heavyHoodie);
 
 export function getApprovedMerchProducts(): MerchProduct[] {
   return structuredClone(approvedProducts);

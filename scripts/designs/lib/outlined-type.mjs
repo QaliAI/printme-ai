@@ -46,3 +46,33 @@ export function textPath(font, text, { x, y, size, tracking = 0, align = 'left' 
   });
   return { d, width: total };
 }
+
+/**
+ * Text set on a circular arc as outlined paths (one <path> per glyph), for
+ * varsity and band-tee lockups. The arc is centred on (cx, cy) with `radius`
+ * to the baseline; `bend` > 0 arches upward (centre below the text).
+ * Returns SVG markup (not just path data) because each glyph is rotated.
+ */
+export function arcText(font, text, { cx, cy, radius, size, tracking = 0, fill = '#000', stroke, strokeWidth = 0 }) {
+  const glyphs = font.stringToGlyphs(text);
+  const advances = glyphs.map((glyph, i) => {
+    let advance = (glyph.advanceWidth / font.unitsPerEm) * size;
+    if (i < glyphs.length - 1) advance += (font.getKerningValue(glyph, glyphs[i + 1]) / font.unitsPerEm) * size + tracking * size;
+    return advance;
+  });
+  const total = advances.reduce((sum, value) => sum + value, 0);
+  let angle = -total / radius / 2; // radians, 0 = straight up
+  const parts = [];
+  glyphs.forEach((glyph, i) => {
+    const width = (glyph.advanceWidth / font.unitsPerEm) * size;
+    const mid = angle + width / 2 / radius;
+    const x = cx + radius * Math.sin(mid);
+    const y = cy - radius * Math.cos(mid);
+    const d = glyph.getPath(-width / 2, 0, size).toPathData(2);
+    const deg = (mid * 180) / Math.PI;
+    const strokeAttrs = stroke ? ` stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linejoin="round" paint-order="stroke"` : '';
+    parts.push(`<path transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(2)})" d="${d}" fill="${fill}"${strokeAttrs}/>`);
+    angle += advances[i] / radius;
+  });
+  return { svg: parts.join(''), angle: total / radius };
+}

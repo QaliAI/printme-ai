@@ -1,0 +1,290 @@
+{
+  "generatedAt": "2026-10-19",
+  "garments": {
+    "tee": {
+      "blueprint": 12,
+      "provider": 99,
+      "sizes": {
+        "M": {
+          "front": {
+            "printArea": {
+              "x": 269,
+              "y": 232,
+              "width": 262,
+              "height": 320
+            },
+            "placeholderWidth": 3591,
+            "placeholderHeight": 4364
+          },
+          "back": {
+            "printArea": {
+              "x": 267,
+              "y": 204,
+              "width": 266,
+              "height": 316
+            },
+            "placeholderWidth": 3591,
+            "placeholderHeight": 4364
+          }
+        },
+        "L": {
+          "front": {
+            "printArea": {
+              "x": 269,
+              "y": 232,
+              "width": 262,
+              "height": 320
+            },
+            "placeholderWidth": 3951,
+            "placeholderHeight": 4800
+          },
+          "back": {
+            "printArea": {
+              "x": 267,
+              "y": 204,
+              "width": 266,
+              "height": 316
+            },
+            "placeholderWidth": 3951,
+            "placeholderHeight": 4800
+          }
+        }
+      },
+      "colors": {
+        "Natural": {
+          "variantIds": {
+            "M": 18389,
+            "L": 18390
+          },
+          "front": "/shop-v2/flat/tee-natural-front.webp",
+          "back": "/shop-v2/flat/tee-natural-back.webp"
+        },
+        "Black": {
+          "variantIds": {
+            "M": 18101,
+            "L": 18102
+          },
+          "front": "/shop-v2/flat/tee-black-front.webp",
+          "back": "/shop-v2/flat/tee-black-back.webp"
+        },
+        "Heather Navy": {
+          "variantIds": {
+            "M": 18269,
+            "L": 18270
+          },
+          "front": "/shop-v2/flat/tee-heather-navy-front.webp",
+          "back": "/shop-v2/flat/tee-heather-navy-back.webp"
+        },
+        "Soft Cream": {
+          "variantIds": {
+            "M": 18461,
+            "L": 18462
+          },
+          "front": "/shop-v2/flat/tee-soft-cream-front.webp",
+          "back": "/shop-v2/flat/tee-soft-cream-back.webp"
+        },
+        "Athletic Heather": {
+          "variantIds": {
+            "M": 18077,
+            "L": 18078
+          },
+          "front": "/shop-v2/flat/tee-athletic-heather-front.webp",
+          "back": "/shop-v2/flat/tee-athletic-heather-back.webp"
+        }
+      }
+    },
+    "crewneck": {
+      "blueprint": 49,
+      "provider": 99,
+      "sizes": {
+        "M": {
+          "front": {
+            "printArea": {
+              "x": 269,
+              "y": 240,
+              "width": 263,
+              "height": 313
+            },
+            "placeholderWidth": 3349,
+            "placeholderHeight": 3824
+          },
+          "back": {
+            "printArea": {
+              "x": 271,
+              "y": 202,
+              "width": 256,
+              "height": 310
+            },
+            "placeholderWidth": 3349,
+            "placeholderHeight": 3824
+          }
+        },
+        "L": {
+          "front": {
+            "printArea": {
+              "x": 269,
+              "y": 240,
+              "width": 263,
+              "height": 313
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 4398
+          },
+          "back": {
+            "printArea": {
+              "x": 271,
+              "y": 202,
+              "width": 256,
+              "height": 310
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 4398
+          }
+        },
+        "XL": {
+          "front": {
+            "printArea": {
+              "x": 269,
+              "y": 240,
+              "width": 263,
+              "height": 313
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 4398
+          },
+          "back": {
+            "printArea": {
+              "x": 271,
+              "y": 202,
+              "width": 256,
+              "height": 310
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 4398
+          }
+        }
+      },
+      "colors": {
+        "Sport Grey": {
+          "variantIds": {
+            "M": 25426,
+            "L": 25457,
+            "XL": 25488
+          },
+          "front": "/shop-v2/flat/crewneck-sport-grey-front.webp",
+          "back": "/shop-v2/flat/crewneck-sport-grey-back.webp"
+        },
+        "Sand": {
+          "variantIds": {
+            "M": 25425,
+            "L": 25456,
+            "XL": 25487
+          },
+          "front": "/shop-v2/flat/crewneck-sand-front.webp",
+          "back": "/shop-v2/flat/crewneck-sand-back.webp"
+        },
+        "Black": {
+          "variantIds": {
+            "M": 25428,
+            "L": 25459,
+            "XL": 25490
+          },
+          "front": "/shop-v2/flat/crewneck-black-front.webp",
+          "back": "/shop-v2/flat/crewneck-black-back.webp"
+        }
+      }
+    },
+    "hoodie": {
+      "blueprint": 77,
+      "provider": 99,
+      "sizes": {
+        "M": {
+          "front": {
+            "printArea": {
+              "x": 281,
+              "y": 261,
+              "width": 227,
+              "height": 147
+            },
+            "placeholderWidth": 3273,
+            "placeholderHeight": 2180
+          },
+          "back": {
+            "printArea": {
+              "x": 289,
+              "y": 240,
+              "width": 239,
+              "height": 200
+            },
+            "placeholderWidth": 3349,
+            "placeholderHeight": 2791
+          }
+        },
+        "L": {
+          "front": {
+            "printArea": {
+              "x": 281,
+              "y": 261,
+              "width": 227,
+              "height": 147
+            },
+            "placeholderWidth": 3531,
+            "placeholderHeight": 2352
+          },
+          "back": {
+            "printArea": {
+              "x": 289,
+              "y": 240,
+              "width": 239,
+              "height": 200
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 3210
+          }
+        },
+        "XL": {
+          "front": {
+            "printArea": {
+              "x": 281,
+              "y": 261,
+              "width": 227,
+              "height": 147
+            },
+            "placeholderWidth": 3531,
+            "placeholderHeight": 2352
+          },
+          "back": {
+            "printArea": {
+              "x": 289,
+              "y": 240,
+              "width": 239,
+              "height": 200
+            },
+            "placeholderWidth": 3852,
+            "placeholderHeight": 3210
+          }
+        }
+      },
+      "colors": {
+        "Black": {
+          "variantIds": {
+            "M": 32919,
+            "L": 32920,
+            "XL": 32921
+          },
+          "front": "/shop-v2/flat/hoodie-black-front.webp",
+          "back": "/shop-v2/flat/hoodie-black-back.webp"
+        },
+        "Sport Grey": {
+          "variantIds": {
+            "M": 32903,
+            "L": 32904,
+            "XL": 32905
+          },
+          "front": "/shop-v2/flat/hoodie-sport-grey-front.webp",
+          "back": "/shop-v2/flat/hoodie-sport-grey-back.webp"
+        }
+      }
+    }
+  }
+}

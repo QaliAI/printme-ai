@@ -17,6 +17,8 @@ describe('product adaptation planning', () => {
       'poster-composition',
       'apparel-breathing-room',
       'mug-handle-safe',
+      'apparel-breathing-room',
+      'apparel-breathing-room',
     ]);
     expect(plans.every((plan) => plan.optional && plan.automated)).toBe(true);
   });

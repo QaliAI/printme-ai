@@ -15,6 +15,8 @@ export interface CuratedDesignRecord extends CuratedDesign {
   publicationDate: string | null;
   tags: string[];
   defaultProductColor: string | null;
+  /** Garment colours this artwork was separated for, in preference order (see garment-colors.ts). */
+  garmentColors?: string[];
   defaultPlacement: PrintPlacement;
   compatibleProductIds: string[];
   incompatibleProductIds: string[];

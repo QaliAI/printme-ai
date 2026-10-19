@@ -18,4 +18,12 @@ export const productCopy: Record<string, { spec: string; detail: string }> = {
     spec: '11 oz ceramic',
     detail: 'White ceramic, lead- and BPA-free, sublimation printed wrap.',
   },
+  'cozy-crewneck': {
+    spec: 'Gildan 18000',
+    detail: '50/50 cotton-poly heavy blend crewneck, ribbed collar and cuffs. Direct-to-garment print.',
+  },
+  'heavy-hoodie': {
+    spec: 'Gildan 18500',
+    detail: 'Heavy blend hoodie, double-lined hood, front pouch. Chest print above the pocket.',
+  },
 };

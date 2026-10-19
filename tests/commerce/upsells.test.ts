@@ -36,7 +36,8 @@ describe('same-design upsells', () => {
     const offers = getSameDesignUpsells({ sourceItem: item, cartItems: [item], products });
     const sets = getSameDesignSets(item, [item], offers);
     expect(sets.map(set => set.label)).toEqual(['Tee + Poster', 'Tee + Mug + Poster']);
-    expect(sets[1].total).toBe(item.configuration.unitPrice + offers.reduce((sum, offer) => sum + offer.configuration.unitPrice, 0));
+    expect(sets[1].total).toBe(item.configuration.unitPrice + sets[1].additions.reduce((sum, offer) => sum + offer.configuration.unitPrice, 0));
+    expect(sets[1].additions.map((offer) => offer.product.id)).toEqual(['everyday-tee', 'keepsake-mug']);
     expect(sets[1].additions.every(offer => offer.configuration.productionAssetUrl === item.configuration.productionAssetUrl)).toBe(true);
     expect(getSameDesignSets(item, [item], [])).toEqual([]);
   });
@@ -66,6 +67,8 @@ describe('same-design upsells', () => {
     expect(recommendations.map((upsell) => upsell.product.id)).toEqual([
       'everyday-tee',
       'keepsake-mug',
+      'cozy-crewneck',
+      'heavy-hoodie',
     ]);
     const quote = calculateBundleQuote(
       {
