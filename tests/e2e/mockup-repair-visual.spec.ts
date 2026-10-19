@@ -101,12 +101,19 @@ test('sitewide mockup visual audit', async ({
       animations: 'disabled'
     });
     if (phase !== 'before' && route === '/') {
-      // Issue Nº 01 homepage: every product preview must be a clean, uncontaminated InstantPreview render.
-      await checkPreview(page.getByTestId('hero-feature').getByTestId('instant-preview'), 'everyday-tee');
+      // Mascot homepage: the drop shows official Printify mockups and the canvas strip shows real blanks.
+      const drop = page.getByTestId('homepage-drop');
+      await drop.scrollIntoViewIfNeeded();
+      await decodeImages(drop);
+      const dropImages = await drop.locator('img').evaluateAll((images) =>
+        images.map((image) => ({ src: (image as HTMLImageElement).currentSrc, ok: (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0 })),
+      );
+      expect(dropImages.length).toBeGreaterThanOrEqual(20);
+      expect(dropImages.every((image) => image.ok && decodeURIComponent(image.src).includes('/merch/'))).toBe(true);
       const showcase = page.getByTestId('homepage-product-showcase');
-      const previews = showcase.getByTestId('instant-preview');
-      expect(await previews.count()).toBeGreaterThanOrEqual(3);
-      for (let i = 0; i < (await previews.count()); i++) await checkPreview(previews.nth(i));
+      await showcase.scrollIntoViewIfNeeded();
+      await decodeImages(showcase);
+      expect(await showcase.locator('img').evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
       await capture(showcase, 'homepage-product-showcase');
     }
     if (route === '/halloween') {
@@ -212,7 +219,8 @@ test('sitewide mockup visual audit', async ({
       json: { id: 'guest-design-visual', design_url: '/designs/seasonal-edit/library-of-lost-hours.webp', status: 'completed' }
     }));
     await page.goto('/app/create/preview?upload=guest-upload-visual&style=visual-test&imageUrl=%2Flanding%2Ftransformations%2Fpet-original.webp');
-    await expect(page.getByTestId('live-product-mockups')).toBeVisible();
+    // First dev-server compile of this legacy route plus a mocked generation can exceed 5s.
+    await expect(page.getByTestId('live-product-mockups')).toBeVisible({ timeout: 30_000 });
     for (const product of ['everyday-tee', 'keepsake-mug', 'gallery-poster']) await checkPreview(page.getByTestId(`legacy-preview-${product}`).getByTestId('instant-preview'), product);
     await capture(page.getByTestId('live-product-mockups'), 'legacy-design-preview-products');
     await page.getByTestId('legacy-preview-keepsake-mug').click();

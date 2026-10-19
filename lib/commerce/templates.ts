@@ -1,3 +1,4 @@
+import { flatBaseImages, flatPreviewTemplates } from './catalog/flat-garments';
 import type {
   MerchProduct,
   PreviewTemplate,
@@ -227,8 +228,12 @@ export const previewTemplates: PreviewTemplate[] = [
   },
 ];
 
+previewTemplates.push(...flatPreviewTemplates);
+
 /** Only visually verified blank assets may be used as product bases. */
 export const verifiedBlankProductImages = new Set([
+  // Printify blank flat mockups for extra colours and garments (scripts/mockups/printify-blank-bases.mjs)
+  ...flatBaseImages,
   '/shop-v2/tee-base.svg', '/shop-v2/tee-back.svg', '/shop-v2/poster-base.svg',
   '/shop-v2/mug-left-base.webp', '/shop-v2/mug-right-base.webp',
   // Official Printify catalog photography of the approved blanks (scripts/mockups/build-photo-bases.mjs)

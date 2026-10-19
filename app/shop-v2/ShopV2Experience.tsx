@@ -21,6 +21,7 @@ import {
   createProductConfiguration,
   refreshConfigurationPreview,
 } from '@/lib/commerce/placement';
+import { preferredGarmentColor, productsForDesign, variantsForDesign } from '@/lib/commerce/designs/garment-colors';
 import {
   readPersistentCart,
   removePersistentCartItem,
@@ -146,6 +147,7 @@ export function ShopV2Experience({
         design: initialDesign.asset,
         product,
         template: getPreviewTemplate(product.previewTemplateId),
+        color: preferredGarmentColor(product, initialDesign),
       });
     });
   const [cartItems, setCartItems] = useState<CartConfigurationSnapshot[]>([]);
@@ -173,6 +175,7 @@ export function ShopV2Experience({
           design: design.asset,
           product,
           template,
+          color: preferredGarmentColor(product, design),
         }),
       );
       setEditingItemId(null);
@@ -279,8 +282,9 @@ export function ShopV2Experience({
     ? findById(products, configuration.merchProductId, 'product')
     : null;
   const compatibleProducts = selectedDesign
-    ? products.filter((product) =>
-        isDesignProductCompatible(selectedDesign, product.id)
+    ? productsForDesign(
+        products.filter((product) => isDesignProductCompatible(selectedDesign, product.id)),
+        selectedDesign,
       )
     : products;
   const cartTotal = useMemo(
@@ -374,13 +378,15 @@ export function ShopV2Experience({
     if (!selectedDesign || !configuration) return;
     assertDesignProductCompatible(selectedDesign, product.id);
     const template = getPreviewTemplate(product.previewTemplateId);
+    // Keep the current colour only if this design may be printed on it for this product.
+    const keepColour = variantsForDesign(product, selectedDesign).some((variant) => variant.color === configuration.selectedColor);
     setConfiguration(
       createProductConfiguration({
         designId: selectedDesign.id,
         design: selectedDesign.asset,
         product,
         template,
-        previous: configuration,
+        previous: keepColour ? configuration : { ...configuration, selectedColor: preferredGarmentColor(product, selectedDesign) },
       })
     );
     trackCommerceEvent('product_changed', {
@@ -743,8 +749,7 @@ export function ShopV2Experience({
                 <fieldset className={styles.controlGroup}>
                   <legend>Format</legend>
                   <div className={styles.variantList}>
-                    {selectedProduct.variants
-                      .filter((variant) => variant.available)
+                    {variantsForDesign(selectedProduct, selectedDesign)
                       .map((variant) => (
                         <button
                           type="button"

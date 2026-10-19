@@ -3,18 +3,24 @@ import path from 'node:path';
 
 const e2eCookie = { name: 'printme-e2e-secret', value: 'printme-local-e2e-secret', domain: 'localhost', path: '/', httpOnly: true, sameSite: 'Strict' as const };
 
-test('hero shows the photo proposition, both CTAs and a real product preview without waiting', async ({ page }, testInfo) => {
+test('hero plays the mascot video with both CTAs above the fold and a pause control', async ({ page }, testInfo) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: /Your photo\. Cut out\. Printed\./i })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: /Make shit\. Print shit\./i })).toBeVisible();
   const upload = page.getByTestId('hero-make');
-  const shop = page.getByRole('link', { name: /^Shop the drops$/i }).first();
+  const shop = page.getByRole('link', { name: /^Shop the drop$/i }).first();
   await expect(upload).toHaveText(/Upload your photo/i);
-  await expect(shop).toHaveAttribute('href', '/shop');
+  await expect(shop).toHaveAttribute('href', '#drop');
   if (testInfo.project.name !== 'mobile-chromium') {
     const box = await shop.boundingBox();
     expect(box!.y + box!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   }
-  await expect(page.getByTestId('hero-feature').getByTestId('instant-preview')).toHaveAttribute('data-product-id', 'everyday-tee');
+  const video = page.getByTestId('hero-video');
+  const expected = testInfo.project.name === 'mobile-chromium' ? /hero-canvas-portrait\.mp4$/ : /hero-canvas\.mp4$/;
+  await expect(video).toHaveAttribute('src', expected);
+  const toggle = page.getByRole('button', { name: /background video/i });
+  await expect(toggle).toBeVisible();
+  await toggle.click();
+  await expect.poll(() => video.evaluate((element: HTMLVideoElement) => element.paused)).toBe(true);
 });
 
 test('the page scrolls naturally and shows no retired designs or unsupported claims', async ({ page }) => {
@@ -29,16 +35,31 @@ test('the page scrolls naturally and shows no retired designs or unsupported cla
   await expect(page.getByTestId('homepage-product-showcase')).toContainText(/lightweight 4.2 oz/i);
 });
 
-test('Specimen Plates originals are previewed on the real tee and open their design pages', async ({ page }) => {
+test('the drop shows ten different official mockups, each opening a purchasable design', async ({ page }) => {
   await page.goto('/');
-  const plates = page.getByTestId('homepage-specimen-plates');
-  await expect(plates.getByRole('heading', { name: /Specimen Plates/i })).toBeVisible();
-  const cards = plates.getByRole('listitem');
-  await expect(cards).toHaveCount(3);
-  await expect(cards.first().getByTestId('instant-preview')).toHaveAttribute('data-product-id', 'everyday-tee');
-  await cards.filter({ hasText: 'Civilized Trash' }).getByRole('link').click();
-  await expect(page).toHaveURL(/\/designs\/civilized-trash$/, { timeout: 30_000 });
-  await expect(page.getByRole('heading', { level: 1, name: /Civilized Trash/i })).toBeVisible();
+  const drop = page.getByTestId('homepage-drop');
+  const cards = drop.getByTestId('drop-card');
+  await expect(cards).toHaveCount(10);
+  const sources = await drop.locator('img[alt]:not([alt=""])').evaluateAll((images) => images.map((image) => (image as HTMLImageElement).currentSrc || (image as HTMLImageElement).src));
+  // Every card uses a different official mockup image.
+  expect(new Set(sources).size).toBe(sources.length);
+  expect(sources.every((src) => decodeURIComponent(src).includes('/merch/'))).toBe(true);
+  await cards.filter({ hasText: 'Second Helping Athletics' }).click();
+  await expect(page).toHaveURL(/\/designs\/second-helping-athletics$/, { timeout: 30_000 });
+  await expect(page.getByRole('heading', { level: 1, name: /Second Helping Athletics/i })).toBeVisible();
+  await expect(page.getByTestId('instant-preview').first()).toHaveAttribute('data-product-id', 'cozy-crewneck');
+});
+
+test('the spray scene scrubs with scroll and loads its clip lazily', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile-chromium', 'Scrub geometry is validated on wider viewports.');
+  await page.goto('/');
+  const scrub = page.getByTestId('spray-scrub');
+  const clip = scrub.locator('video');
+  await expect(clip).not.toHaveAttribute('src', /.+/);
+  await scrub.scrollIntoViewIfNeeded();
+  await expect(clip).toHaveAttribute('src', /spray-scrub\.mp4$/);
+  await page.mouse.wheel(0, 500);
+  await expect.poll(() => scrub.locator('li[data-shown="true"]').count(), { timeout: 10_000 }).toBeGreaterThan(0);
 });
 
 test('upload → remove background → preview cutout → choose product → continue to studio', async ({ page, context }) => {

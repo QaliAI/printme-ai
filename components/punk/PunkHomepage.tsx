@@ -1,181 +1,160 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { InstantPreview } from '@/components/commerce/InstantPreview';
 import { SiteFooter } from '@/components/brand/SiteFooter';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { productCopy } from '@/lib/commerce/product-copy';
-import { createProductConfiguration } from '@/lib/commerce/placement';
-import { getPreviewTemplate } from '@/lib/commerce/templates';
-import type { DesignAsset, MerchProduct } from '@/lib/commerce/types';
+import { canvasStrip, dropShowcase } from '@/lib/commerce/merch-showcase';
+import type { MerchProduct } from '@/lib/commerce/types';
 import { photoStyles } from '@/lib/ai/photo-styles';
-import { isReviewFeatureEnabled } from '@/lib/feature-flags';
 import { AI_STYLES_ENABLED } from '@/lib/ai/availability';
 import { MakeYourOwnArt } from './MakeYourOwnArt';
+import { HeroVideo } from './motion/HeroVideo';
+import { InViewVideo } from './motion/InViewVideo';
+import { Parallax } from './motion/Parallax';
+import { Reveal } from './motion/Reveal';
+import { ScrubVideo } from './motion/ScrubVideo';
 import styles from './punk.module.css';
+import motion from './home-motion.module.css';
 
 const usd = (cents: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100);
 
-function fromPrice(product: MerchProduct) {
-  return Math.min(...product.variants.filter((v) => v.available).map((v) => v.unitPrice));
+function fromPrice(product: MerchProduct, color?: string | null) {
+  const variants = product.variants.filter((v) => v.available && (!color || v.color === color));
+  return Math.min(...(variants.length ? variants : product.variants).map((v) => v.unitPrice));
 }
 
 const headline: { word: string; tone: 'paper' | 'pink' | 'yellow' | 'ink' | 'photocopy' }[] = [
-  { word: 'Your', tone: 'paper' },
-  { word: 'photo.', tone: 'pink' },
-  { word: 'Cut', tone: 'ink' },
-  { word: 'out.', tone: 'yellow' },
-  { word: 'Printed.', tone: 'photocopy' },
+  { word: 'Make', tone: 'paper' },
+  { word: 'shit.', tone: 'pink' },
+  { word: 'Print', tone: 'yellow' },
+  { word: 'shit.', tone: 'photocopy' },
 ];
 
-/** Real output of our background removal on a CC0 sample photo (public/samples/README.md). */
-const SAMPLE_CUTOUT: DesignAsset = {
-  id: 'asset-sample-ginger-cat-cutout',
-  version: 'sample-v1',
-  url: '/samples/ginger-cat-cutout.png',
-  alt: 'Ginger cat cut out from its background',
-  width: 747,
-  height: 699,
-  mimeType: 'image/png',
-  hasTransparency: true,
-};
-
-function SamplePreview({
-  product,
-  design = SAMPLE_CUTOUT,
-  designId = 'homepage-sample',
-  altModel = false,
-}: {
-  product: MerchProduct;
-  design?: DesignAsset;
-  designId?: string;
-  /** Show the tee on the second Printify catalog model (same print geometry). */
-  altModel?: boolean;
-}) {
-  let configuration = createProductConfiguration({
-    designId,
-    design,
-    product,
-    template: getPreviewTemplate(product.previewTemplateId),
-  });
-  const altView = configuration.previewViewId.replace(/-front$/, '-alt-front');
-  if (altModel && getPreviewTemplate('tee-alt-v2').views.some((view) => view.id === altView)) {
-    configuration = { ...configuration, previewTemplateId: 'tee-alt-v2', previewViewId: altView };
-  }
-  return <InstantPreview design={design} configuration={configuration} showSafeZone={false} presentation="merchandising" />;
-}
-
 /**
- * PrintMe.ai homepage — the working proposition first: upload a photo, get a
- * clean cutout, see it on the real product. Product prices and previews come
- * from the commerce engine; the hero result is real pipeline output.
+ * PrintMe.ai homepage. The mascot (Unit 001) carries the motion: a hero loop,
+ * a scroll-scrubbed spray scene and in-view skate clips. Merchandise is shown
+ * only on official Printify mockups of products we actually sell.
  */
 export async function PunkHomepage() {
   const products = getApprovedMerchProducts();
   const productById = new Map(products.map((p) => [p.id, p]));
-  const tee = productById.get('everyday-tee') ?? products[0];
-  const mug = productById.get('keepsake-mug') ?? products[0];
-  const startingPrice = Math.min(...products.map(fromPrice));
-  const ordered = ['everyday-tee', 'gallery-poster', 'keepsake-mug'].map((id) => productById.get(id)).filter((p): p is MerchProduct => Boolean(p));
-  const textThread = isReviewFeatureEnabled('text-thread');
-  const plates = (await getDesignCatalogService().listPublished()).filter((design) => design.tags.includes('specimen-plates'));
+  const startingPrice = Math.min(...products.map((product) => fromPrice(product)));
+  const designs = new Map((await getDesignCatalogService().listPublished()).map((design) => [design.slug, design]));
+  const cards = dropShowcase.filter((card) => designs.has(card.slug) && productById.has(card.productId));
 
   return (
     <div className={styles.home}>
-      {/* HERO — the proposition, shown with real output */}
-      <section className={styles.hero} aria-labelledby="hero-heading">
-        <div className={styles.heroCopy}>
-          <p className={styles.issueTag}>Custom merch from any photo</p>
-          <h1 id="hero-heading" className={styles.ransom}>
+      {/* HERO — the mascot sprays the logo, full bleed */}
+      <section className={motion.hero} aria-labelledby="hero-heading">
+        <HeroVideo
+          wide="/mascot/hero-canvas.mp4"
+          portrait="/mascot/hero-canvas-portrait.mp4"
+          poster="/mascot/hero-canvas-poster.webp"
+          portraitPoster="/mascot/hero-canvas-portrait-poster.webp"
+        />
+        <div className={motion.heroShade} aria-hidden="true" />
+        <div className={motion.heroCopy}>
+          <p className={styles.issueTag}>Custom merch · drawn, cut out and printed</p>
+          <h1 id="hero-heading" className={`${styles.ransom} ${motion.heroRansom}`}>
             {headline.map((part, i) => (
-              <span key={part.word} className={styles.ransomWord} data-tone={part.tone} style={{ ['--i' as string]: i }}>
+              <span key={`${part.word}-${i}`} className={styles.ransomWord} data-tone={part.tone} style={{ ['--i' as string]: i }}>
                 {part.word}
               </span>
             ))}
           </h1>
-          <p className={styles.heroLede}>
-            Upload your pet, your person or your inside joke. We remove the background, you place it on a real tee, poster or mug, and
-            we print it to order.
+          <p className={motion.heroLede}>
+            Upload your pet, your person or your inside joke and we cut it out for a tee, hoodie, mug or poster. Or grab something from the drop.
+            Printed to order, from {usd(startingPrice)}.
           </p>
           <div className={styles.heroActions}>
             <a href="#make" className={styles.btnPink} data-testid="hero-make">
               Upload your photo
             </a>
-            <Link href="/shop" className={styles.btnInk}>
-              Shop the drops
-            </Link>
-          </div>
-          <ul className={styles.heroFacts}>
-            <li>Background removal included</li>
-            <li>Exact print preview</li>
-            <li>From {usd(startingPrice)}</li>
-          </ul>
-        </div>
-
-        <div className={styles.heroProofGrid}>
-          <figure className={styles.heroBefore}>
-            <Image src="/samples/ginger-cat.jpg" alt="Original photo of a ginger long-haired cat" width={1280} height={857} priority sizes="(max-width: 900px) 60vw, 22vw" />
-            <figcaption>Your photo</figcaption>
-          </figure>
-          <span className={styles.heroArrow} aria-hidden="true">
-            cut out →
-          </span>
-          <Link href="/create?product=everyday-tee" className={styles.heroAfter} data-testid="hero-feature">
-            <SamplePreview product={tee} />
-            <span className={styles.heroAfterTag}>
-              Exact preview · {tee.name} {usd(fromPrice(tee))}
-            </span>
-          </Link>
-          <div className={styles.heroMugMini} aria-hidden="true">
-            <SamplePreview product={mug} />
+            <a href="#drop" className={styles.btnPaper}>
+              Shop the drop
+            </a>
           </div>
         </div>
+        <p className={motion.heroCredit} aria-hidden="true">
+          Unit 001 · on the clock
+        </p>
       </section>
 
-      {/* TRY IT — the working pipeline, right after the hero */}
-      <MakeYourOwnArt products={products} styles={AI_STYLES_ENABLED ? Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label })) : []} />
-
-      {/* ORIGINALS — PrintMe's own designs, previewed on the real tee */}
-      {plates.length > 0 && (
-        <section className={styles.drops} aria-labelledby="plates-heading" data-testid="homepage-specimen-plates">
-          <header className={styles.sectionHead}>
-            <div>
-              <p className={styles.issueTag}>New originals · drawn for PrintMe</p>
-              <h2 id="plates-heading" className={styles.posterHeading}>
-                Specimen <span className={styles.hlPink}>Plates</span>
-              </h2>
-            </div>
-            <Link href="/collections/specimen-plates" className={styles.textLink}>
-              See the collection →
+      {/* THE DROP — official Printify mockups, every one a different person, product and scene */}
+      <section className={motion.drop} id="drop" aria-labelledby="drop-heading" data-testid="homepage-drop">
+        <header className={motion.dropHead}>
+          <div>
+            <p className={styles.issueTag}>Q4 2026 · seven new originals</p>
+            <h2 id="drop-heading" className={styles.posterHeading}>
+              The <span className={styles.hlPink}>drop</span>
+            </h2>
+          </div>
+          <p className={motion.dropIntro}>
+            Researched against what is actually selling this season, drawn for PrintMe and photographed by Printify on the real blanks.{' '}
+            <Link href="/collections/q4-drop" className={styles.textLink}>
+              See the whole drop →
             </Link>
-          </header>
-          <ul className={styles.productGrid}>
-            {plates.map((design, index) => (
-              <li key={design.id} className={styles.productItem}>
-                <Link href={`/designs/${design.slug}`} className={styles.productCard}>
-                  <span className={styles.productMedia}>
-                    <SamplePreview product={tee} design={design.asset} designId={design.id} altModel={index % 2 === 0} />
+          </p>
+        </header>
+        <ul className={motion.dropGrid}>
+          {cards.map((card, index) => {
+            const design = designs.get(card.slug)!;
+            const product = productById.get(card.productId)!;
+            return (
+              <Reveal as="li" key={card.slug} delay={(index % 4) * 70} tilt={index % 2 ? 2.5 : -2.5} className={motion.dropItem}>
+                <Link href={`/designs/${card.slug}`} className={motion.dropCard} data-size={card.size} data-testid="drop-card">
+                  <span className={motion.dropMedia}>
+                    <Image src={card.main.src} alt={card.main.alt} fill sizes="(max-width: 700px) 92vw, (max-width: 1100px) 46vw, 30vw" className={motion.dropMain} />
+                    <Image src={card.hover.src} alt="" fill sizes="(max-width: 700px) 92vw, (max-width: 1100px) 46vw, 30vw" className={motion.dropHover} />
+                    <span className={motion.dropTag}>{card.tag}</span>
                   </span>
-                  <span className={styles.productMeta}>
+                  <span className={motion.dropMeta}>
                     <strong>{design.title}</strong>
                     <span>
-                      {tee.name}
-                      <b>{usd(fromPrice(tee))}</b>
+                      {product.name}
+                      {card.color ? ` · ${card.color}` : ''}
                     </span>
+                    <b>{usd(fromPrice(product, card.color))}</b>
                   </span>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+              </Reveal>
+            );
+          })}
+        </ul>
+      </section>
 
-      {/* PICK YOUR CANVAS */}
-      <section className={styles.drops} aria-labelledby="canvas-heading" data-testid="homepage-product-showcase">
+      {/* SPRAY — scroll-scrubbed, natural scroll */}
+      <section className={motion.spray} aria-labelledby="spray-heading">
+        <div className={motion.sprayCopy}>
+          <p className={styles.issueTag}>How it gets made</p>
+          <h2 id="spray-heading" className={styles.posterHeading}>
+            Idea in. <span className={styles.hlYellow}>Merch</span> out.
+          </h2>
+          <p className={styles.lede}>Scroll and Unit 001 does the work. You only have to bring the idea.</p>
+        </div>
+        <ScrubVideo
+          src="/mascot/spray-scrub.mp4"
+          poster="/mascot/spray-scrub-poster.webp"
+          endFrame="/mascot/spray-scrub-end.webp"
+          steps={['You bring the photo or the joke.', 'We cut it out and lay it out.', 'You check the exact preview.', 'It is printed when you order.']}
+        />
+      </section>
+
+      {/* MAKE YOUR OWN — the working cutout tool */}
+      <div className={motion.makeWrap}>
+        <Parallax distance={60} rotate={4} className={motion.makeMascot}>
+          <Image src="/mascot/robot-skate.webp" alt="" width={639} height={828} sizes="220px" />
+        </Parallax>
+        <MakeYourOwnArt products={products} styles={AI_STYLES_ENABLED ? Object.entries(photoStyles).map(([key, value]) => ({ key, label: value.label })) : []} />
+      </div>
+
+      {/* PICK YOUR CANVAS — real blanks, different colours */}
+      <section className={motion.canvas} aria-labelledby="canvas-heading" data-testid="homepage-product-showcase">
         <header className={styles.sectionHead}>
           <div>
-            <p className={styles.issueTag}>Three things we print really well</p>
+            <p className={styles.issueTag}>Five blanks we print really well</p>
             <h2 id="canvas-heading" className={styles.posterHeading}>
               Pick your <span className={styles.hlPink}>canvas</span>
             </h2>
@@ -184,78 +163,67 @@ export async function PunkHomepage() {
             Product details →
           </Link>
         </header>
-        <ul className={styles.productGrid}>
-          {ordered.map((product) => (
-            <li key={product.id} className={styles.productItem}>
-              <Link href={`/create?product=${product.id}`} className={styles.productCard}>
-                <span className={styles.productMedia}>
-                  <SamplePreview product={product} />
-                </span>
-                <span className={styles.productMeta}>
+        <ul className={motion.canvasRow}>
+          {canvasStrip.map((item, index) => {
+            const product = productById.get(item.productId);
+            if (!product) return null;
+            return (
+              <Reveal as="li" key={item.productId} delay={index * 60} tilt={index % 2 ? -2 : 2}>
+                <Link href={`/products/${product.merchandising?.slug ?? product.id}`} className={motion.canvasCard}>
+                  <span className={motion.canvasMedia}>
+                    <Image src={item.image} alt={item.alt} fill sizes="(max-width: 700px) 46vw, 18vw" />
+                  </span>
                   <strong>{productCopy[product.id]?.spec ?? product.name}</strong>
                   <span>
-                    {product.name}
-                    <b>from {usd(fromPrice(product))}</b>
+                    {product.name} · {item.note}
                   </span>
-                  <small className={styles.productDetail}>{productCopy[product.id]?.detail}</small>
-                </span>
-              </Link>
-            </li>
-          ))}
+                  <small>{productCopy[product.id]?.detail}</small>
+                  <b>from {usd(fromPrice(product))}</b>
+                </Link>
+              </Reveal>
+            );
+          })}
         </ul>
       </section>
 
-      {/* GARMENT DETAIL — real photography of the actual blank */}
-      <section className={styles.editorial} aria-labelledby="editorial-heading">
-        <div className={styles.detailPair}>
-          <figure>
-            <Image src="/shop-v2/photo/tee-detail-shoulder.webp" alt="Close-up of the Bella+Canvas 3001 shoulder seam" width={900} height={900} sizes="(max-width: 900px) 50vw, 22vw" />
-          </figure>
-          <figure>
-            <Image src="/shop-v2/photo/tee-detail-collar.webp" alt="Close-up of the Bella+Canvas 3001 ribbed collar" width={900} height={900} sizes="(max-width: 900px) 50vw, 22vw" />
-          </figure>
+      {/* MEET UNIT 001 — the mascot */}
+      <section className={motion.unit} aria-labelledby="unit-heading">
+        <div className={motion.unitFigures}>
+          <Parallax distance={-50} rotate={-3} className={motion.unitFront}>
+            <Image src="/mascot/robot-hoodie-front.webp" alt="Unit 001, the PrintMe robot, in a paint-splattered hoodie" width={322} height={635} sizes="(max-width: 700px) 40vw, 220px" />
+          </Parallax>
+          <Parallax distance={50} rotate={3} className={motion.unitBack}>
+            <Image src="/mascot/robot-hoodie-back.webp" alt="" width={300} height={627} sizes="(max-width: 700px) 36vw, 200px" />
+          </Parallax>
+          <span className={motion.unitNote} data-n="1">boombox head</span>
+          <span className={motion.unitNote} data-n="2">signature spray can</span>
+          <span className={motion.unitNote} data-n="3">will skate for snacks</span>
         </div>
-        <div className={styles.editorialCopy}>
-          <p className={styles.issueTag}>What you actually get</p>
-          <h2 id="editorial-heading" className={styles.posterHeading}>
-            Light cotton.
-            <br />
-            <span className={styles.hlYellow}>Loud print.</span>
+        <div className={motion.unitCopy}>
+          <p className={styles.issueTag}>Meet the mascot</p>
+          <h2 id="unit-heading" className={styles.posterHeading}>
+            Unit <span className={styles.hlYellow}>001</span>
           </h2>
-          <dl className={styles.specList}>
-            <div>
-              <dt>Tee</dt>
-              <dd>Bella+Canvas 3001: a lightweight 4.2 oz unisex jersey with a ribbed collar and side seams. Printed direct-to-garment.</dd>
-            </div>
-            <div>
-              <dt>Poster</dt>
-              <dd>Museum-grade archival matte paper, 189 g/m², pigment inks.</dd>
-            </div>
-            <div>
-              <dt>Mug</dt>
-              <dd>11 oz white ceramic, lead- and BPA-free, sublimation printed.</dd>
-            </div>
-            <div>
-              <dt>Every order</dt>
-              <dd>Printed when you order. Damaged or misprinted items are reviewed and reprinted.</dd>
-            </div>
-          </dl>
-          <p className={styles.photoNote}>Photos: Printify catalog photography of the exact blank we print on.</p>
+          <p className={styles.lede}>
+            Boombox for a head, spray can for a hand, zero respect for blank walls. He tags it, skates it and prints your stuff.
+          </p>
+          <div className={motion.unitClip}>
+            <InViewVideo src="/mascot/skate-tunnel.mp4" poster="/mascot/skate-tunnel-poster.webp" className={motion.clipVideo} />
+          </div>
+          <Link href="/designs/made-by-machines" className={styles.btnInk}>
+            Wear the robot
+          </Link>
         </div>
       </section>
 
-      {/* SEASONAL */}
+      {/* SEASONAL — Halloween until Oct 31, then the holiday shop */}
       <section className={styles.season} aria-labelledby="season-heading">
         <div className={styles.seasonCopy}>
           <p className={styles.seasonTag}>Halloween · The Slasher Shop</p>
           <h2 id="season-heading" className={styles.posterHeading}>
             Make it <span className={styles.hlAcid}>creepy.</span>
           </h2>
-          <p className={styles.lede}>
-            {AI_STYLES_ENABLED
-              ? 'Upload a photo and turn it into Halloween art in the studio. You see the result before you pay.'
-              : 'Put your names on a haunted design, or cut out your pet and give them their own spooky tee.'}
-          </p>
+          <p className={styles.lede}>Put your names on a haunted design, or cut out your pet and give them their own spooky tee.</p>
           <div className={styles.seasonActions}>
             <Link href="/halloween" className={styles.btnAcid}>
               Enter the Halloween shop
@@ -263,38 +231,15 @@ export async function PunkHomepage() {
           </div>
         </div>
         <div className={styles.seasonCards}>
-          {AI_STYLES_ENABLED ? (
-            <>
-              <Link href="/create?style=halloween-pet" className={styles.seasonCard}>
-                <span className={styles.seasonCardType} aria-hidden="true">
-                  Your pet.
-                  <br />
-                  <em>But spooky.</em>
-                </span>
-                <strong>Halloween pet art</strong>
-                <small>AI style · keeps your pet&apos;s markings</small>
-              </Link>
-              <Link href="/create?style=haunted-portrait" className={styles.seasonCard}>
-                <span className={styles.seasonCardType} aria-hidden="true">
-                  Your face.
-                  <br />
-                  <em>By candlelight.</em>
-                </span>
-                <strong>Gothic portrait</strong>
-                <small>AI style · upload any clear photo</small>
-              </Link>
-            </>
-          ) : (
-            <a href="#make" className={styles.seasonCard}>
-              <span className={styles.seasonCardType} aria-hidden="true">
-                Your pet.
-                <br />
-                <em>Cut out.</em>
-              </span>
-              <strong>Pet photo cutout</strong>
-              <small>Remove the background, put them on merch</small>
-            </a>
-          )}
+          <a href="#make" className={styles.seasonCard}>
+            <span className={styles.seasonCardType} aria-hidden="true">
+              Your pet.
+              <br />
+              <em>Cut out.</em>
+            </span>
+            <strong>Pet photo cutout</strong>
+            <small>Remove the background, put them on merch</small>
+          </a>
           <Link href="/halloween#seasonal-edit" className={styles.seasonCard}>
             <span className={styles.seasonCardType} aria-hidden="true">
               Your names.
@@ -307,83 +252,48 @@ export async function PunkHomepage() {
         </div>
       </section>
 
-      {/* WHAT YOU CAN MAKE TODAY */}
-      <section className={styles.tools} aria-labelledby="tools-heading">
-        <h2 id="tools-heading" className={styles.posterHeading}>
-          What you can <span className={styles.hlYellow}>make today</span>
-        </h2>
-        <ul className={styles.toolGrid}>
-          <li>
-            <a href="#make">
-              <strong>Photo cutouts</strong>
-              <span>Remove the background from any photo, fix edges with a brush, put it on merch.</span>
+      {/* SKATE BAND — trust facts over the mascot clip */}
+      <section className={motion.band} aria-labelledby="band-heading">
+        <InViewVideo src="/mascot/skate-park.mp4" poster="/mascot/skate-park-poster.webp" className={motion.bandVideo} />
+        <div className={motion.bandShade} aria-hidden="true" />
+        <div className={motion.bandCopy}>
+          <h2 id="band-heading" className={motion.bandType}>
+            <span data-tone="paper">Printed</span> <span data-tone="pink">to order.</span> <span data-tone="yellow">No</span> <span data-tone="ink">warehouse.</span>
+          </h2>
+          <ul className={motion.bandFacts}>
+            <li id="shipping">
+              <strong>Printed to order</strong>
+              <span>Made when you order by Printify print partners. Production and shipping are estimated at checkout.</span>
+            </li>
+            <li>
+              <strong>Preview before you pay</strong>
+              <span>Previews use each product&apos;s real print area and placement.</span>
+            </li>
+            <li id="guarantee">
+              <strong>Damaged or misprinted?</strong>
+              <span>We review it and reprint verified damage or production defects.</span>
+            </li>
+            <li>
+              <strong>Your photos stay yours</strong>
+              <span>Cutout photos are deleted from the processor right after.</span>
+            </li>
+          </ul>
+          <div className={styles.encoreActions}>
+            <a href="#make" className={styles.btnPink}>
+              Upload your photo
             </a>
-          </li>
-          {AI_STYLES_ENABLED && (
-            <li>
-              <Link href="/create?style=illustrated">
-                <strong>AI photo styles</strong>
-                <span>{Object.keys(photoStyles).length} styles, from illustrated portraits to Halloween pet art. Preview before you pay.</span>
-              </Link>
-            </li>
-          )}
-          <li>
-            <Link href="/halloween#seasonal-edit">
-              <strong>Personalized designs</strong>
-              <span>Add family, pet and reader names to seasonal designs.</span>
-            </Link>
-          </li>
-          {textThread && (
-            <li>
-              <Link href="/text-thread">
-                <strong>Text-thread designer</strong>
-                <span>Turn a group-chat moment into a print.</span>
-              </Link>
-            </li>
-          )}
-        </ul>
-      </section>
-
-      {/* ENCORE */}
-      <section className={styles.encore} aria-labelledby="encore-heading">
-        <div className={styles.encoreWall} aria-hidden="true" />
-        <h2 id="encore-heading" className={styles.encoreType}>
-          <span data-tone="paper">Stop</span> <span data-tone="pink">scrolling.</span> <span data-tone="yellow">Start</span>{' '}
-          <span data-tone="ink">making.</span>
-        </h2>
-        <div className={styles.encoreActions}>
-          <a href="#make" className={styles.btnPink}>
-            Upload your photo
-          </a>
-          <Link href="/shop" className={styles.btnPaper}>
-            Shop the drops
-          </Link>
+            <a href="#drop" className={styles.btnPaper}>
+              Shop the drop
+            </a>
+          </div>
         </div>
-        <ul className={styles.trustRow}>
-          <li id="shipping">
-            <strong>Printed to order</strong>
-            <span>Made when you order by Printify print partners. Production and shipping are estimated separately at checkout.</span>
-          </li>
-          <li>
-            <strong>Preview before you pay</strong>
-            <span>The preview uses each product&apos;s real print area and placement.</span>
-          </li>
-          <li id="guarantee">
-            <strong>Damaged or misprinted?</strong>
-            <span>We review it and reprint verified damage or production defects.</span>
-          </li>
-          <li>
-            <strong>Your photos stay yours</strong>
-            <span>Cutout photos are deleted from the processor right after. Studio uploads are kept privately for your order.</span>
-          </li>
-        </ul>
       </section>
 
       <SiteFooter />
 
       <nav className={styles.mobileBar} aria-label="Quick actions" data-testid="home-mobile-commerce-bar">
         <a href="#make">Upload photo</a>
-        <Link href="/shop">Shop drops</Link>
+        <a href="#drop">Shop the drop</a>
       </nav>
     </div>
   );

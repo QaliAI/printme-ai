@@ -19,3 +19,22 @@ Slogans were checked on 2026-10-12 by web search; "Civilized trash",
 "Will play dead to avoid small talk", "Carved under protest" and
 "Professional rummager" returned no existing merch. The research behind each
 concept is in `lib/merchandising/opportunity-queue.ts`.
+
+## Q4 2026 drop (2026-10-19)
+
+Generated for PrintMe with Figma AI (`gemini-3.1-flash-image`, file
+"PrintMe merch art 2026-10") from text-only prompts, then upscaled 4x with
+Cloudinary `e_upscale` (`scripts/designs/upscale.mjs`) into `upscaled/`.
+`scripts/designs/build-q4-drops.mjs` keys and composes the print files.
+
+| File | Subject (all prompts: original, no text, isolated on flat white) |
+| --- | --- |
+| `turkey-mascot.png` | 1950s collegiate mascot: muscular turkey flexing in a leather football helmet; navy, gold, cream, rust. |
+| `soup-bowl.png` | Chunky 70s steaming soup bowl with spoon; cream, burnt orange, mustard, brown. |
+| `dog-lights.png` | Continuous single-line scruffy dog tangled in Christmas lights; coloured bulbs. |
+| `skeleton-reader.png` | Woodcut skeleton reading on a stack of books with a candle; black ink. |
+| `capybara-spring.png` | Two-colour risograph capybara in a hot spring with a yuzu on its head. |
+| `krampus-poster.png` | 70s horror poster art: Krampus reading a glowing phone on a snowy rooftop (full bleed). |
+
+The robot stencil is made in code from the owner-supplied mascot
+(`public/mascot/robot-skate.webp`, cut out from `brand/printmerobot/printmeairobot.jpg`).

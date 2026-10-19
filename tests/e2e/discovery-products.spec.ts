@@ -31,7 +31,8 @@ test('approved product pages expose pricing and readiness without false promises
   await expect(
     page.getByRole('heading', { level: 1, name: /Choose your canvas/ }),
   ).toBeVisible();
-  await expect(page.locator('section').first().getByRole('article')).toHaveCount(3);
+  // One card per approved product (tee, mug, poster, crewneck, hoodie).
+  await expect(page.locator('section').first().getByRole('article')).toHaveCount(5);
 
   await page.getByRole('link', { name: /Everyday Tee/ }).click();
   await expect(

@@ -53,3 +53,6 @@ build-output*.txt
 
 # third-party research captures: keep local, never publish
 /docs/creative-rebuild/research/*.jpg
+
+# Raw mascot source videos (40 MB). The site serves encoded cuts from public/mascot/.
+brand/printmerobot/*.mp4

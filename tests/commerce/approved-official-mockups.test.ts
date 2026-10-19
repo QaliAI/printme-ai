@@ -69,6 +69,6 @@ describe('approved official mockup mapping', () => {
       });
     }
     expect(client.listPrintProviders).not.toHaveBeenCalled();
-    expect((await response.json()).mockups).toHaveLength(3);
+    expect((await response.json()).mockups).toHaveLength(products.length);
   });
 });

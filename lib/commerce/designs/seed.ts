@@ -167,21 +167,97 @@ const issue01Metadata: Record<string, { slug: string; keywords: string[]; mercha
  * the artwork and slogans are PrintMe's own. Filtered 'new' only: no sales
  * history exists for these designs yet.
  */
-const specimenPlateMetadata: Record<string, { slug: string; keywords: string[]; merchandisingPriority: number }> = {
+interface OriginalMeta {
+  slug: string;
+  keywords: string[];
+  merchandisingPriority: number;
+  defaultColor?: string;
+  garmentColors?: string[];
+}
+
+const specimenPlateMetadata: Record<string, OriginalMeta> = {
   'design-civilized-trash': {
     slug: 'civilized-trash',
     keywords: ['opossum', 'possum', 'funny animal', 'vintage engraving', 'introvert', 'tea', 'trash'],
     merchandisingPriority: 122,
+    defaultColor: 'Soft Cream',
+    garmentColors: ['Soft Cream', 'White', 'Natural', 'Athletic Heather'],
   },
   'design-carved-under-protest': {
     slug: 'carved-under-protest',
     keywords: ['jack-o-lantern', 'pumpkin', 'funny halloween', 'vintage engraving', 'grumpy', 'october'],
     merchandisingPriority: 121,
+    defaultColor: 'White',
+    garmentColors: ['White', 'Natural', 'Soft Cream'],
   },
   'design-professional-rummager': {
     slug: 'professional-rummager',
     keywords: ['raccoon', 'trash panda', 'funny animal', 'vintage engraving', 'snacks', 'night owl'],
     merchandisingPriority: 120,
+    defaultColor: 'Athletic Heather',
+    garmentColors: ['Athletic Heather', 'White', 'Natural', 'Soft Cream', 'Sport Grey'],
+  },
+};
+
+/**
+ * Q4 2026 drop (2026-10-19): seven originals answering researched Q4 demand
+ * (Thanksgiving game day, cozy-season type, pet-parent Christmas, book lovers,
+ * capybara humour, retro horror holiday, PrintMe brand merch). Built by
+ * scripts/designs/build-q4-drops.mjs; mockups are Printify renders
+ * (public/merch/provenance.json). Evidence: lib/merchandising/opportunity-queue.ts.
+ */
+const q4DropMetadata: Record<string, OriginalMeta & { products: string[] }> = {
+  'design-made-by-machines': {
+    slug: 'made-by-machines',
+    keywords: ['robot', 'printme mascot', 'streetwear', 'stencil', 'graffiti', 'hoodie'],
+    merchandisingPriority: 141,
+    products: ['heavy-hoodie', 'everyday-tee'],
+    defaultColor: 'Black',
+    garmentColors: ['Black', 'Heather Navy'],
+  },
+  'design-second-helping-athletics': {
+    slug: 'second-helping-athletics',
+    keywords: ['thanksgiving', 'turkey bowl', 'football', 'varsity', 'vintage mascot', 'crewneck'],
+    merchandisingPriority: 140,
+    products: ['cozy-crewneck', 'everyday-tee', 'gallery-poster'],
+    defaultColor: 'Sport Grey',
+    garmentColors: ['Sport Grey', 'Sand', 'White', 'Athletic Heather', 'Natural', 'Soft Cream'],
+  },
+  'design-supervising-the-decorations': {
+    slug: 'supervising-the-decorations',
+    keywords: ['dog', 'christmas lights', 'dog mom', 'pet parent', 'christmas', 'line art'],
+    merchandisingPriority: 139,
+    products: ['everyday-tee', 'cozy-crewneck', 'gallery-poster'],
+    defaultColor: 'Natural',
+    garmentColors: ['Natural', 'Soft Cream', 'White', 'Sand', 'Athletic Heather', 'Sport Grey'],
+  },
+  'design-one-more-chapter-tour': {
+    slug: 'one-more-chapter-tour',
+    keywords: ['book club', 'reading', 'skeleton', 'band tee', 'dark academia', 'bookish'],
+    merchandisingPriority: 138,
+    products: ['everyday-tee', 'cozy-crewneck'],
+    defaultColor: 'Black',
+    garmentColors: ['Black', 'Heather Navy'],
+  },
+  'design-low-power-mode': {
+    slug: 'low-power-mode',
+    keywords: ['capybara', 'funny animal', 'risograph', 'introvert', 'self care', 'hot spring'],
+    merchandisingPriority: 137,
+    products: ['everyday-tee', 'cozy-crewneck', 'gallery-poster'],
+    defaultColor: 'Heather Navy',
+    garmentColors: ['Heather Navy', 'Black'],
+  },
+  'design-soup-of-the-day': {
+    slug: 'soup-of-the-day',
+    keywords: ['soup', 'cozy season', 'fall', 'mug', 'retro', 'comfort food'],
+    merchandisingPriority: 136,
+    products: ['keepsake-mug'],
+  },
+  'design-he-saw-the-group-chat': {
+    slug: 'he-saw-the-group-chat',
+    keywords: ['krampus', 'christmas', 'horror', 'vintage poster', 'funny christmas', 'group chat'],
+    merchandisingPriority: 135,
+    products: ['gallery-poster'],
   },
 };
 
@@ -189,11 +265,15 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
   curatedDesigns.map((design, index) => {
     const issueMeta = issue01Metadata[design.id];
     const plateMeta = specimenPlateMetadata[design.id];
-    const original = issueMeta
-      ? { ...issueMeta, source: 'PrintMe Studio Issue 01', tag: 'issue-01', line: 'Issue 01', products: ['everyday-tee', 'gallery-poster', 'keepsake-mug'] }
+    const q4Meta = q4DropMetadata[design.id];
+    type Original = OriginalMeta & { archived?: boolean; source: string; tag: string; line: string; products: string[]; date: string };
+    const original: Original | undefined = issueMeta
+      ? { ...issueMeta, source: 'PrintMe Studio Issue 01', tag: 'issue-01', line: 'Issue 01', products: ['everyday-tee', 'gallery-poster', 'keepsake-mug'], date: '2026-10-12T00:00:00.000Z' }
       : plateMeta
-        ? { ...plateMeta, archived: false, source: 'PrintMe Studio Originals', tag: 'specimen-plates', line: 'Specimen Plates', products: ['everyday-tee', 'gallery-poster'] }
-        : undefined;
+        ? { ...plateMeta, archived: false, source: 'PrintMe Studio Originals', tag: 'specimen-plates', line: 'Specimen Plates', products: ['everyday-tee', 'gallery-poster'], date: '2026-10-12T00:00:00.000Z' }
+        : q4Meta
+          ? { ...q4Meta, archived: false, source: 'PrintMe Studio Q4 2026', tag: 'q4-2026', line: 'Q4 Drop', date: '2026-10-19T00:00:00.000Z' }
+          : undefined;
     if (original) {
       return {
         ...structuredClone(design),
@@ -201,9 +281,10 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
         artistOrSource: original.source,
         rightsStatus: 'commercial-print-cleared',
         publicationStatus: original.archived ? 'archived' : 'published',
-        publicationDate: '2026-10-12T00:00:00.000Z',
+        publicationDate: original.date,
         tags: [design.collection.toLowerCase(), original.tag, ...original.keywords],
-        defaultProductColor: 'White',
+        defaultProductColor: original.defaultColor ?? 'White',
+        garmentColors: original.garmentColors,
         defaultPlacement: {
           position: 'front' as const,
           decorationMethod: 'dtg' as const,
@@ -315,6 +396,45 @@ export const developmentDesignSeeds: CuratedDesignRecord[] =
 
 export const developmentCollectionSeeds: DesignCollection[] = [
   {
+    id: 'collection-q4-drop',
+    slug: 'q4-drop',
+    title: 'The Q4 Drop',
+    description:
+      'Gifts people actually want: a game-day turkey crewneck, a dog tangled in Christmas lights, a Krampus poster and the PrintMe robot hoodie.',
+    publicationStatus: 'published',
+    designIds: [
+      'design-made-by-machines',
+      'design-second-helping-athletics',
+      'design-supervising-the-decorations',
+      'design-one-more-chapter-tour',
+      'design-low-power-mode',
+      'design-soup-of-the-day',
+      'design-he-saw-the-group-chat',
+    ],
+  },
+  {
+    id: 'collection-christmas',
+    slug: 'christmas',
+    title: 'Christmas',
+    description: 'For the dog who helped with the lights and the family group chat that Krampus is reading.',
+    publicationStatus: 'published',
+    designIds: ['design-supervising-the-decorations', 'design-he-saw-the-group-chat'],
+  },
+  {
+    id: 'collection-funny-originals',
+    slug: 'funny-originals',
+    title: 'Funny Originals',
+    description: 'Capybaras on low power, skeletons on chapter twelve, raccoons with ambition. Drawn for PrintMe.',
+    publicationStatus: 'published',
+    designIds: [
+      'design-low-power-mode',
+      'design-one-more-chapter-tour',
+      'design-civilized-trash',
+      'design-professional-rummager',
+      'design-carved-under-protest',
+    ],
+  },
+  {
     id: 'collection-specimen-plates',
     slug: 'specimen-plates',
     title: 'Specimen Plates',
@@ -363,6 +483,7 @@ export const developmentCollectionSeeds: DesignCollection[] = [
       'Feast mode apparel, holiday morning keepsakes, and heirloom harvest crests.',
     publicationStatus: 'published',
     designIds: [
+      'design-second-helping-athletics',
       'design-feast-mode',
       'design-thankful-grateful-caffeinated',
       'design-thanksgiving-social-club',
@@ -404,6 +525,24 @@ export const developmentCollectionSeeds: DesignCollection[] = [
 ];
 
 export const developmentDropSeeds: DesignDrop[] = [
+  {
+    id: 'drop-q4-2026',
+    slug: 'q4-2026',
+    title: 'Q4 2026 — Seven Gifts, Zero Filler',
+    description:
+      'Seven originals for Thanksgiving through New Year, on tees, crewnecks, hoodies, mugs and posters.',
+    publicationStatus: 'published',
+    publicationDate: '2026-10-19T00:00:00.000Z',
+    designIds: [
+      'design-made-by-machines',
+      'design-second-helping-athletics',
+      'design-supervising-the-decorations',
+      'design-one-more-chapter-tour',
+      'design-low-power-mode',
+      'design-soup-of-the-day',
+      'design-he-saw-the-group-chat',
+    ],
+  },
   {
     id: 'drop-specimen-plates',
     slug: 'specimen-plates',

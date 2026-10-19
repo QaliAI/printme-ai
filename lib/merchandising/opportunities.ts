@@ -40,7 +40,7 @@ const signalSchema = z.object({
 export const opportunitySchema = z.object({
   id: z.string().regex(/^opp-[a-z0-9-]+$/),
   title: z.string(),
-  category: z.enum(['funny-animal', 'personalized-pet', 'retro-horror', 'seasonal-humor', 'group-merch']),
+  category: z.enum(['funny-animal', 'personalized-pet', 'retro-horror', 'seasonal-humor', 'group-merch', 'niche-humor', 'brand']),
   status: z.enum(opportunityStatuses),
   decision: z
     .object({ by: z.string(), at: z.string(), note: z.string() })
@@ -55,7 +55,7 @@ export const opportunitySchema = z.object({
   originalConceptBrief: z.string(),
   riskLevel: z.enum(['low', 'medium', 'high', 'blocked']),
   rightsNotes: z.string(),
-  productIds: z.array(z.enum(['everyday-tee', 'gallery-poster', 'keepsake-mug'])),
+  productIds: z.array(z.enum(['everyday-tee', 'gallery-poster', 'keepsake-mug', 'cozy-crewneck', 'heavy-hoodie'])),
   productNotes: z.string(),
   unitEconomics: z.object({
     retailPriceCents: z.number().int().positive(),

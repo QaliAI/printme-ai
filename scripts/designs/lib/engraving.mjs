@@ -179,6 +179,114 @@ export async function engravingToLayer(sourcePath, { scale = 4, closeRadius = 3,
     out[p * 4] = r; out[p * 4 + 1] = g; out[p * 4 + 2] = b;
     out[p * 4 + 3] = Math.round(alpha * 255);
   }
+  if (boldLines > 0) {
+    // Thicken thin line art so it holds up at browsing size and in DTG: spread
+    // alpha with a blur, then re-steepen it (a soft morphological dilation).
+    const alpha = Buffer.alloc(W * H);
+    for (let p = 0; p < W * H; p++) alpha[p] = out[p * 4 + 3];
+    const spread = await sharp(alpha, { raw: { width: W, height: H, channels: 1 } }).blur(boldLines).extractChannel(0).raw().toBuffer();
+    for (let p = 0; p < W * H; p++) {
+      const a = Math.min(255, Math.max(out[p * 4 + 3], spread[p] * 3.2));
+      if (out[p * 4 + 3] < 40 && a > out[p * 4 + 3]) {
+        // Newly covered pixels take the line colour, not paper.
+        out[p * 4] = 30; out[p * 4 + 1] = 30; out[p * 4 + 2] = 30;
+      }
+      out[p * 4 + 3] = a;
+    }
+  }
+  const png = await sharp(out, { raw: { width: W, height: H, channels: 4 } }).trim({ threshold: 1 }).png().toBuffer();
+  const meta = await sharp(png).metadata();
+  return { png, width: meta.width, height: meta.height };
+}
+
+/**
+ * General illustration keying for already-high-resolution sources.
+ * Masks are analysed on a downsampled copy (fast), colour is kept at full
+ * resolution.
+ *
+ * - mode 'silhouette': subject filled solid (white areas stay white), for light garments.
+ * - mode 'lineart': only ink prints (dark strokes + coloured fills); paper inside the
+ *   drawing is transparent, so the garment colour shows through.
+ * - mode 'knockout': for dark garments. Light tones print in `inkColor`, dark strokes are
+ *   transparent, the way vintage band tees are separated.
+ *
+ * @returns {Promise<{ png: Buffer, width: number, height: number }>} trimmed RGBA layer
+ */
+export async function keyIllustration(
+  sourcePath,
+  { mode = 'silhouette', analysisMax = 1100, closeRadius = 3, inkThreshold = 42, nearRadius = 70, inkColor = [242, 236, 222], knockoutGamma = 1.1, boldLines = 0 } = {},
+) {
+  const full = await sharp(sourcePath).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const W = full.info.width;
+  const H = full.info.height;
+  const factor = Math.min(1, analysisMax / Math.max(W, H));
+  const small = await sharp(full.data, { raw: { width: W, height: H, channels: 3 } })
+    .resize(Math.round(W * factor), Math.round(H * factor), { kernel: 'cubic' })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height } = small.info;
+  const data = small.data;
+  const paperColor = borderPaper(data, width, height);
+  const paper = paperColor.l;
+  const shiftOf = (r, g, b, l) =>
+    Math.max(Math.abs(r - paperColor.r - (l - paper)), Math.abs(g - paperColor.g - (l - paper)), Math.abs(b - paperColor.b - (l - paper)));
+
+  const ink = new Uint8Array(width * height);
+  for (let p = 0; p < width * height; p++) {
+    const r = data[p * 3], g = data[p * 3 + 1], b = data[p * 3 + 2];
+    const l = lum(r, g, b);
+    ink[p] = paper - l > inkThreshold || shiftOf(r, g, b, l) > 24 ? 1 : 0;
+  }
+  const band = Math.round(Math.min(width, height) * 0.012);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x < band || y < band || x >= width - band || y >= height - band) ink[y * width + x] = 0;
+    }
+  }
+  const closed = dilate(ink, width, height, closeRadius);
+  const outside = outsideRegion(closed, width, height);
+  const inside = keepLargeRegions(erode(outside.map((v) => (v ? 0 : 1)), width, height, closeRadius - 1), width, height);
+  const near = dilate(inside, width, height, Math.round(nearRadius * (width / 896)));
+
+  const upMask = (mask, kernel, blur) => {
+    let pipeline = sharp(Buffer.from(mask.map((v) => v * 255)), { raw: { width, height, channels: 1 } }).resize(W, H, { kernel });
+    if (blur) pipeline = pipeline.blur(blur);
+    return pipeline.extractChannel(0).raw().toBuffer();
+  };
+  const silhouette = await upMask(inside, 'cubic', 1 / factor * 0.5);
+  const nearMask = await upMask(near, 'nearest', 0);
+  const color = full.data;
+
+  const out = Buffer.alloc(W * H * 4);
+  const black = 18;
+  for (let p = 0; p < W * H; p++) {
+    let r = Math.min(255, (color[p * 3] * paper) / paperColor.r);
+    let g = Math.min(255, (color[p * 3 + 1] * paper) / paperColor.g);
+    let b = Math.min(255, (color[p * 3 + 2] * paper) / paperColor.b);
+    const l = lum(r, g, b);
+    let alpha;
+    if (mode === 'knockout') {
+      // Light = ink, dark = shirt.
+      const light = Math.min(1, Math.max(0, (l - 40) / (paper - 60)));
+      alpha = (silhouette[p] / 255) * Math.pow(light, knockoutGamma);
+      [r, g, b] = inkColor;
+    } else {
+      const t = Math.min(1, Math.max(0, (l - black) / (paper - black)));
+      const k = l > 0 ? ((t < 1 ? Math.pow(t, 1.25) : 1) * 255) / Math.max(l, 1) : 0;
+      r = Math.min(255, r * k); g = Math.min(255, g * k); b = Math.min(255, b * k);
+      const darkness = (paper - l) / paper;
+      const dark = Math.min(1, Math.max(0, (darkness - 0.14) / 0.24));
+      const hue = Math.min(1, Math.max(0, (shiftOf(color[p * 3], color[p * 3 + 1], color[p * 3 + 2], lum(color[p * 3], color[p * 3 + 1], color[p * 3 + 2])) - 18) / 26));
+      const inkAlpha = nearMask[p] ? Math.max(dark, hue) : 0;
+      alpha = mode === 'lineart' ? inkAlpha : Math.max(silhouette[p] / 255, inkAlpha);
+      if (mode === 'lineart' && alpha > 0 && hue < dark) {
+        // Pure line pixels: print solid line colour rather than a grey ramp.
+        r = Math.min(r, 40); g = Math.min(g, 40); b = Math.min(b, 40);
+      }
+    }
+    out[p * 4] = r; out[p * 4 + 1] = g; out[p * 4 + 2] = b;
+    out[p * 4 + 3] = Math.round(alpha * 255);
+  }
   const png = await sharp(out, { raw: { width: W, height: H, channels: 4 } }).trim({ threshold: 1 }).png().toBuffer();
   const meta = await sharp(png).metadata();
   return { png, width: meta.width, height: meta.height };

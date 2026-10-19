@@ -118,6 +118,166 @@
       "transformation": "crop 541,437,1067 to 800px",
       "blueprintId": 12,
       "verifiedAt": "2026-10-12"
+    },
+    {
+      "path": "/shop-v2/flat/tee-natural-front.webp",
+      "sha256": "bce2c569dec9968292ecf2daab72a29b95c80e27db88be3d1425bdd97a5edbdf",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-natural-back.webp",
+      "sha256": "1f7bf1504067c7140c8b9b291153efc451f8ecb68723212631b0d44a0bae2a12",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-black-front.webp",
+      "sha256": "63e17262e363a64d8b64739a157178859bcb79e9de5a1a44aa29f4ebc5889f62",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-black-back.webp",
+      "sha256": "7831d0d9e2275b2be101db7e2e3d0c412d61ae67c2785b89678428ade4826166",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-heather-navy-front.webp",
+      "sha256": "237001bb44f8af3446cae02edbf9a1816a8383215e2d77393325be539acc1afc",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-heather-navy-back.webp",
+      "sha256": "acb339ec211f482b962ba36f2a8ba36ba8c018ef5631a0ce6a27af2958688685",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-soft-cream-front.webp",
+      "sha256": "14411c5f4d9338a7b92b2576737316804d74eb037db925efdcd7392c2ea8f400",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-soft-cream-back.webp",
+      "sha256": "25cde1e15287ffce72a5e44df0f14e434c8ed7aa578dad2555c3c8f63e7dcce5",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-athletic-heather-front.webp",
+      "sha256": "3edf26f1076ae2d4051e1ca19932f951cdbe144db9c05db3c41c9ec81af811dd",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/tee-athletic-heather-back.webp",
+      "sha256": "c340585ab4e3e6c89506d0d9e9c2e46423e2ace5ef6f2612c6d5840bccf25172",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 12,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-sport-grey-front.webp",
+      "sha256": "91df0438bc060ad62572dfccf2a112dace610082e7c7427a8fe4eed79aff4eb3",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-sport-grey-back.webp",
+      "sha256": "d253dbb87157b85c5c23291400839c7ba3fa43bdec6681517d64ea579cbe6778",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-sand-front.webp",
+      "sha256": "813e4f01b180b71cc70ae8978ad8a60dc393f4e55ff375fdab252b5d1d361a5b",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-sand-back.webp",
+      "sha256": "b56e79b6dd5dea380c587da7888818db3d3629b3e68194aaba2c4f92e524bbc7",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-black-front.webp",
+      "sha256": "39398e7a3dd1c6e57037d14de2a031067cda0f15b24c51b67109315fbd18cee0",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/crewneck-black-back.webp",
+      "sha256": "ed8794d593802691b476e470e4d36c2edf62f13e5d33a135f01219a0fabd71a5",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 49,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/hoodie-black-front.webp",
+      "sha256": "2b7d07ff923ac42f0beea9dbf9394a70fdc58c539d82b41b31f9e1cb3eb5e1f3",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 77,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/hoodie-black-back.webp",
+      "sha256": "52c88d612fa444dd709500d8f60b6d50551c8f70edb9b86ea93165c176200b49",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 77,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/hoodie-sport-grey-front.webp",
+      "sha256": "372e65bd83af35178c628ea7645c6c61e10d4b4d75142e7ba9432a8ca77869f6",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera front, resized to 800px",
+      "blueprintId": 77,
+      "verifiedAt": "2026-10-19"
+    },
+    {
+      "path": "/shop-v2/flat/hoodie-sport-grey-back.webp",
+      "sha256": "561acb57a1de5d640aef154f5abb5dc013bed521fdde978132eadbd174903d9b",
+      "source": "Printify generated blank mockup",
+      "transformation": "camera back, resized to 800px",
+      "blueprintId": 77,
+      "verifiedAt": "2026-10-19"
     }
   ],
   "notes": [
