@@ -45,6 +45,8 @@ Result: on any real order with shipping or tax, Stripe takes the money, the webh
 Reproduced locally: a $34.00 tee plus $3.99 quoted shipping gives a paid event of 3799 → `500 {"error":"Stripe event processing failed."}`; the order stays unpaid. The existing e2e tests pass only because they send `amount_total = subtotal`.
 Fix (coding task): store the quoted shipping on the pending order and reconcile tax from the session (`total_details.amount_tax`, `amount_shipping`) before comparing, or compare against `subtotal + shipping + tax` read from Stripe. Update the harness and RPC together. The `BLOCKER` test in `launch-gate.spec.ts` is marked `test.fail` and will start reporting once this is fixed.
 
+**B1 fix (PR `fix/b1-checkout-totals`, not applied to any database):** `attach_commerce_stripe_session` now records the shipping fee that was put on the Stripe session (`orders.shipping`, `total = subtotal + shipping`). `complete_stripe_checkout_payment` takes Stripe's `amount_subtotal`, `amount_shipping`, `amount_tax` and `amount_discount`. It accepts the payment only if the subtotal and shipping match the order, the amounts add up to `amount_total`, there is no discount and tax is in range, and then it records the tax and the paid total. The same SQL is in `migrations/013_fix_checkout_paid_totals.sql` and in the canonical launch migration. The webhook (`payment-totals.ts`) and the e2e harness apply the same rules. The B1 test is now a normal test, with extra cases at subtotal + shipping + tax and for mismatched payments.
+
 **B2. Database paused, commerce schema missing.** See rows 1–2. Restoring the DB is Rubin's call. Migrations need a reviewed plan, not a replay by file prefix (`migrations/README.md` lists conflicting duplicates).
 
 **B3. Webhook doesn't check `livemode`.** A signed event is processed whatever its `livemode` value. Separate test/live signing secrets are the only guard. Low risk, but add a check that `event.livemode` matches `STRIPE_MODE`.
@@ -70,7 +72,7 @@ Also run: `tests/e2e/shop-v2.spec.ts` 6/6 pass, `npx vitest run` 188 passed / 3 
 
 1. [ ] **Rubin:** restore `printme-ai` in Supabase, and decide on the plan (see decisions).
 2. [ ] Agent: read-only schema audit of the restored DB (`scripts/verify-supabase-schema.mjs`, `pg_policies`); write a reconciled migration plan.
-3. [ ] Agent: fix B1 and B3 in a PR, with tests at subtotal, subtotal+shipping and subtotal+shipping+tax.
+3. [ ] Agent: fix B1 and B3 in a PR, with tests at subtotal, subtotal+shipping and subtotal+shipping+tax. (B1: PR open, see above. B3: still open.)
 4. [ ] **Rubin:** approve and apply the reviewed migrations, after a backup.
 5. [ ] **Rubin (Stripe dashboard):** confirm PrintMe account public details, enable Stripe Tax for physical goods, and register a **test-mode** webhook endpoint for `checkout.session.completed` + `checkout.session.async_payment_succeeded`. Put its signing secret in Vercel preview.
 6. [ ] **Rubin:** set up Resend (verified sender domain) and add `RESEND_API_KEY`, `TRANSACTIONAL_FROM_EMAIL`, `SUPPORT_EMAIL`, `COMMERCE_OPERATIONS_SECRET`, `ADMIN_EMAILS`, `PRINTIFY_WEBHOOK_SECRET`.
