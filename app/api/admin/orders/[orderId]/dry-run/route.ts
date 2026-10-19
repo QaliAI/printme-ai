@@ -10,6 +10,7 @@ import { validateOrderArtwork } from '@/lib/commerce/fulfillment/artwork-validat
 import { evaluateOrderEconomics } from '@/lib/commerce/fulfillment/economics-validator';
 import { cartConfigurationSnapshotSchema } from '@/lib/commerce/snapshot';
 import type { CartConfigurationSnapshot } from '@/lib/commerce/types';
+import { orderShippingPaidCents } from '@/lib/commerce/checkout/payment-totals';
 
 export async function GET(
   request: NextRequest,
@@ -74,7 +75,7 @@ export async function GET(
     }
 
     const artworkAudit = validateOrderArtwork(items);
-    const shippingPaidCents = Math.round(Number(order.shipping ?? 0) * 100);
+    const shippingPaidCents = orderShippingPaidCents(order.shipping);
     const economicsAudit = evaluateOrderEconomics(items, shippingPaidCents);
 
     // Try building the actual Printify payload

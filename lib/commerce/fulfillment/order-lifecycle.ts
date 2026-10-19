@@ -9,6 +9,7 @@ import {
   evaluateOrderEconomics,
 } from './economics-validator';
 import type { CartConfigurationSnapshot } from '../types';
+import { orderShippingPaidCents } from '../checkout/payment-totals';
 
 export type OperatorQueueTab =
   | 'NEEDS_REVIEW'
@@ -99,7 +100,7 @@ export function resolveOrderLifecycle(
 
   // Run audits
   const artworkAudit = validateOrderArtwork(order.items);
-  const shippingPaidCents = Math.round((order.shipping ?? 0) * 100);
+  const shippingPaidCents = orderShippingPaidCents(order.shipping);
   const economicsAudit = evaluateOrderEconomics(order.items, shippingPaidCents);
 
   if (!artworkAudit.valid) {

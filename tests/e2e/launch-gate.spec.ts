@@ -48,7 +48,16 @@ function e2eHeaders(sessionKey: string) {
   return { 'x-commerce-e2e-secret': e2eSecret, 'x-commerce-e2e-session': sessionKey };
 }
 
-function signedEvent(stripeSessionId: string, amountTotal: number, livemode = false) {
+interface PaidAmounts {
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  /** Defaults to subtotal + shipping + tax, the way Stripe computes it. */
+  total?: number;
+}
+
+function signedEvent(stripeSessionId: string, amounts: PaidAmounts, livemode = false) {
+  const amountTotal = amounts.total ?? amounts.subtotal + amounts.shipping + amounts.tax;
   const event = {
     id: `evt_gate_${randomUUID()}`,
     object: 'event',
@@ -64,6 +73,8 @@ function signedEvent(stripeSessionId: string, amountTotal: number, livemode = fa
         object: 'checkout.session',
         payment_status: 'paid',
         amount_total: amountTotal,
+        amount_subtotal: amounts.subtotal,
+        total_details: { amount_shipping: amounts.shipping, amount_tax: amounts.tax, amount_discount: 0 },
         currency: 'usd',
         payment_intent: `pi_test_gate_${randomUUID()}`,
         customer_details: { email: 'gate@example.test' },
@@ -79,6 +90,13 @@ function signedEvent(stripeSessionId: string, amountTotal: number, livemode = fa
   const body = JSON.stringify(event);
   const signature = new Stripe('sk_test_signature_fixture').webhooks.generateTestHeaderString({ payload: body, secret: webhookSecret });
   return { body, signature };
+}
+
+async function e2eStatus(request: APIRequestContext, run: { sessionKey: string; stripeSessionId: string }) {
+  const response = await request.get(`/api/commerce/e2e/status?session_id=${encodeURIComponent(run.stripeSessionId)}`, {
+    headers: e2eHeaders(run.sessionKey),
+  });
+  return response.json();
 }
 
 /** Adds one tee to an e2e cart, starts checkout (intercepted) and returns the fake session. */
@@ -121,7 +139,7 @@ test.describe('launch gate #10 (dry run, local only)', () => {
 
   test('Stripe webhook rejects missing, wrong-secret and tampered signatures', async ({ request }) => {
     const sessionKey = randomUUID();
-    const { body, signature } = signedEvent('cs_test_e2e_unknown', 100);
+    const { body, signature } = signedEvent('cs_test_e2e_unknown', { subtotal: 100, shipping: 0, tax: 0 });
 
     const missing = await request.post('/api/webhooks/stripe', {
       headers: { 'content-type': 'application/json', ...e2eHeaders(sessionKey) },
@@ -143,9 +161,9 @@ test.describe('launch gate #10 (dry run, local only)', () => {
     expect(tampered.status()).toBe(400);
   });
 
-  test('paid webhook for the item subtotal creates exactly one dry-run order and no Printify writes', async ({ page, context, request }) => {
+  test('paid webhook for subtotal + quoted shipping creates exactly one dry-run order and no Printify writes', async ({ page, context, request }) => {
     const run = await dryRunCheckout(page, context, request);
-    const { body, signature } = signedEvent(run.stripeSessionId, run.subtotal);
+    const { body, signature } = signedEvent(run.stripeSessionId, { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: 0 });
     const headers = { 'content-type': 'application/json', 'stripe-signature': signature, ...e2eHeaders(run.sessionKey) };
 
     const first = await request.post('/api/webhooks/stripe', { headers, data: body });
@@ -153,31 +171,66 @@ test.describe('launch gate #10 (dry run, local only)', () => {
     const retry = await request.post('/api/webhooks/stripe', { headers, data: body });
     expect(await retry.json()).toMatchObject({ received: true, duplicate: true });
 
-    const status = await (
-      await request.get(`/api/commerce/e2e/status?session_id=${encodeURIComponent(run.stripeSessionId)}`, { headers: e2eHeaders(run.sessionKey) })
-    ).json();
+    const status = await e2eStatus(request, run);
     expect(status).toMatchObject({ paymentStatus: 'paid', dryRunCount: 1, printifyWriteCount: 0, eventAttempts: 1 });
     expect(run.external, 'browser must not reach Stripe or Printify APIs').toEqual([]);
   });
 
-  test('BLOCKER: a payment that includes the quoted shipping is accepted as paid', async ({ page, context, request }) => {
-    // Expected to fail today. Checkout adds a shipping rate (stripe-gateway.ts)
-    // and automatic tax, but the pending order total is the item subtotal
-    // (create_pending order in migrations/005, shipping = 0, tax = 0) and
-    // complete_stripe_checkout_payment rejects any paid amount != total.
-    // The e2e harness mirrors that rule. When this starts passing, remove test.fail.
-    test.fail(true, 'Order total excludes shipping/tax; real Stripe amount_total will not match. See LAUNCH_GATE_10_EVIDENCE.md, blocker B1.');
+  test('B1: a payment that includes the quoted shipping is accepted as paid', async ({ page, context, request }) => {
+    // Was blocker B1 (LAUNCH_GATE_10_EVIDENCE.md): the order total excluded
+    // shipping, so a real amount_total never matched and the webhook 500'd.
     const run = await dryRunCheckout(page, context, request);
     expect(run.shippingFeeCents).toBeGreaterThan(0);
-    const { body, signature } = signedEvent(run.stripeSessionId, run.subtotal + run.shippingFeeCents);
+    const { body, signature } = signedEvent(run.stripeSessionId, { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: 0 });
     const response = await request.post('/api/webhooks/stripe', {
       headers: { 'content-type': 'application/json', 'stripe-signature': signature, ...e2eHeaders(run.sessionKey) },
       data: body,
     });
     expect(response.ok()).toBe(true);
-    const status = await (
-      await request.get(`/api/commerce/e2e/status?session_id=${encodeURIComponent(run.stripeSessionId)}`, { headers: e2eHeaders(run.sessionKey) })
-    ).json();
+    const status = await e2eStatus(request, run);
     expect(status.paymentStatus).toBe('paid');
+    expect(status.amounts).toEqual({
+      subtotal: run.subtotal,
+      shipping: run.shippingFeeCents,
+      tax: 0,
+      total: run.subtotal + run.shippingFeeCents,
+      paidAmount: run.subtotal + run.shippingFeeCents,
+    });
+  });
+
+  test('a payment with shipping and Stripe automatic tax is accepted and the tax is recorded', async ({ page, context, request }) => {
+    const run = await dryRunCheckout(page, context, request);
+    const tax = 312;
+    const { body, signature } = signedEvent(run.stripeSessionId, { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax });
+    const response = await request.post('/api/webhooks/stripe', {
+      headers: { 'content-type': 'application/json', 'stripe-signature': signature, ...e2eHeaders(run.sessionKey) },
+      data: body,
+    });
+    expect(response.ok()).toBe(true);
+    const status = await e2eStatus(request, run);
+    expect(status.paymentStatus).toBe('paid');
+    expect(status.amounts).toMatchObject({ tax, total: run.subtotal + run.shippingFeeCents + tax, paidAmount: run.subtotal + run.shippingFeeCents + tax });
+  });
+
+  test('payments that do not match the order stay unpaid', async ({ page, context, request }) => {
+    const run = await dryRunCheckout(page, context, request);
+    const attempts: Array<[string, PaidAmounts]> = [
+      ['shipping left out', { subtotal: run.subtotal, shipping: 0, tax: 0 }],
+      ['shipping changed', { subtotal: run.subtotal, shipping: run.shippingFeeCents - 1, tax: 0 }],
+      ['subtotal changed', { subtotal: run.subtotal - 100, shipping: run.shippingFeeCents, tax: 100 }],
+      ['total does not add up', { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: 0, total: run.subtotal + run.shippingFeeCents + 1 }],
+      ['tax larger than the order', { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: run.subtotal + run.shippingFeeCents + 1 }],
+    ];
+    for (const [label, amounts] of attempts) {
+      const { body, signature } = signedEvent(run.stripeSessionId, amounts);
+      const response = await request.post('/api/webhooks/stripe', {
+        headers: { 'content-type': 'application/json', 'stripe-signature': signature, ...e2eHeaders(run.sessionKey) },
+        data: body,
+      });
+      expect(response.status(), label).toBe(500);
+    }
+    const status = await e2eStatus(request, run);
+    expect(status.paymentStatus).toBe('unpaid');
+    expect(status.dryRunCount).toBe(0);
   });
 });
