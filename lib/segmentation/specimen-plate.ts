@@ -42,11 +42,18 @@ export function plateName(raw: string) {
   return clean || 'YOUR PET';
 }
 
+/**
+ * Loads only the web fonts. next/font family lists also name a fallback face
+ * (src: local("Times New Roman") / local("Arial")); where that OS font is
+ * missing (Linux, Android) Chromium rejects document.fonts.load for the whole list.
+ */
 export async function loadPlateFonts(serifFamily: string, monoFamily: string) {
+  const serif = serifFamily.split(',')[0].trim();
+  const mono = monoFamily.split(',')[0].trim();
   await Promise.all([
-    document.fonts.load(`400 200px ${serifFamily}`),
-    document.fonts.load(`italic 400 200px ${serifFamily}`),
-    document.fonts.load(`700 100px ${monoFamily}`),
+    document.fonts.load(`400 200px ${serif}`),
+    document.fonts.load(`italic 400 200px ${serif}`),
+    document.fonts.load(`700 100px ${mono}`),
   ]);
 }
 

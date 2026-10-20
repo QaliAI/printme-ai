@@ -77,3 +77,15 @@ jobs:
 
       - name: Run Playwright tests
         run: npm run test:e2e
+
+      # Traces, screenshots, the HTML report, and any snapshot Playwright had
+      # to write because no Linux baseline exists yet.
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            output/playwright/
+            tests/e2e/**/*-linux.png
+          retention-days: 14
