@@ -39,7 +39,11 @@ Application-owned commerce migrations:
 10. `010_add_analytics_events.sql`
 11. `011_add_commerce_rls_policies.sql`
 12. `012_launch_fulfillment_and_notification_outbox.sql`
-13. `013_fix_checkout_paid_totals.sql` (blocker B1: paid total includes shipping and tax; same SQL as the canonical launch migration)
+13. `013_fix_checkout_paid_totals.sql` (blocker B1: paid total includes shipping and tax; refuses a second payment for a paid order; same SQL as the canonical launch migration)
+14. `014_restrict_commerce_rpcs_to_service_role.sql` (revokes anon/authenticated EXECUTE on the commerce RPCs from 005–012; same statements as the canonical launch migration's section 014)
+
+`docs/MIGRATIONS_002_TO_009_BUNDLE.sql` is an older bundle without the 013/014
+fixes. Do not run it; the canonical launch migration in `docs/launch/` replaces it.
 
 The order/status compatibility patch `004_adjust_orders_status_and_columns.sql`
 also supplies `orders.order_number`, which is absent on the restored project.

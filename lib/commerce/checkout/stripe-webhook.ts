@@ -63,6 +63,19 @@ export function verifyStripeWebhookPayload(
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }
 
+/**
+ * True when a signed event's livemode disagrees with this deployment's
+ * STRIPE_MODE. Separate signing secrets normally keep test and live apart; this
+ * stops a misconfigured secret from letting one mode's events settle the other's
+ * orders.
+ */
+export function isStripeEventModeMismatch(
+  event: Pick<Stripe.Event, 'livemode'>,
+  stripeMode = process.env.STRIPE_MODE,
+) {
+  return event.livemode !== (stripeMode === 'live');
+}
+
 export class StripeCheckoutWebhookService {
   constructor(private readonly store: StripeWebhookStore) {}
 

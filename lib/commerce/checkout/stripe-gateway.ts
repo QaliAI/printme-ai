@@ -100,6 +100,10 @@ export class StripeTestCheckoutGateway implements CheckoutGateway {
                       amount: input.shippingFeeCents,
                       currency: 'usd',
                     },
+                    // Explicit, like the line items: unset falls back to the
+                    // account default, which could make shipping tax-inclusive.
+                    tax_behavior: 'exclusive',
+                    tax_code: 'txcd_92010001',
                     display_name: 'Standard Ground Shipping',
                     delivery_estimate: {
                       minimum: { unit: 'business_day', value: 3 },

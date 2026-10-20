@@ -51,6 +51,8 @@ Fix (coding task): store the quoted shipping on the pending order and reconcile 
 
 **B3. Webhook doesn't check `livemode`.** A signed event is processed whatever its `livemode` value. Separate test/live signing secrets are the only guard. Low risk, but add a check that `event.livemode` matches `STRIPE_MODE`.
 
+**B3 fix (branch `integration/checkout-b1-b3`, not deployed):** the webhook returns 400 before touching the database when `event.livemode` disagrees with `STRIPE_MODE` (unset counts as test). The same branch also makes the shipping rate tax-exclusive (`txcd_92010001`), restricts all eight commerce RPCs to `service_role` (migration 014), and refuses a second PaymentIntent for an already-paid order (013). See `docs/CLAUDE_CHECKOUT_HANDOFF.md`.
+
 **B4. No email, no Printify webhook secret, no ops secret** (rows 13–15).
 
 **B5. Open issue-#10 P0 items not verified here:** official Printify shipping rates per provider, Stripe Tax setup, merchant public details (issue #10 says they still show Rubix AI), and a real Printify draft from a paid test order.
@@ -72,7 +74,7 @@ Also run: `tests/e2e/shop-v2.spec.ts` 6/6 pass, `npx vitest run` 188 passed / 3 
 
 1. [ ] **Rubin:** restore `printme-ai` in Supabase, and decide on the plan (see decisions).
 2. [ ] Agent: read-only schema audit of the restored DB (`scripts/verify-supabase-schema.mjs`, `pg_policies`); write a reconciled migration plan.
-3. [ ] Agent: fix B1 and B3 in a PR, with tests at subtotal, subtotal+shipping and subtotal+shipping+tax. (B1: PR open, see above. B3: still open.)
+3. [ ] Agent: fix B1 and B3 in a PR, with tests at subtotal, subtotal+shipping and subtotal+shipping+tax. (B1 and B3: fixed on `integration/checkout-b1-b3`, PR open, not merged.)
 4. [ ] **Rubin:** approve and apply the reviewed migrations, after a backup.
 5. [ ] **Rubin (Stripe dashboard):** confirm PrintMe account public details, enable Stripe Tax for physical goods, and register a **test-mode** webhook endpoint for `checkout.session.completed` + `checkout.session.async_payment_succeeded`. Put its signing secret in Vercel preview.
 6. [ ] **Rubin:** set up Resend (verified sender domain) and add `RESEND_API_KEY`, `TRANSACTIONAL_FROM_EMAIL`, `SUPPORT_EMAIL`, `COMMERCE_OPERATIONS_SECRET`, `ADMIN_EMAILS`, `PRINTIFY_WEBHOOK_SECRET`.

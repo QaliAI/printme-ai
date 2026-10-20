@@ -124,6 +124,24 @@ BEGIN
   IF target_order.id IS NULL THEN
     RAISE EXCEPTION 'checkout order not found' USING ERRCODE = 'P0002';
   END IF;
+  -- Already paid: a replay of the same payment settles the event and changes
+  -- nothing else; any other payment for this order is a double charge and is
+  -- left for a human (the event stays failed and replayable).
+  IF target_order.payment_status <> 'unpaid' THEN
+    IF target_order.stripe_payment_intent_id IS DISTINCT FROM p_payment_intent_id THEN
+      RAISE EXCEPTION 'order already paid by another payment'
+        USING ERRCODE = '23505';
+    END IF;
+    UPDATE commerce_webhook_events
+    SET
+      receipt_status = 'processed',
+      order_id = target_order.id,
+      processed_at = now(),
+      error_code = NULL,
+      error_message = NULL
+    WHERE source = 'stripe' AND event_id = p_event_id;
+    RETURN target_order.id;
+  END IF;
   IF upper(target_order.currency) <> upper(p_currency) THEN
     RAISE EXCEPTION 'paid currency mismatch' USING ERRCODE = '23514';
   END IF;

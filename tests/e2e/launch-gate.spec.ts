@@ -56,7 +56,12 @@ interface PaidAmounts {
   total?: number;
 }
 
-function signedEvent(stripeSessionId: string, amounts: PaidAmounts, livemode = false) {
+interface EventOptions {
+  livemode?: boolean;
+  paymentIntent?: string;
+}
+
+function signedEvent(stripeSessionId: string, amounts: PaidAmounts, { livemode = false, paymentIntent }: EventOptions = {}) {
   const amountTotal = amounts.total ?? amounts.subtotal + amounts.shipping + amounts.tax;
   const event = {
     id: `evt_gate_${randomUUID()}`,
@@ -76,7 +81,7 @@ function signedEvent(stripeSessionId: string, amounts: PaidAmounts, livemode = f
         amount_subtotal: amounts.subtotal,
         total_details: { amount_shipping: amounts.shipping, amount_tax: amounts.tax, amount_discount: 0 },
         currency: 'usd',
-        payment_intent: `pi_test_gate_${randomUUID()}`,
+        payment_intent: paymentIntent ?? `pi_test_gate_${randomUUID()}`,
         customer_details: { email: 'gate@example.test' },
         collected_information: {
           shipping_details: {
@@ -232,5 +237,46 @@ test.describe('launch gate #10 (dry run, local only)', () => {
     const status = await e2eStatus(request, run);
     expect(status.paymentStatus).toBe('unpaid');
     expect(status.dryRunCount).toBe(0);
+  });
+  test('B3: an event whose livemode does not match STRIPE_MODE is rejected and changes nothing', async ({ page, context, request }) => {
+    const run = await dryRunCheckout(page, context, request);
+    const amounts = { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: 0 };
+    const { body, signature } = signedEvent(run.stripeSessionId, amounts, { livemode: true });
+    const response = await request.post('/api/webhooks/stripe', {
+      headers: { 'content-type': 'application/json', 'stripe-signature': signature, ...e2eHeaders(run.sessionKey) },
+      data: body,
+    });
+    expect(response.status()).toBe(400);
+    expect(await response.text()).toMatch(/mode does not match/);
+    const status = await e2eStatus(request, run);
+    expect(status).toMatchObject({ paymentStatus: 'unpaid', dryRunCount: 0, printifyWriteCount: 0 });
+  });
+
+  test('a second event for the same payment changes nothing; a different payment for a paid order is refused', async ({ page, context, request }) => {
+    const run = await dryRunCheckout(page, context, request);
+    const amounts = { subtotal: run.subtotal, shipping: run.shippingFeeCents, tax: 0 };
+    const paymentIntent = `pi_test_gate_${randomUUID()}`;
+    const send = async (event: { body: string; signature: string }) =>
+      request.post('/api/webhooks/stripe', {
+        headers: { 'content-type': 'application/json', 'stripe-signature': event.signature, ...e2eHeaders(run.sessionKey) },
+        data: event.body,
+      });
+
+    const first = await send(signedEvent(run.stripeSessionId, amounts, { paymentIntent }));
+    expect(await first.json()).toMatchObject({ duplicate: false, fulfillment: 'dry_run_complete' });
+    const paid = await e2eStatus(request, run);
+
+    // New event id, same PaymentIntent (e.g. completed + async_payment_succeeded).
+    const replay = await send(signedEvent(run.stripeSessionId, amounts, { paymentIntent }));
+    expect(replay.ok()).toBe(true);
+
+    // Another PaymentIntent for an order that is already paid: a double charge.
+    const other = await send(signedEvent(run.stripeSessionId, { ...amounts, tax: 50 }));
+    expect(other.status()).toBe(500);
+
+    const status = await e2eStatus(request, run);
+    expect(status).toMatchObject({ paymentStatus: 'paid', dryRunCount: 1, printifyWriteCount: 0 });
+    expect(status.amounts).toEqual(paid.amounts);
+    expect(run.external).toEqual([]);
   });
 });

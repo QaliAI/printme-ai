@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import {
+  isStripeEventModeMismatch,
   StripeCheckoutWebhookService,
   verifyStripeWebhookPayload,
 } from '@/lib/commerce/checkout/stripe-webhook';
@@ -66,6 +67,12 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: 'Invalid Stripe signature.' },
+      { status: 400 },
+    );
+  }
+  if (isStripeEventModeMismatch(event)) {
+    return NextResponse.json(
+      { error: 'Stripe event mode does not match this deployment.' },
       { status: 400 },
     );
   }

@@ -1077,6 +1077,24 @@ BEGIN
   IF target_order.id IS NULL THEN
     RAISE EXCEPTION 'checkout order not found' USING ERRCODE = 'P0002';
   END IF;
+  -- Already paid: a replay of the same payment settles the event and changes
+  -- nothing else; any other payment for this order is a double charge and is
+  -- left for a human (the event stays failed and replayable).
+  IF target_order.payment_status <> 'unpaid' THEN
+    IF target_order.stripe_payment_intent_id IS DISTINCT FROM p_payment_intent_id THEN
+      RAISE EXCEPTION 'order already paid by another payment'
+        USING ERRCODE = '23505';
+    END IF;
+    UPDATE commerce_webhook_events
+    SET
+      receipt_status = 'processed',
+      order_id = target_order.id,
+      processed_at = now(),
+      error_code = NULL,
+      error_message = NULL
+    WHERE source = 'stripe' AND event_id = p_event_id;
+    RETURN target_order.id;
+  END IF;
   IF upper(target_order.currency) <> upper(p_currency) THEN
     RAISE EXCEPTION 'paid currency mismatch' USING ERRCODE = '23514';
   END IF;
@@ -2599,6 +2617,48 @@ BEGIN
       WITH CHECK (true);
   END IF;
 END $$;
+
+
+-- ============================================================================
+-- SECTION 014: COMMERCE RPCs CALLABLE ONLY BY service_role
+-- Source: migrations/014_restrict_commerce_rpcs_to_service_role.sql
+-- The sections above revoke EXECUTE from PUBLIC only; Supabase default
+-- privileges still grant it to anon and authenticated.
+-- ============================================================================
+
+REVOKE ALL ON FUNCTION create_commerce_pending_order(
+  UUID, UUID, TEXT, TEXT, INTEGER, TEXT
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION create_commerce_pending_order(
+  UUID, UUID, TEXT, TEXT, INTEGER, TEXT
+) TO service_role;
+
+REVOKE ALL ON FUNCTION lock_fulfillment_job(UUID, TEXT, TEXT)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION lock_fulfillment_job(UUID, TEXT, TEXT)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION begin_commerce_webhook_event(TEXT, TEXT, TEXT, JSONB)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION begin_commerce_webhook_event(TEXT, TEXT, TEXT, JSONB)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION claim_failed_commerce_webhook_event(TEXT, TEXT)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION claim_failed_commerce_webhook_event(TEXT, TEXT)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION finish_commerce_webhook_event(TEXT, TEXT, TEXT, TEXT, TEXT)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION finish_commerce_webhook_event(TEXT, TEXT, TEXT, TEXT, TEXT)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION apply_printify_order_transition(
+  TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ
+) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION apply_printify_order_transition(
+  TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TIMESTAMPTZ
+) TO service_role;
 
 COMMIT;
 

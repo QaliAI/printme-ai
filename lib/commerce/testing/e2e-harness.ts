@@ -30,6 +30,7 @@ interface HarnessOrder {
   paidAmount: number | null;
   currency: string;
   paymentStatus: 'unpaid' | 'paid';
+  paymentIntentId: string | null;
   customerEmail: string | null;
   shippingAddress: FulfillmentOrder['shippingAddress'] | null;
   stripeSessionId: string | null;
@@ -181,6 +182,7 @@ class E2ECheckoutStore implements CheckoutStore {
       paidAmount: null,
       currency: input.currency,
       paymentStatus: 'unpaid',
+      paymentIntentId: null,
       customerEmail: null,
       shippingAddress: null,
       stripeSessionId: null,
@@ -267,6 +269,15 @@ export class E2EStripeWebhookStore implements StripeWebhookStore {
     );
     if (!order) throw new Error('E2E checkout order not found.');
     // Mirrors complete_stripe_checkout_payment (migrations/013).
+    if (order.paymentStatus !== 'unpaid') {
+      if (order.paymentIntentId !== input.paymentIntentId) {
+        throw new Error('E2E order already paid by another payment.');
+      }
+      const replayed = state().events.get(input.eventId);
+      if (replayed) replayed.orderId = order.id;
+      await this.completeEvent(input.eventId);
+      return order.id;
+    }
     const mismatch = checkPaidOrderTotals(order, {
       subtotal: input.amountSubtotal,
       shipping: input.amountShipping,
@@ -279,6 +290,7 @@ export class E2EStripeWebhookStore implements StripeWebhookStore {
       throw new Error(`E2E paid amount mismatch: ${mismatch}.`);
     }
     order.paymentStatus = 'paid';
+    order.paymentIntentId = input.paymentIntentId;
     order.tax = input.amountTax;
     order.total = input.paidAmount;
     order.paidAmount = input.paidAmount;
