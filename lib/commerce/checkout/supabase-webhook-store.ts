@@ -107,6 +107,10 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
         p_shipping_address: input.shippingAddress,
         p_paid_amount: input.paidAmount,
         p_currency: input.currency,
+        p_amount_subtotal: input.amountSubtotal,
+        p_amount_shipping: input.amountShipping,
+        p_amount_tax: input.amountTax,
+        p_amount_discount: input.amountDiscount,
       },
     );
     if (error) throw error;

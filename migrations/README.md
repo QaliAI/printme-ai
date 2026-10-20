@@ -39,6 +39,7 @@ Application-owned commerce migrations:
 10. `010_add_analytics_events.sql`
 11. `011_add_commerce_rls_policies.sql`
 12. `012_launch_fulfillment_and_notification_outbox.sql`
+13. `013_fix_checkout_paid_totals.sql` (blocker B1: paid total includes shipping and tax; same SQL as the canonical launch migration)
 
 The order/status compatibility patch `004_adjust_orders_status_and_columns.sql`
 also supplies `orders.order_number`, which is absent on the restored project.

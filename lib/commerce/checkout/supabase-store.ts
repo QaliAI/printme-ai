@@ -151,6 +151,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
         p_order_id: input.orderId,
         p_stripe_session_id: input.stripeSessionId,
         p_stripe_checkout_url: input.redirectUrl,
+        p_shipping_cents: input.shippingCents,
       },
     );
     if (error) throw error;

@@ -46,6 +46,7 @@ class MemoryCheckoutStore implements CheckoutStore {
   createdItems: CartConfigurationSnapshot[] = [];
   identity: CheckoutIdentity | null = null;
   createCount = 0;
+  attachedShippingCents: number | null = null;
 
   async loadActiveCart(identity: CheckoutIdentity) {
     this.identity = identity;
@@ -81,6 +82,7 @@ class MemoryCheckoutStore implements CheckoutStore {
   async attachStripeSession(
     input: Parameters<CheckoutStore['attachStripeSession']>[0],
   ) {
+    this.attachedShippingCents = input.shippingCents;
     this.attempt = {
       orderId: input.orderId,
       checkoutId: input.checkoutId,
@@ -187,6 +189,8 @@ describe('secure Stripe test checkout', () => {
         shippingFeeCents: 399,
       }),
     );
+    // The same fee is recorded on the order so the paid amount can be checked (B1).
+    expect(store.attachedShippingCents).toBe(399);
   });
 
   it('returns an existing redirect without creating a duplicate order', async () => {
@@ -240,7 +244,12 @@ class MemoryWebhookStore implements StripeWebhookStore {
   async completePayment(
     input: Parameters<StripeWebhookStore['completePayment']>[0],
   ) {
-    if (input.paidAmount !== 3400 || input.currency !== 'USD') {
+    if (
+      input.paidAmount !== 3799 ||
+      input.amountSubtotal !== 3400 ||
+      input.amountShipping !== 399 ||
+      input.currency !== 'USD'
+    ) {
       throw new Error('amount mismatch');
     }
     this.completed = input;
@@ -259,7 +268,13 @@ function paidEvent(eventId = 'evt_test_paid'): Stripe.Event {
         id: 'cs_test_fixture',
         object: 'checkout.session',
         payment_status: 'paid',
-        amount_total: 3400,
+        amount_total: 3799,
+        amount_subtotal: 3400,
+        total_details: {
+          amount_shipping: 399,
+          amount_tax: 0,
+          amount_discount: 0,
+        },
         currency: 'usd',
         payment_intent: 'pi_test_fixture',
         customer_details: {
@@ -341,8 +356,38 @@ describe('Stripe webhook authority', () => {
     (wrongAmount.data.object as Stripe.Checkout.Session).amount_total = 1;
     await expect(
       new StripeCheckoutWebhookService(amountStore).process(wrongAmount),
+    ).rejects.toMatchObject({ code: 'PAYMENT_TOTALS_INCONSISTENT' });
+    expect(amountStore.failedCode).toBe('PAYMENT_TOTALS_INCONSISTENT');
+
+    // Stripe's numbers add up, but they don't match the order (store check).
+    const orderStore = new MemoryWebhookStore();
+    const otherOrder = paidEvent('evt_test_other_order');
+    const session = otherOrder.data.object as Stripe.Checkout.Session;
+    session.amount_subtotal = 3000;
+    session.amount_total = 3399;
+    await expect(
+      new StripeCheckoutWebhookService(orderStore).process(otherOrder),
     ).rejects.toThrow(/amount mismatch/i);
-    expect(amountStore.failedCode).toBe('WEBHOOK_PROCESSING_FAILED');
+    expect(orderStore.failedCode).toBe('WEBHOOK_PROCESSING_FAILED');
+
+    const missingStore = new MemoryWebhookStore();
+    const missing = paidEvent('evt_test_missing_totals');
+    (missing.data.object as Stripe.Checkout.Session).total_details = null;
+    await expect(
+      new StripeCheckoutWebhookService(missingStore).process(missing),
+    ).rejects.toMatchObject({ code: 'INCOMPLETE_PAYMENT_DETAILS' });
+  });
+
+  it('passes shipping and tax from the session to the store', async () => {
+    const store = new MemoryWebhookStore();
+    await new StripeCheckoutWebhookService(store).process(paidEvent('evt_test_totals'));
+    expect(store.completed).toMatchObject({
+      paidAmount: 3799,
+      amountSubtotal: 3400,
+      amountShipping: 399,
+      amountTax: 0,
+      amountDiscount: 0,
+    });
   });
 
   it('claims each failed Stripe event for replay only once', async () => {

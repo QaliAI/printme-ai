@@ -11,6 +11,7 @@ import { validateOrderArtwork } from '@/lib/commerce/fulfillment/artwork-validat
 import { evaluateOrderEconomics } from '@/lib/commerce/fulfillment/economics-validator';
 import { cartConfigurationSnapshotSchema } from '@/lib/commerce/snapshot';
 import type { CartConfigurationSnapshot } from '@/lib/commerce/types';
+import { orderShippingPaidCents } from '@/lib/commerce/checkout/payment-totals';
 
 export async function POST(
   request: NextRequest,
@@ -92,7 +93,7 @@ export async function POST(
       );
     }
 
-    const shippingPaidCents = Math.round(Number(order.shipping ?? 0) * 100);
+    const shippingPaidCents = orderShippingPaidCents(order.shipping);
     const economicsAudit = evaluateOrderEconomics(items, shippingPaidCents);
     if (!economicsAudit.valid) {
       return NextResponse.json(
