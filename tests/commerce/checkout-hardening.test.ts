@@ -45,10 +45,10 @@ describe('B3: webhook livemode must match STRIPE_MODE', () => {
 class RecordingWebhookStore implements StripeWebhookStore {
   completedEvents: string[] = [];
   payments = 0;
-  async beginEvent() {
+  async beginEvent(_event: Stripe.Event): Promise<boolean> {
     return true;
   }
-  async claimFailedEvent() {
+  async claimFailedEvent(_eventId: string): Promise<Stripe.Event | null> {
     return null;
   }
   async completeEvent(eventId: string) {
