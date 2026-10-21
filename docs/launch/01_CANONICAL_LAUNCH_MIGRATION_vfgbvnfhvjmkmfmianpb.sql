@@ -267,8 +267,8 @@ CREATE POLICY "Users can delete own cart items" ON cart_items
 -- ============================================================================
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_stripe_session_id_unique
-  ON orders(stripe_session_id)
-  WHERE stripe_session_id IS NOT NULL;
+  ON orders(stripe_checkout_session_id)
+  WHERE stripe_checkout_session_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS catalog_blueprints (
   printify_blueprint_id INTEGER PRIMARY KEY,
