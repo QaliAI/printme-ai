@@ -49,11 +49,16 @@ export interface CheckoutStore {
     subtotal: number;
     currency: 'USD';
   }): Promise<CheckoutAttempt>;
+  /**
+   * Links the Stripe session and records the shipping fee that was put on it,
+   * so the paid amount can be checked against the order (blocker B1).
+   */
   attachStripeSession(input: {
     orderId: string;
     checkoutId: string;
     stripeSessionId: string;
     redirectUrl: string;
+    shippingCents: number;
   }): Promise<void>;
 }
 
@@ -155,6 +160,7 @@ export class SecureCheckoutService {
       checkoutId: attempt.checkoutId,
       stripeSessionId: session.id,
       redirectUrl: session.url,
+      shippingCents: shipping.shippingFeeCents,
     });
 
     return {

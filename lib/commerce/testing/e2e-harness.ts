@@ -10,6 +10,7 @@ import {
   type CheckoutStore,
 } from '../checkout/service';
 import type { StripeWebhookStore } from '../checkout/stripe-webhook';
+import { checkPaidOrderTotals } from '../checkout/payment-totals';
 import type { CheckoutConfirmation } from '../checkout/confirmation';
 import type { FulfillmentOrder } from '../fulfillment/payload';
 import type {
@@ -23,8 +24,13 @@ interface HarnessOrder {
   id: string;
   items: CartConfigurationSnapshot[];
   subtotal: number;
+  shipping: number;
+  tax: number;
+  total: number;
+  paidAmount: number | null;
   currency: string;
   paymentStatus: 'unpaid' | 'paid';
+  paymentIntentId: string | null;
   customerEmail: string | null;
   shippingAddress: FulfillmentOrder['shippingAddress'] | null;
   stripeSessionId: string | null;
@@ -170,8 +176,13 @@ class E2ECheckoutStore implements CheckoutStore {
       id: orderId,
       items: structuredClone(input.cart.items),
       subtotal: input.subtotal,
+      shipping: 0,
+      tax: 0,
+      total: input.subtotal,
+      paidAmount: null,
       currency: input.currency,
       paymentStatus: 'unpaid',
+      paymentIntentId: null,
       customerEmail: null,
       shippingAddress: null,
       stripeSessionId: null,
@@ -195,6 +206,9 @@ class E2ECheckoutStore implements CheckoutStore {
       status: 'redirect_ready',
     });
     order.stripeSessionId = input.stripeSessionId;
+    order.shipping = input.shippingCents;
+    order.tax = 0;
+    order.total = order.subtotal + input.shippingCents;
   }
 }
 
@@ -254,13 +268,32 @@ export class E2EStripeWebhookStore implements StripeWebhookStore {
       (candidate) => candidate.stripeSessionId === input.stripeSessionId,
     );
     if (!order) throw new Error('E2E checkout order not found.');
-    if (
-      order.subtotal !== input.paidAmount ||
-      order.currency !== input.currency
-    ) {
-      throw new Error('E2E paid amount or currency mismatch.');
+    // Mirrors complete_stripe_checkout_payment (migrations/013).
+    if (order.paymentStatus !== 'unpaid') {
+      if (order.paymentIntentId !== input.paymentIntentId) {
+        throw new Error('E2E order already paid by another payment.');
+      }
+      const replayed = state().events.get(input.eventId);
+      if (replayed) replayed.orderId = order.id;
+      await this.completeEvent(input.eventId);
+      return order.id;
+    }
+    const mismatch = checkPaidOrderTotals(order, {
+      subtotal: input.amountSubtotal,
+      shipping: input.amountShipping,
+      tax: input.amountTax,
+      discount: input.amountDiscount,
+      total: input.paidAmount,
+      currency: input.currency,
+    });
+    if (mismatch) {
+      throw new Error(`E2E paid amount mismatch: ${mismatch}.`);
     }
     order.paymentStatus = 'paid';
+    order.paymentIntentId = input.paymentIntentId;
+    order.tax = input.amountTax;
+    order.total = input.paidAmount;
+    order.paidAmount = input.paidAmount;
     order.customerEmail = input.customerEmail;
     order.shippingAddress = {
       ...input.shippingAddress,
@@ -393,5 +426,14 @@ export function getE2EStatus(
     dryRunCount: order?.dryRunCount ?? 0,
     printifyWriteCount: order?.printifyWriteCount ?? 0,
     eventAttempts,
+    amounts: order
+      ? {
+          subtotal: order.subtotal,
+          shipping: order.shipping,
+          tax: order.tax,
+          total: order.total,
+          paidAmount: order.paidAmount,
+        }
+      : null,
   };
 }

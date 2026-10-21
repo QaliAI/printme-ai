@@ -93,6 +93,16 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
   const stripeSessionId = new URL(page.url()).pathname.split('/').at(-1);
   expect(stripeSessionId).toMatch(/^cs_test_e2e_/);
 
+  const cartResponse = await request.get('/api/commerce/cart', {
+    headers: { 'x-commerce-e2e-secret': e2eSecret, 'x-commerce-e2e-session': sessionKey },
+  });
+  const { items: cartItems } = await cartResponse.json();
+  const quote = await (
+    await request.post('/api/commerce/shipping-quote', {
+      data: { items: cartItems, destination: { country: 'US', state: 'IL', postalCode: '60601' } },
+    })
+  ).json();
+  const shippingCents = quote.shippingFeeCents as number;
   const event = {
     id: `evt_e2e_${randomUUID()}`,
     object: 'event',
@@ -103,7 +113,9 @@ test('shopper completes persistent test checkout through verified dry-run fulfil
         id: stripeSessionId,
         object: 'checkout.session',
         payment_status: 'paid',
-        amount_total: 3400,
+        amount_total: 3400 + shippingCents,
+        amount_subtotal: 3400,
+        total_details: { amount_shipping: shippingCents, amount_tax: 0, amount_discount: 0 },
         currency: 'usd',
         payment_intent: `pi_test_e2e_${randomUUID()}`,
         customer_details: {

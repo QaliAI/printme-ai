@@ -1,3 +1,7 @@
+-- DO NOT RUN. Superseded by docs/launch/01_CANONICAL_LAUNCH_MIGRATION_vfgbvnfhvjmkmfmianpb.sql.
+-- This older bundle lacks the B1 paid-total fix (013) and the service_role-only
+-- RPC grants (014). See docs/CLAUDE_CHECKOUT_HANDOFF.md.
+
 -- ============================================================================
 -- PRINTME.AI — CONSOLIDATED DATABASE MIGRATION BUNDLE (002 TO 010)
 -- Target Project: vfgbvnfhvjmkmfmianpb (printme-ai)

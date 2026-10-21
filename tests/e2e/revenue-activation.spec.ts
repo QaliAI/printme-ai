@@ -86,8 +86,10 @@ test('Halloween photo input reaches editing, persisted output previews, and a fu
   await page.waitForURL('https://checkout.stripe.com/**');
   const stripeSessionId = new URL(page.url()).pathname.split('/').at(-1)!;
   const subtotal = items.reduce((sum: number, item: { configuration: { unitPrice: number }; quantity: number }) => sum + item.configuration.unitPrice * item.quantity, 0);
+  const quote = await (await request.post('/api/commerce/shipping-quote', { data: { items, destination: { country: 'US', state: 'IL', postalCode: '60601' } } })).json();
+  const shippingCents = quote.shippingFeeCents as number;
   const event = { id: `evt_revenue_${randomUUID()}`, object: 'event', type: 'checkout.session.completed', livemode: false, created: Math.floor(Date.now()/1000), data: { object: {
-    id: stripeSessionId, object: 'checkout.session', payment_status: 'paid', amount_total: subtotal, currency: 'usd', payment_intent: `pi_test_${randomUUID()}`,
+    id: stripeSessionId, object: 'checkout.session', payment_status: 'paid', amount_total: subtotal + shippingCents, amount_subtotal: subtotal, total_details: { amount_shipping: shippingCents, amount_tax: 0, amount_discount: 0 }, currency: 'usd', payment_intent: `pi_test_${randomUUID()}`,
     customer_details: { email: 'shopper@example.test' }, collected_information: { shipping_details: { name: 'Test Shopper', address: { line1: '1 Test Way', line2: null, city: 'Chicago', state: 'IL', postal_code: '60601', country: 'US' } } },
   } } };
   const body = JSON.stringify(event);

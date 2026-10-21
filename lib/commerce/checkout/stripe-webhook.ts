@@ -2,6 +2,10 @@ import 'server-only';
 
 import Stripe from 'stripe';
 import { z } from 'zod';
+import {
+  PaymentTotalsError,
+  readStripeSessionAmounts,
+} from './payment-totals';
 
 const addressSchema = z.object({
   line1: z.string().min(1),
@@ -32,7 +36,12 @@ export interface StripeWebhookStore {
     paymentIntentId: string;
     customerEmail: string;
     shippingAddress: z.infer<typeof addressSchema> & { name: string };
+    /** Stripe amount_total: subtotal + shipping + tax. */
     paidAmount: number;
+    amountSubtotal: number;
+    amountShipping: number;
+    amountTax: number;
+    amountDiscount: number;
     currency: string;
   }): Promise<string>;
 }
@@ -54,12 +63,31 @@ export function verifyStripeWebhookPayload(
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }
 
+/**
+ * True when a signed event's livemode disagrees with this deployment's
+ * STRIPE_MODE. Separate signing secrets normally keep test and live apart; this
+ * stops a misconfigured secret from letting one mode's events settle the other's
+ * orders.
+ */
+export function isStripeEventModeMismatch(
+  event: Pick<Stripe.Event, 'livemode'>,
+  stripeMode = process.env.STRIPE_MODE,
+) {
+  return event.livemode !== (stripeMode === 'live');
+}
+
 export class StripeCheckoutWebhookService {
   constructor(private readonly store: StripeWebhookStore) {}
 
   async process(event: Stripe.Event) {
     const isNew = await this.store.beginEvent(event);
-    if (!isNew) return { duplicate: true, orderId: null };
+    if (!isNew) {
+      // A prior delivery may have failed after its receipt was recorded.
+      // Atomically reclaim only failed receipts; never rerun processed or in-flight events.
+      const claimed = await this.store.claimFailedEvent(event.id);
+      if (!claimed) return { duplicate: true, orderId: null };
+      return this.processClaimed(claimed);
+    }
     return this.processClaimed(event);
   }
 
@@ -92,14 +120,19 @@ export class StripeCheckoutWebhookService {
           'INCOMPLETE_SHIPPING_ADDRESS',
         );
       }
-      if (
-        session.amount_total === null ||
-        !session.currency ||
-        !session.customer_details?.email
-      ) {
+      if (!session.currency || !session.customer_details?.email) {
         throw new StripeWebhookValidationError(
           'INCOMPLETE_PAYMENT_DETAILS',
         );
+      }
+      let amounts;
+      try {
+        amounts = readStripeSessionAmounts(session);
+      } catch (error) {
+        if (error instanceof PaymentTotalsError) {
+          throw new StripeWebhookValidationError(error.code);
+        }
+        throw error;
       }
       const paymentIntentId =
         typeof session.payment_intent === 'string'
@@ -120,7 +153,11 @@ export class StripeCheckoutWebhookService {
           name: shippingDetails.data.name,
           ...shippingDetails.data.address,
         },
-        paidAmount: session.amount_total,
+        paidAmount: amounts.total,
+        amountSubtotal: amounts.subtotal,
+        amountShipping: amounts.shipping,
+        amountTax: amounts.tax,
+        amountDiscount: amounts.discount,
         currency: session.currency.toUpperCase(),
       });
       return { duplicate: false, orderId };

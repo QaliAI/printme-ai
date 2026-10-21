@@ -207,6 +207,10 @@ export class PrintifyWebhookService {
   async process(event: PrintifyWebhookEvent) {
     const isNew = await this.store.beginEvent(event);
     if (!isNew) {
+      // Retry a recorded failure on provider redelivery, but not a processed
+      // or concurrently processing receipt. The claim is atomic in the store.
+      const claimed = await this.store.claimFailedEvent(event.id);
+      if (claimed) return this.processClaimed(claimed);
       return {
         duplicate: true,
         outcome: 'duplicate' as const,
