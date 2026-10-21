@@ -71,6 +71,25 @@ function sessionEvent(type: string, paymentStatus: string): Stripe.Event {
   } as unknown as Stripe.Event;
 }
 
+describe('Stripe failed receipt redelivery', () => {
+  it('reclaims failed events exactly once without reprocessing successful receipts', async () => {
+    const failed = sessionEvent('checkout.session.expired', 'unpaid');
+    const store = new RecordingWebhookStore();
+    let claims = 0;
+    store.beginEvent = async () => false;
+    store.claimFailedEvent = async (id) => {
+      if (id !== failed.id || claims++ > 0) return null;
+      return failed;
+    };
+    const service = new StripeCheckoutWebhookService(store);
+
+    expect(await service.process(failed)).toEqual({ duplicate: false, orderId: null });
+    expect(await service.process(failed)).toEqual({ duplicate: true, orderId: null });
+    expect(store.completedEvents).toEqual([failed.id]);
+    expect(store.payments).toBe(0);
+  });
+});
+
 describe('failed and unpaid Stripe events never mark an order paid', () => {
   it.each([
     ['checkout.session.async_payment_failed', 'unpaid'],
