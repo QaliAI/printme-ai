@@ -10,7 +10,12 @@ async function decodeImages(locator: Locator) {
     await Promise.all(images.map(image => {
       if (!(image instanceof HTMLImageElement)) return;
       image.loading = 'eager';
-      return image.decode().catch(() => {});
+      // Broken/slow third-party assets must not freeze a full-site audit.
+      // Check their state separately; bound decode work to a few seconds.
+      return Promise.race([
+        image.decode().catch(() => {}),
+        new Promise<void>((resolve) => setTimeout(resolve, 3_000)),
+      ]);
     }));
   });
 }
