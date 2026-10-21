@@ -235,6 +235,24 @@ describe('Printify webhook processing', () => {
     expect(store.state).toBe('delivered');
   });
 
+  it('retries a failed receipt on ordinary provider redelivery', async () => {
+    const store = new MemoryPrintifyWebhookStore();
+    const payload = event('event-redelivery');
+    store.events.set(payload.id, { event: payload, status: 'failed' });
+    store.attempts.set(payload.id, 1);
+    const service = new PrintifyWebhookService(store);
+
+    const first = await service.process(payload);
+    expect(first.outcome).toBe('applied');
+    expect(first.duplicate).toBe(false);
+    expect(store.state).toBe('in_production');
+    expect(store.attempts.get(payload.id)).toBe(2);
+
+    const again = await service.process(payload);
+    expect(again.duplicate).toBe(true);
+    expect(store.attempts.get(payload.id)).toBe(2);
+  });
+
   it('claims a failed event once and replays it safely', async () => {
     const store = new MemoryPrintifyWebhookStore();
     const payload = event('event-replay');
