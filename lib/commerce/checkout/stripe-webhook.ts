@@ -81,7 +81,13 @@ export class StripeCheckoutWebhookService {
 
   async process(event: Stripe.Event) {
     const isNew = await this.store.beginEvent(event);
-    if (!isNew) return { duplicate: true, orderId: null };
+    if (!isNew) {
+      // A prior delivery may have failed after its receipt was recorded.
+      // Atomically reclaim only failed receipts; never rerun processed or in-flight events.
+      const claimed = await this.store.claimFailedEvent(event.id);
+      if (!claimed) return { duplicate: true, orderId: null };
+      return this.processClaimed(claimed);
+    }
     return this.processClaimed(event);
   }
 
