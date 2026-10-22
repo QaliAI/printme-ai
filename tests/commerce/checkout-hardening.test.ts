@@ -202,6 +202,7 @@ describe('commerce RPCs are callable only by service_role', () => {
       'claim_failed_commerce_webhook_event',
       'close_commerce_checkout',
       'complete_stripe_checkout_payment',
+      'commerce_recovery_schema_version',
       'create_commerce_pending_order',
       'finish_commerce_webhook_event',
       'lock_fulfillment_job',
@@ -251,3 +252,4 @@ describe('already-paid orders are never paid twice (013 guard)', () => {
     expect(guardBlock).not.toMatch(/UPDATE orders/);
   });
 });
+vi.mock('@/lib/commerce/schema-readiness', () => ({ assertCommerceRecoverySchema: async () => undefined }));

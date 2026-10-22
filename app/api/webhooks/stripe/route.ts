@@ -21,6 +21,7 @@ import {
   isCommerceE2ERequest,
 } from '@/lib/commerce/testing/e2e-harness';
 import { deliverOrderConfirmation } from '@/lib/notifications/order-confirmation';
+import { assertCommerceRecoverySchema, CommerceSchemaNotReadyError } from '@/lib/commerce/schema-readiness';
 
 export async function POST(request: NextRequest) {
   const e2eRequest = isCommerceE2ERequest(request);
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (!e2eRequest) await assertCommerceRecoverySchema();
     const result = await new StripeCheckoutWebhookService(
       e2eRequest
         ? new E2EStripeWebhookStore()
@@ -116,7 +118,10 @@ export async function POST(request: NextRequest) {
       duplicate: result.duplicate,
       fulfillment,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof CommerceSchemaNotReadyError) {
+      return NextResponse.json({ error: 'Commerce database recovery is not ready. Retry this receipt.', code: error.code }, { status: 503 });
+    }
     return NextResponse.json(
       { error: 'Stripe event processing failed.' },
       { status: 500 },

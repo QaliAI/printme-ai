@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import type { NotificationType } from './email-service';
 
 export interface OutboxEntry {
@@ -87,6 +88,7 @@ export class NotificationOutboxService {
 
     try {
       const supabase = getSupabaseAdminClient();
+      await assertCommerceRecoverySchema();
       const { data, error } = await supabase.rpc('claim_commerce_notification', {
         p_order_id: input.orderId ?? null, p_event_type: input.eventType,
         p_recipient: input.recipient, p_key: input.idempotencyKey, p_payload: input.payload,

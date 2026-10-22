@@ -3,20 +3,22 @@ import 'server-only';
 import type Stripe from 'stripe';
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import type { StripeWebhookStore } from './stripe-webhook';
 
 export class SupabaseStripeWebhookStore implements StripeWebhookStore {
-  private get client() {
+  private async recoveryClient() {
     if (
       process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
     ) {
       throw new Error('Stripe webhook persistence is disabled.');
     }
+    await assertCommerceRecoverySchema();
     return getSupabaseAdminClient();
   }
 
   async beginEvent(event: Stripe.Event) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'begin_commerce_webhook_event',
       {
         p_source: 'stripe',
@@ -30,7 +32,7 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   }
 
   async claimFailedEvent(eventId: string) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'claim_failed_commerce_webhook_event',
       {
         p_source: 'stripe',
@@ -66,7 +68,7 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   }
 
   async completeEvent(eventId: string) {
-    const { error } = await this.client.rpc(
+    const { error } = await (await this.recoveryClient()).rpc(
       'finish_commerce_webhook_event',
       {
         p_source: 'stripe',
@@ -80,14 +82,14 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   }
 
   async closeCheckout(input: Parameters<StripeWebhookStore['closeCheckout']>[0]) {
-    const { error } = await this.client.rpc('close_commerce_checkout', {
+    const { error } = await (await this.recoveryClient()).rpc('close_commerce_checkout', {
       p_event_id: input.eventId, p_session_id: input.stripeSessionId, p_reason: input.reason,
     });
     if (error) throw error;
   }
 
   async recordPaymentHold(input: Parameters<StripeWebhookStore['recordPaymentHold']>[0]) {
-    const { error } = await this.client.rpc('record_stripe_payment_hold', {
+    const { error } = await (await this.recoveryClient()).rpc('record_stripe_payment_hold', {
       p_event_id: input.eventId, p_payment_intent_id: input.paymentIntentId,
       p_reason: input.reason, p_refunded_amount: input.refundedAmount,
     });
@@ -95,7 +97,7 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   }
 
   async failEvent(eventId: string, code: string, message: string) {
-    const { error } = await this.client.rpc(
+    const { error } = await (await this.recoveryClient()).rpc(
       'finish_commerce_webhook_event',
       {
         p_source: 'stripe',
@@ -111,7 +113,7 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   async completePayment(
     input: Parameters<StripeWebhookStore['completePayment']>[0],
   ) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'complete_stripe_checkout_payment',
       {
         p_event_id: input.eventId,

@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import { cartConfigurationSnapshotSchema } from '../snapshot';
 import { CheckoutValidationError } from './service';
 import type {
@@ -48,13 +49,14 @@ function assertCheckoutPersistence() {
 }
 
 export class SupabaseCheckoutStore implements CheckoutStore {
-  private get client() {
+  private async recoveryClient() {
     assertCheckoutPersistence();
+    await assertCommerceRecoverySchema();
     return getSupabaseAdminClient();
   }
 
   async loadActiveCart(identity: CheckoutIdentity) {
-    let query = this.client
+    let query = (await this.recoveryClient())
       .from('carts')
       .select(
         'id,cart_items(configuration_snapshot)',
@@ -80,7 +82,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
     identity: CheckoutIdentity,
     idempotencyKey: string,
   ) {
-    let query = this.client
+    let query = (await this.recoveryClient())
       .from('commerce_checkout_sessions')
       .select(
         'id,order_id,stripe_session_id,stripe_checkout_url,status,user_id,guest_token_hash',
@@ -95,7 +97,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
   }
 
   async loadPendingOrderItems(orderId: string) {
-    const { data, error } = await this.client
+    const { data, error } = await (await this.recoveryClient())
       .from('order_items')
       .select('configuration_snapshot')
       .eq('order_id', orderId)
@@ -112,7 +114,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
   async createPendingOrder(
     input: Parameters<CheckoutStore['createPendingOrder']>[0],
   ) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'create_commerce_pending_order',
       {
         p_cart_id: input.cart.id,
@@ -146,7 +148,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
   async attachStripeSession(
     input: Parameters<CheckoutStore['attachStripeSession']>[0],
   ) {
-    const { error } = await this.client.rpc(
+    const { error } = await (await this.recoveryClient()).rpc(
       'attach_commerce_stripe_session',
       {
         p_checkout_id: input.checkoutId,

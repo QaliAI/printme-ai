@@ -89,10 +89,29 @@ beforeEach(async () => {
 });
 afterAll(async () => { vi.unstubAllEnvs(); await db?.close(); });
 
+describe('database recovery capability marker', () => {
+  it('proves all migration guards are active and restricts the handshake to service role', async () => {
+    expect((await db.query<{ version: number }>('SELECT commerce_recovery_schema_version() version')).rows[0].version).toBe(15);
+    await db.exec('ALTER TABLE orders DISABLE TRIGGER zz_orders_payment_hold');
+    try {
+      expect((await db.query<{ version: number }>('SELECT commerce_recovery_schema_version() version')).rows[0].version).toBe(0);
+    } finally { await db.exec('ALTER TABLE orders ENABLE TRIGGER zz_orders_payment_hold'); }
+    for (const role of ['anon','authenticated']) {
+      await db.exec(`SET ROLE ${role}`);
+      try { await expect(db.query('SELECT commerce_recovery_schema_version()')).rejects.toThrow(/permission denied/); }
+      finally { await db.exec('RESET ROLE'); }
+    }
+    await db.exec('SET ROLE service_role');
+    try {
+      expect((await db.query<{ version: number }>('SELECT commerce_recovery_schema_version() version')).rows[0].version).toBe(15);
+    } finally { await db.exec('RESET ROLE'); }
+  });
+});
+
 describe('real PostgreSQL payment recovery (no external services)', () => {
   it('ships the identical upgrade in the canonical reference and limits every RPC', async () => {
     const canonical = sql('docs/launch/01_CANONICAL_LAUNCH_MIGRATION_vfgbvnfhvjmkmfmianpb.sql');
-    expect(canonical.slice(canonical.indexOf('-- Depends on reconciled commerce schema through 014.'))).toBe(recovery);
+    expect(canonical.slice(canonical.indexOf('-- Depends on reconciled commerce schema through 014.'), canonical.indexOf('-- SECTION 016')).trim()).toBe(recovery.trim());
     const exposed=await db.query(`SELECT p.proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
       WHERE n.nspname='public' AND p.prosecdef AND p.prorettype<>'trigger'::regtype
         AND (has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'))`);

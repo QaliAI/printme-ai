@@ -569,4 +569,27 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION claim_commerce_notification(UUID, TEXT, TEXT, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION claim_commerce_notification(UUID, TEXT, TEXT, TEXT, JSONB) TO service_role;
+
+-- Read-only application/database compatibility handshake. Installed last in the
+-- same transaction: schema 014 cannot advertise partial recovery support.
+CREATE OR REPLACE FUNCTION commerce_recovery_schema_version()
+RETURNS INTEGER LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
+  SELECT CASE WHEN
+    to_regclass('public.commerce_payment_holds') IS NOT NULL
+    AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public'
+      AND table_name='orders' AND column_name='commerce_hold_reason')
+    AND to_regprocedure('public.record_stripe_payment_hold(text,text,text,integer)') IS NOT NULL
+    AND to_regprocedure('public.close_commerce_checkout(text,text,text)') IS NOT NULL
+    AND to_regprocedure('public.begin_commerce_production_submission(uuid,text)') IS NOT NULL
+    AND to_regprocedure('public.claim_commerce_notification(uuid,text,text,text,jsonb)') IS NOT NULL
+    AND EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid='public.orders'::regclass
+      AND tgname='zz_orders_payment_hold' AND tgenabled IN ('O','A'))
+    AND EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid='public.fulfillment_jobs'::regclass
+      AND tgname='fulfillment_payment_guard' AND tgenabled IN ('O','A'))
+    AND EXISTS (SELECT 1 FROM pg_trigger WHERE tgrelid='public.profiles'::regclass
+      AND tgname='profiles_guard_admin_assignment' AND tgenabled IN ('O','A'))
+  THEN 15 ELSE 0 END;
+$$;
+REVOKE ALL ON FUNCTION commerce_recovery_schema_version() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION commerce_recovery_schema_version() TO service_role;
 COMMIT;

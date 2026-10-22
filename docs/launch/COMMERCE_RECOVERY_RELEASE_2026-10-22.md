@@ -102,3 +102,11 @@ Browser runs emitted image-loading/hydration warnings after the framework securi
 | Production activation | **NO-GO** | All above + explicit owner approval. Checkout remains false. |
 
 References: [Stripe event types](https://docs.stripe.com/api/events/types), [Next.js security advisory](https://github.com/advisories/GHSA-2464-fhr4-w9xw), [Vercel branch deployment control](https://vercel.com/docs/project-configuration/git-configuration#git.deploymentenabled).
+
+## Safe code release before migration — October 22 follow-up
+
+The owner subsequently authorized merging verified code and deploying the public Pets experience, while expressly withholding production migrations and payment activation. This changes the code-release restriction in steps 6/11 above; every paid-launch proof remains required. Production still has schema 014. Before touching recovery-only columns or functions, the application now discovers a service-role-only read-only migration marker through PostgREST OpenAPI, then verifies the marker returns 15. Migration 015 installs that marker atomically and checks the payment/fulfillment/profile guards. Missing, stale or unavailable capability evidence closes the gate. Signed Stripe/Printify deliveries return retryable 503 rather than acknowledging unpersisted events. Recovery on 015 continues with checkout disabled.
+
+Read-only hosted inspection also confirmed nine catalog tables have RLS disabled and allow anonymous/authenticated inserts. Prepared migration 016 revokes their public writes, preserves public reads on the eight customer catalog tables, restricts sync-run reports to the service role and enables RLS. Local role tests verify denial, allowed reads, service writes and repeat application. **016 is not applied to production.** Include its reviewed delta in the backup/staging/migration approval sequence; do not replay the full canonical bundle.
+
+Follow-up verification: 258 unit tests passed, 3 intentionally skipped; typecheck passed. The existing full browser baseline is 96 passed / 15 skipped; final-head CI results are recorded on PR #29. No hosted schema, service settings, checkout flag, charge or Printify order was changed by this follow-up.

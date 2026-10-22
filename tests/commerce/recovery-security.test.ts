@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   getUser: vi.fn(), from: vi.fn(), recordPaymentHold: vi.fn(), completeEvent: vi.fn(),
 }));
+vi.mock('@/lib/commerce/schema-readiness', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/lib/commerce/schema-readiness')>(),
+  assertCommerceRecoverySchema: async () => undefined,
+}));
 vi.mock('@/lib/supabase/admin', () => ({ getSupabaseAdminClient: () => ({ auth: { getUser: mocks.getUser }, from: mocks.from }) }));
 vi.mock('@/lib/commerce/checkout/supabase-webhook-store', () => ({
   SupabaseStripeWebhookStore: class {

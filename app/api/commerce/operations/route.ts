@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { hasCommerceOperationsAccess } from '@/lib/commerce/operations-auth';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 
 /** Small authenticated monitoring surface; no customer data or raw payloads. */
 export async function GET(request: NextRequest) {
   if (!hasCommerceOperationsAccess(request)) return NextResponse.json({ error: 'Not authorized.' }, { status: 401 });
   if (process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true') return NextResponse.json({ error: 'Persistence disabled.' }, { status: 503 });
   try {
+    await assertCommerceRecoverySchema();
     const client = getSupabaseAdminClient();
     const staleAt = new Date(Date.now() - 5 * 60_000).toISOString();
     const results = await Promise.all([
