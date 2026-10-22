@@ -8,7 +8,6 @@ import type { StripeWebhookStore } from './stripe-webhook';
 export class SupabaseStripeWebhookStore implements StripeWebhookStore {
   private get client() {
     if (
-      process.env.COMMERCE_CHECKOUT_ENABLED !== 'true' ||
       process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
     ) {
       throw new Error('Stripe webhook persistence is disabled.');
@@ -77,6 +76,21 @@ export class SupabaseStripeWebhookStore implements StripeWebhookStore {
         p_error_message: '',
       },
     );
+    if (error) throw error;
+  }
+
+  async closeCheckout(input: Parameters<StripeWebhookStore['closeCheckout']>[0]) {
+    const { error } = await this.client.rpc('close_commerce_checkout', {
+      p_event_id: input.eventId, p_session_id: input.stripeSessionId, p_reason: input.reason,
+    });
+    if (error) throw error;
+  }
+
+  async recordPaymentHold(input: Parameters<StripeWebhookStore['recordPaymentHold']>[0]) {
+    const { error } = await this.client.rpc('record_stripe_payment_hold', {
+      p_event_id: input.eventId, p_payment_intent_id: input.paymentIntentId,
+      p_reason: input.reason, p_refunded_amount: input.refundedAmount,
+    });
     if (error) throw error;
   }
 

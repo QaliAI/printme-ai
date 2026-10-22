@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardBody } from '@/components/Card';
+import { supabase } from '@/lib/supabase';
 import type { OperatorQueueTab } from '@/lib/commerce/fulfillment/order-lifecycle';
 import type { CartConfigurationSnapshot } from '@/lib/commerce/types';
 import type { ArtworkValidationResult } from '@/lib/commerce/fulfillment/artwork-validator';
@@ -98,6 +99,12 @@ const TABS: { id: OperatorQueueTab | 'ALL'; label: string; color: string }[] = [
   { id: 'EXCEPTION', label: 'Exception', color: 'bg-rose-100 text-rose-800' },
 ];
 
+async function operatorHeaders() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) throw new Error('Sign in with an authorized operator account.');
+  return { Authorization: `Bearer ${session.access_token}` };
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [tabCounts, setTabCounts] = useState<Record<string, number>>({});
@@ -116,7 +123,7 @@ export default function AdminOrdersPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/orders?tab=${activeTab}`);
+      const res = await fetch(`/api/admin/orders?tab=${activeTab}`, { headers: await operatorHeaders() });
       if (!res.ok) {
         throw new Error(`Failed to load orders: HTTP ${res.status}`);
       }
@@ -141,7 +148,7 @@ export default function AdminOrdersPage() {
     setLoadingDryRun(true);
     setDryRunData(null);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/dry-run`);
+      const res = await fetch(`/api/admin/orders/${orderId}/dry-run`, { headers: await operatorHeaders() });
       if (!res.ok) {
         throw new Error(`Dry-run failed: HTTP ${res.status}`);
       }
@@ -163,6 +170,7 @@ export default function AdminOrdersPage() {
     try {
       const res = await fetch(`/api/admin/orders/${orderId}/approve`, {
         method: 'POST',
+        headers: await operatorHeaders(),
       });
       const data = await res.json();
       if (!res.ok) {

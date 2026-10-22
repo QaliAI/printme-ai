@@ -217,6 +217,9 @@ describe('secure Stripe test checkout', () => {
 });
 
 class MemoryWebhookStore implements StripeWebhookStore {
+  async closeCheckout() {}
+  async recordPaymentHold() {}
+
   events = new Set<string>();
   failedEvents = new Map<string, Stripe.Event>();
   completed: Parameters<StripeWebhookStore['completePayment']>[0] | null =

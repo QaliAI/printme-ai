@@ -129,6 +129,7 @@ export class PrintifyFulfillmentService {
     });
     if (lock.alreadyComplete) return lock.job;
 
+    let providerWriteStarted = false;
     try {
       const payload = buildPrintifyFulfillmentPayload(order);
       const payloadHash = hashFulfillmentPayload(payload);
@@ -146,7 +147,11 @@ export class PrintifyFulfillmentService {
       let printifyOrderId: string | null = null;
       let printifyProductId: string | null = null;
 
-      if ((mode === 'draft' || mode === 'live') && this.draftGateway) {
+      if (!this.draftGateway) throw new FulfillmentModeError('DRAFT_GATEWAY_UNAVAILABLE');
+      if (mode === 'draft' || mode === 'live') {
+        // A response or local persistence failure after this point may hide a
+        // created provider order. Never retry the POST without reconciliation.
+        providerWriteStarted = true;
         const draftResult = await this.draftGateway.createDraftOrder(order);
         printifyOrderId = draftResult.printifyOrderId;
         printifyProductId = draftResult.printifyProductId ?? null;
@@ -179,7 +184,9 @@ export class PrintifyFulfillmentService {
             : 'FULFILLMENT_PREPARATION_FAILED',
         errorMessage:
           error instanceof Error ? error.message : 'Unknown fulfillment error.',
-        retryClassification: classifyFulfillmentFailure(error),
+        retryClassification: providerWriteStarted
+          ? 'manual_review_uncertain_submission'
+          : classifyFulfillmentFailure(error),
       });
       throw error;
     }

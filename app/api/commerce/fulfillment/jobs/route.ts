@@ -12,6 +12,10 @@ export async function GET(request: NextRequest) {
     : [
         'paid',
         'fulfillment_failed',
+        'preparing_fulfillment',
+        'fulfillment_submitting',
+        'manual_review_ready',
+        'cancelled',
         'dry_run_complete',
         'fulfillment_ready',
       ];

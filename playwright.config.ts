@@ -56,6 +56,8 @@ export default defineConfig({
       COMMERCE_E2E_TEST_MODE: 'true',
       COMMERCE_E2E_TEST_SECRET: 'printme-local-e2e-secret',
       COMMERCE_CHECKOUT_ENABLED: 'true',
+      STRIPE_MODE: 'test',
+      COMMERCE_PERSISTENCE_ENABLED: 'false',
       STRIPE_SECRET_KEY: 'sk_test_local_e2e_only',
       STRIPE_WEBHOOK_SECRET: 'whsec_local_e2e_only',
       PRINTIFY_FULFILLMENT_MODE: 'dry-run',

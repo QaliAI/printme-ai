@@ -123,6 +123,7 @@ export function resolveOrderLifecycle(
 
   // 1. Terminal / Exception States
   if (
+    ['refunded', 'partially_refunded', 'refund_pending', 'disputed'].includes(paymentStatus) ||
     orderStatus === 'cancelled' ||
     fulfillmentStatus === 'cancelled' ||
     jobState === 'cancelled' ||

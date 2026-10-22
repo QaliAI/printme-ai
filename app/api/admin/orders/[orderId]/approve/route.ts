@@ -154,35 +154,9 @@ export async function POST(
       }
     }
 
-    // In dry-run or disabled mode: mark as approved by operator
-    await supabase
-      .from('orders')
-      .update({
-        fulfillment_status: 'manual_review_approved',
-        error_message: null,
-        updated_at: approvedAt,
-      })
-      .eq('id', orderId);
-
-    await supabase
-      .from('fulfillment_jobs')
-      .update({
-        state: 'fulfillment_ready',
-        locked_at: null,
-        locked_by: null,
-        updated_at: approvedAt,
-      })
-      .eq('order_id', orderId);
-
-    return NextResponse.json({
-      success: true,
-      orderId,
-      mode,
-      approvedBy: operator,
-      approvedAt,
-      message:
-        'Order successfully verified and approved by operator. (Live Printify submission remains gated until merchant activates live mode).',
-    });
+    return NextResponse.json(
+      { error: 'Production approval requires draft or live fulfillment mode.' }, { status: 409 },
+    );
   } catch (err) {
     console.error('Error approving order:', err);
     return NextResponse.json(

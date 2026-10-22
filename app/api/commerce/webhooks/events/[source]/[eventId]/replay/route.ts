@@ -1,3 +1,4 @@
+import { deliverOrderConfirmation } from '@/lib/notifications/order-confirmation';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { StripeCheckoutWebhookService } from '@/lib/commerce/checkout/stripe-webhook';
@@ -37,6 +38,7 @@ export async function POST(
         : await new PrintifyWebhookService(
             new SupabasePrintifyWebhookStore(),
           ).replay(params.data.eventId);
+    if ('orderId' in result && result.orderId) await deliverOrderConfirmation(result.orderId);
     return NextResponse.json({
       replayed: !result.duplicate,
       duplicate: result.duplicate,

@@ -33,8 +33,7 @@ function toJob(value: unknown): FulfillmentJob {
 
 function assertFulfillmentPersistence() {
   if (
-    process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true' ||
-    process.env.COMMERCE_CHECKOUT_ENABLED !== 'true'
+    process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
   ) {
     throw new Error('Fulfillment persistence is disabled.');
   }
@@ -50,7 +49,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
     const { data, error } = await this.client
       .from('orders')
       .select(
-        'id,payment_status,customer_email,shipping_address,printify_order_id,production_submitted_at,order_items(configuration_snapshot)',
+        'id,status,fulfillment_status,commerce_hold_reason,payment_status,customer_email,shipping_address,printify_order_id,production_submitted_at,order_items(configuration_snapshot)',
       )
       .eq('id', orderId)
       .maybeSingle();
@@ -60,6 +59,9 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       .object({
         id: z.string().uuid(),
         payment_status: z.string(),
+        status: z.string(),
+        fulfillment_status: z.string(),
+        commerce_hold_reason: z.string().nullable(),
         customer_email: z.string().nullable(),
         shipping_address: z.unknown(),
         printify_order_id: z.string().nullable(),
@@ -69,7 +71,8 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
         ),
       })
       .parse(data);
-    if (row.payment_status !== 'paid' || !row.customer_email) return null;
+    if (row.payment_status !== 'paid' || row.commerce_hold_reason || row.status === 'cancelled' ||
+      ['cancelled', 'refunded'].includes(row.fulfillment_status) || !row.customer_email) return null;
     return fulfillmentOrderSchema.parse({
       id: row.id,
       paymentStatus: row.payment_status,
@@ -232,31 +235,10 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async markSubmitting(jobId: string, externalRequestId: string) {
-    const { data, error } = await this.client
-      .from('fulfillment_jobs')
-      .update({
-        state: 'fulfillment_submitting',
-        external_request_id: externalRequestId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', jobId)
-      .eq('state', 'fulfillment_ready')
-      .select('attempt_count')
-      .single();
+    const { error } = await this.client.rpc('begin_commerce_production_submission', {
+      p_job_id: jobId, p_request_id: externalRequestId,
+    });
     if (error) throw error;
-    const attempt = z
-      .object({ attempt_count: z.number().int().positive() })
-      .parse(data);
-    const { error: attemptError } = await this.client
-      .from('fulfillment_attempts')
-      .insert({
-        fulfillment_job_id: jobId,
-        attempt_number: attempt.attempt_count,
-        action: 'send_to_production',
-        external_request_id: externalRequestId,
-        outcome: 'started',
-      });
-    if (attemptError) throw attemptError;
   }
 
   async markSubmitted(jobId: string, orderId: string) {

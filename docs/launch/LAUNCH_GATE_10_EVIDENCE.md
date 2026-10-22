@@ -1,5 +1,7 @@
 # Launch gate #10 — checkout evidence pack
 
+> Historical Oct 19 snapshot. The Oct 22 recheck found an active database with commerce tables and production checkout explicitly false. Use [the current engineering evidence and release procedure](COMMERCE_RECOVERY_RELEASE_2026-10-22.md) for launch decisions.
+
 Checked Mon Oct 19, 2026, ~11:05–11:20 AM CT, against `master` at `0af2cda`.
 Read-only. No database restored, no env var changed, no Stripe or Printify call made, nothing deployed.
 

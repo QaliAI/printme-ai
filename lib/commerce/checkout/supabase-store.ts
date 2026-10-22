@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
 import { cartConfigurationSnapshotSchema } from '../snapshot';
+import { CheckoutValidationError } from './service';
 import type {
   CheckoutAttempt,
   CheckoutIdentity,
@@ -122,6 +123,7 @@ export class SupabaseCheckoutStore implements CheckoutStore {
         p_currency: input.currency,
       },
     );
+    if (error?.message?.includes('active checkout snapshot changed')) throw new CheckoutValidationError('ACTIVE_CHECKOUT_CART_CHANGED');
     if (error) throw error;
     const result = z
       .array(

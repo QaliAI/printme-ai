@@ -43,6 +43,9 @@ describe('B3: webhook livemode must match STRIPE_MODE', () => {
 });
 
 class RecordingWebhookStore implements StripeWebhookStore {
+  async closeCheckout(input: Parameters<StripeWebhookStore['closeCheckout']>[0]) { this.completedEvents.push(input.eventId); }
+  async recordPaymentHold() {}
+
   completedEvents: string[] = [];
   payments = 0;
   async beginEvent(_event: Stripe.Event): Promise<boolean> {
@@ -192,14 +195,18 @@ describe('commerce RPCs are callable only by service_role', () => {
   it('finds the commerce RPCs in both the migrations and the canonical launch migration', () => {
     const expected = [
       'apply_printify_order_transition',
+      'begin_commerce_production_submission',
+      'claim_commerce_notification',
       'attach_commerce_stripe_session',
       'begin_commerce_webhook_event',
       'claim_failed_commerce_webhook_event',
+      'close_commerce_checkout',
       'complete_stripe_checkout_payment',
       'create_commerce_pending_order',
       'finish_commerce_webhook_event',
       'lock_fulfillment_job',
-    ];
+      'record_stripe_payment_hold',
+    ].sort();
     expect(securityDefinerRpcs(canonical)).toEqual(expected);
     expect(securityDefinerRpcs(migrations)).toEqual(expected);
   });
@@ -216,7 +223,7 @@ describe('commerce RPCs are callable only by service_role', () => {
     const statements = (sql: string) =>
       [...sql.matchAll(/^(?:REVOKE|GRANT)\b[\s\S]*?;/gm)].map((match) => match[0].replace(/\s+/g, ' '));
     const fix = readFileSync(path.join(root, 'migrations/014_restrict_commerce_rpcs_to_service_role.sql'), 'utf8');
-    const section = canonical.slice(canonical.indexOf('SECTION 014'));
+    const section = canonical.slice(canonical.indexOf('SECTION 014'), canonical.indexOf('SECTION 015'));
     expect(statements(fix)).toHaveLength(12);
     expect(statements(section)).toEqual(statements(fix));
   });

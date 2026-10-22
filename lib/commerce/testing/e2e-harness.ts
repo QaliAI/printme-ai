@@ -232,6 +232,17 @@ export async function createE2ECheckout(
 }
 
 export class E2EStripeWebhookStore implements StripeWebhookStore {
+  async closeCheckout(input: Parameters<StripeWebhookStore['closeCheckout']>[0]) {
+    for (const attempt of state().attempts.values()) {
+      const order = state().orders.get(attempt.orderId);
+      if (attempt.stripeSessionId === input.stripeSessionId && order?.paymentStatus === 'unpaid') {
+        attempt.status = input.reason === 'expired' ? 'cancelled' : 'failed';
+      }
+    }
+    await this.completeEvent(input.eventId);
+  }
+  async recordPaymentHold() { throw new Error('Use the PostgreSQL payment-hold tests.'); }
+
   async beginEvent(event: Stripe.Event) {
     if (state().events.has(event.id)) return false;
     state().events.set(event.id, {

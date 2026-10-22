@@ -25,9 +25,7 @@ const inMemoryOutbox = new Map<string, OutboxEntry>();
 
 function isPersistenceActive(): boolean {
   return (
-    process.env.COMMERCE_PERSISTENCE_ENABLED === 'true' &&
-    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-    Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+    process.env.COMMERCE_PERSISTENCE_ENABLED === 'true'
   );
 }
 
@@ -49,10 +47,11 @@ export class NotificationOutboxService {
         .eq('idempotency_key', idempotencyKey)
         .maybeSingle();
 
-      if (error || !data) return false;
+      if (error) throw error;
+      if (!data) return false;
       return data.status === 'sent';
-    } catch {
-      return false;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -65,11 +64,12 @@ export class NotificationOutboxService {
     recipient: string;
     idempotencyKey: string;
     payload: Record<string, unknown>;
-  }): Promise<void> {
+  }): Promise<boolean> {
     const now = new Date().toISOString();
 
     if (!isPersistenceActive()) {
       const existing = inMemoryOutbox.get(input.idempotencyKey);
+      if (existing?.status === 'sent' || existing?.status === 'sending') return false;
       inMemoryOutbox.set(input.idempotencyKey, {
         id: existing?.id || `mem-${Date.now()}`,
         orderId: input.orderId,
@@ -82,28 +82,18 @@ export class NotificationOutboxService {
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
       });
-      return;
+      return true;
     }
 
     try {
       const supabase = getSupabaseAdminClient();
-      // Upsert outbox row
-      await supabase.from('commerce_notification_outbox').upsert(
-        {
-          order_id: input.orderId || null,
-          event_type: input.eventType,
-          recipient: input.recipient,
-          idempotency_key: input.idempotencyKey,
-          payload: input.payload,
-          status: 'sending',
-          attempts: 1,
-          updated_at: now,
-        },
-        { onConflict: 'idempotency_key' },
-      );
-    } catch (err) {
-      console.warn('[NotificationOutbox] Failed to record sending state:', err);
-    }
+      const { data, error } = await supabase.rpc('claim_commerce_notification', {
+        p_order_id: input.orderId ?? null, p_event_type: input.eventType,
+        p_recipient: input.recipient, p_key: input.idempotencyKey, p_payload: input.payload,
+      });
+      if (error) throw error;
+      return data === true;
+    } catch (error) { throw error; }
   }
 
   /**
@@ -128,7 +118,7 @@ export class NotificationOutboxService {
 
     try {
       const supabase = getSupabaseAdminClient();
-      await supabase
+      const { error } = await supabase
         .from('commerce_notification_outbox')
         .update({
           status: 'sent',
@@ -138,8 +128,9 @@ export class NotificationOutboxService {
           last_error: null,
         })
         .eq('idempotency_key', idempotencyKey);
+      if (error) throw error;
     } catch (err) {
-      console.warn('[NotificationOutbox] Failed to record success state:', err);
+      throw err;
     }
   }
 
@@ -157,7 +148,7 @@ export class NotificationOutboxService {
 
     if (!isPersistenceActive()) {
       const existing = inMemoryOutbox.get(idempotencyKey);
-      if (existing) {
+      if (existing && existing.status !== 'sent') {
         existing.status = 'failed';
         existing.lastError = error;
         existing.nextAttemptAt = nextAttempt;
@@ -168,7 +159,7 @@ export class NotificationOutboxService {
 
     try {
       const supabase = getSupabaseAdminClient();
-      await supabase
+      const { error: dbError } = await supabase
         .from('commerce_notification_outbox')
         .update({
           status: 'failed',
@@ -176,9 +167,11 @@ export class NotificationOutboxService {
           next_attempt_at: nextAttempt,
           updated_at: nowIso,
         })
-        .eq('idempotency_key', idempotencyKey);
+        .eq('idempotency_key', idempotencyKey)
+        .eq('status', 'sending');
+      if (dbError) throw dbError;
     } catch (err) {
-      console.warn('[NotificationOutbox] Failed to record failure state:', err);
+      throw err;
     }
   }
 

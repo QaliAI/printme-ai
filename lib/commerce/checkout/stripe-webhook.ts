@@ -25,6 +25,13 @@ export interface StripeWebhookStore {
   beginEvent(event: Stripe.Event): Promise<boolean>;
   claimFailedEvent(eventId: string): Promise<Stripe.Event | null>;
   completeEvent(eventId: string): Promise<void>;
+  closeCheckout(input: { eventId: string; stripeSessionId: string; reason: 'expired' | 'payment_failed' }): Promise<void>;
+  recordPaymentHold(input: {
+    eventId: string;
+    paymentIntentId: string;
+    reason: 'refund' | 'dispute';
+    refundedAmount: number;
+  }): Promise<void>;
   failEvent(
     eventId: string,
     code: string,
@@ -99,6 +106,34 @@ export class StripeCheckoutWebhookService {
 
   private async processClaimed(event: Stripe.Event) {
     try {
+      if (isStripeEventModeMismatch(event)) {
+        throw new StripeWebhookValidationError('EVENT_MODE_MISMATCH');
+      }
+      if (event.type === 'charge.refunded' || event.type.startsWith('refund.') || event.type.startsWith('charge.dispute.')) {
+        const object = event.data.object as unknown as Record<string, unknown>;
+        const intent = object.payment_intent;
+        const paymentIntentId = typeof intent === 'string' ? intent : (intent as { id?: string } | null)?.id;
+        if (!paymentIntentId) throw new StripeWebhookValidationError('PAYMENT_INTENT_MISSING');
+        // charge.refunded carries the cumulative amount. Individual refund
+        // amounts must not be summed across created/updated duplicate events.
+        const refundedAmount = event.type === 'charge.refunded' ? object.amount_refunded : 0;
+        if (!Number.isSafeInteger(refundedAmount) || (refundedAmount as number) < 0) {
+          throw new StripeWebhookValidationError('INVALID_REFUND_AMOUNT');
+        }
+        await this.store.recordPaymentHold({
+          eventId: event.id, paymentIntentId,
+          reason: event.type.startsWith('charge.dispute.') ? 'dispute' : 'refund',
+          refundedAmount: refundedAmount as number,
+        });
+        return { duplicate: false, orderId: null };
+      }
+      if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (!session.id) throw new StripeWebhookValidationError('CHECKOUT_SESSION_MISSING');
+        await this.store.closeCheckout({ eventId: event.id, stripeSessionId: session.id,
+          reason: event.type === 'checkout.session.expired' ? 'expired' : 'payment_failed' });
+        return { duplicate: false, orderId: null };
+      }
       if (
         event.type !== 'checkout.session.completed' &&
         event.type !== 'checkout.session.async_payment_succeeded'

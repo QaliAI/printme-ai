@@ -61,7 +61,7 @@ test('success redirect does not claim payment without a verified webhook', async
       name: 'Payment verification pending',
     }),
   ).toBeVisible();
-  await expect(page.getByText(/does not prove payment/i)).toBeVisible();
+  await expect(page.getByText(/If you already paid, do not place another order/i)).toBeVisible();
 });
 
 test('Halloween features the original Carved Under Protest on the real tee', async ({ page }) => {

@@ -214,6 +214,23 @@ describe('idempotent Printify fulfillment', () => {
     expect(productionGateway.sendOrderToProduction).not.toHaveBeenCalled();
   });
 
+  it('never treats a lost draft acknowledgement as safe to retry', async () => {
+    process.env.PRINTIFY_FULFILLMENT_MODE = 'draft';
+    const store = new MemoryFulfillmentStore();
+    const markFailed = vi.spyOn(store, 'markFailed');
+    const createDraftOrder = vi.fn(async () => ({ printifyOrderId: 'draft-created' }));
+    store.markReady = async () => { throw new Error('DB unavailable after provider accepted'); };
+    await expect(new PrintifyFulfillmentService(store, undefined, { createDraftOrder }).prepare(store.job.orderId)).rejects.toThrow('DB unavailable');
+    expect(createDraftOrder).toHaveBeenCalledTimes(1);
+    expect(markFailed).toHaveBeenCalledWith(expect.objectContaining({ retryClassification: 'manual_review_uncertain_submission' }));
+  });
+
+  it('does not silently mark a draft ready when the gateway is missing', async () => {
+    process.env.PRINTIFY_FULFILLMENT_MODE = 'draft';
+    const store = new MemoryFulfillmentStore();
+    await expect(new PrintifyFulfillmentService(store).prepare(store.job.orderId)).rejects.toMatchObject({ code: 'DRAFT_GATEWAY_UNAVAILABLE' });
+  });
+
   it('deduplicates completed jobs', async () => {
     const store = new MemoryFulfillmentStore();
     const service = new PrintifyFulfillmentService(store);

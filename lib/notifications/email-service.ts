@@ -304,7 +304,7 @@ export class TransactionalEmailService {
       return duplicateResult;
     }
 
-    await outbox.recordSending({
+    const claimed = await outbox.recordSending({
       orderId: orderId ?? null,
       eventType: type,
       recipient: recipientEmail,
@@ -312,6 +312,10 @@ export class TransactionalEmailService {
       payload: (message.metadata as Record<string, unknown>) || {},
     });
 
+    if (!claimed) return {
+      success: false, error: 'Notification already claimed; inspect durable outbox.',
+      idempotencyKey: message.idempotencyKey, timestamp: new Date().toISOString(),
+    };
     const result = await this.transport.send(message);
 
     if (result.success) {

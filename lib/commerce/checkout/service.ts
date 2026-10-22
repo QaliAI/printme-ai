@@ -93,6 +93,7 @@ export class SecureCheckoutService {
   ): Promise<CheckoutAttempt> {
     const { idempotencyKey, destination } = checkoutRequestSchema.parse(input);
     const existing = await this.store.findAttempt(identity, idempotencyKey);
+    if (existing && ['paid', 'cancelled', 'failed'].includes(existing.status)) throw new CheckoutValidationError('CHECKOUT_CLOSED');
     if (existing?.redirectUrl && existing.stripeSessionId) return existing;
 
     let cart: CheckoutCart | null = null;
@@ -129,15 +130,6 @@ export class SecureCheckoutService {
       throw new CheckoutValidationError('INVALID_TOTAL');
     }
 
-    const shipping = calculateShippingQuote({
-      destination: destination ?? {
-        country: 'US',
-        state: 'NY',
-        postalCode: '10001',
-      },
-      items,
-    });
-
     const attempt =
       existing ??
       (await this.store.createPendingOrder({
@@ -147,6 +139,20 @@ export class SecureCheckoutService {
         subtotal,
         currency: 'USD',
       }));
+    // A concurrent request may have already snapshotted this cart. Stripe
+    // must receive the winning persisted items, never a stale client snapshot.
+    items = await this.store.loadPendingOrderItems(attempt.orderId);
+    if (!items.length) throw new CheckoutValidationError('ORDER_ITEMS_MISSING');
+    for (const item of items) await validateSnapshotAgainstApprovedCatalog(item, this.availability);
+    const shipping = calculateShippingQuote({
+      destination: destination ?? {
+        country: 'US',
+        state: 'NY',
+        postalCode: '10001',
+      },
+      items,
+    });
+
     const session = await this.gateway.createSession({
       orderId: attempt.orderId,
       checkoutId: attempt.checkoutId,
