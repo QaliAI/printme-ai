@@ -11,6 +11,7 @@ import styles from './PunkHeader.module.css';
 const navigation = [
   { href: '/shop', label: 'Shop' },
   { href: '/create', label: 'Create' },
+  { href: '/pets', label: 'Pets' },
   { href: '/drops', label: 'Drops' },
   { href: '/halloween', label: 'Halloween' },
   { href: '/collections', label: 'Collections' },

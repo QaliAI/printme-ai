@@ -22,6 +22,13 @@ export const commerceAnalyticsEvents = [
   'bundle_view',
   'bundle_added',
   'session_started',
+  'pets_style_selected',
+  'pets_draft_saved',
+  'pets_generation_started',
+  'pets_generation_completed',
+  'pets_generation_failed',
+  'pets_preview_favorited',
+  'pets_keepsake_viewed',
 ] as const;
 
 export const commerceAnalyticsEventSchema = z.enum(
@@ -56,6 +63,12 @@ export function hasDirectIdentifier(properties: Record<string, unknown>) {
     'secret',
     'token',
     'prompt',
+    'caption',
+    'message',
+    'filename',
+    'photodata',
+    'imagedata',
+    'reference',
     'imageurl',
     'customerid',
     'userid',
@@ -69,7 +82,7 @@ export function classifyAcquisition(url: URL, referrer = '') {
   const allowed: Record<string, string[]> = {
     utm_source: ['google', 'bing', 'instagram', 'facebook', 'tiktok', 'pinterest', 'newsletter', 'printme'],
     utm_medium: ['organic', 'social', 'email', 'cpc', 'paid-social', 'referral'],
-    utm_campaign: ['halloween-2026', 'fall-2026', 'thanksgiving-2026'],
+    utm_campaign: ['halloween-2026', 'fall-2026', 'thanksgiving-2026', 'pets-launch', 'pets-gifts', 'pets-memories'],
   };
   const values: Record<string, string> = {};
   for (const [key, list] of Object.entries(allowed)) {
@@ -83,7 +96,7 @@ export function classifyAcquisition(url: URL, referrer = '') {
       : /(^|\.)(instagram|facebook|tiktok|pinterest)\./.test(host) ? 'social' : 'referral';
   } catch { /* No referrer is normal. */ }
   const section = url.pathname.split('/')[1];
-  return { ...values, referrer_class: referrerClass, landing_path: ['', 'halloween', 'create', 'shop-v2', 'designs', 'products', 'collections', 'drops'].includes(section) ? `/${section}` : '/other' };
+  return { ...values, referrer_class: referrerClass, landing_path: ['', 'pets', 'halloween', 'create', 'shop-v2', 'designs', 'products', 'collections', 'drops'].includes(section) ? `/${section}` : '/other' };
 }
 
 function acquisitionProperties() {

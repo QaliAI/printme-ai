@@ -27,6 +27,7 @@ export function SiteFooter() {
           <h2 className={styles.colTitle}>Make</h2>
           <nav className={styles.colNav} aria-label="Make">
             <Link href="/create">Upload a photo</Link>
+            <Link href="/pets">PrintMe Pets</Link>
             <Link href="/#make">Remove a background</Link>
             {AI_STYLES_ENABLED && <Link href="/create?style=illustrated">AI styles</Link>}
             {isReviewFeatureEnabled('text-thread') && <Link href="/text-thread">Text-thread designer</Link>}

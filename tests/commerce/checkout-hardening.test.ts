@@ -186,7 +186,7 @@ function securityDefinerRpcs(sql: string) {
 function grantsOnlyServiceRole(sql: string, name: string) {
   const fn = `ON FUNCTION ${name}\\s*\\([^)]*\\)\\s*`;
   return (
-    new RegExp(`REVOKE ALL ${fn}FROM PUBLIC, anon, authenticated;`).test(sql) &&
+    new RegExp(`REVOKE ALL ${fn}FROM PUBLIC,\\s*anon,\\s*authenticated;`).test(sql) &&
     new RegExp(`GRANT EXECUTE ${fn}TO service_role;`).test(sql)
   );
 }
@@ -209,7 +209,10 @@ describe('commerce RPCs are callable only by service_role', () => {
       'record_stripe_payment_hold',
     ].sort();
     expect(securityDefinerRpcs(canonical)).toEqual(expected);
-    expect(securityDefinerRpcs(migrations)).toEqual(expected);
+    // Pets is a separately authorized optional ledger, outside the commerce bundle.
+    expect(securityDefinerRpcs(migrations)).toEqual([...expected,
+      'finish_pets_generation', 'pets_generation_ledger_version', 'reserve_pets_generation',
+    ].sort());
   });
 
   it.each([

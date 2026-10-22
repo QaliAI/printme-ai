@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { SiteFooter } from '@/components/brand/SiteFooter';
+import { PetsPromo } from '@/components/pets/PetsPromo';
 import { getApprovedMerchProducts } from '@/lib/commerce/catalog/approved-catalog';
 import { getDesignCatalogService } from '@/lib/commerce/designs/service';
 import { productCopy } from '@/lib/commerce/product-copy';
@@ -215,6 +216,8 @@ export async function PunkHomepage() {
           </Link>
         </div>
       </section>
+
+      <PetsPromo />
 
       {/* SEASONAL — Halloween until Oct 31, then the holiday shop */}
       <section className={styles.season} aria-labelledby="season-heading">

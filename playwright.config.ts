@@ -61,6 +61,7 @@ export default defineConfig({
       STRIPE_SECRET_KEY: 'sk_test_local_e2e_only',
       STRIPE_WEBHOOK_SECRET: 'whsec_local_e2e_only',
       PRINTIFY_FULFILLMENT_MODE: 'dry-run',
+      PETS_GENERATION_ENABLED: 'false',
       STUDIO_E2E_TEST_MODE: 'true',
       STUDIO_E2E_TEST_SECRET: 'printme-local-studio-e2e-secret',
     },
