@@ -3237,4 +3237,3 @@ END $$;
 REVOKE ALL ON FUNCTION claim_commerce_notification(UUID, TEXT, TEXT, TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION claim_commerce_notification(UUID, TEXT, TEXT, TEXT, JSONB) TO service_role;
 COMMIT;
-
