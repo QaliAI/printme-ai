@@ -8,7 +8,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const add = (path: string, priority: number, date?: string | null) => urls.set(path, {
     url: `${baseUrl}${path}`, priority, changeFrequency: 'weekly', ...(date ? { lastModified: date } : {}),
   });
-  ['', '/designs', '/collections', '/drops', '/shop-v2', '/products', '/create', '/halloween'].forEach(path => add(path, path ? 0.8 : 1));
+  ['', '/designs', '/collections', '/drops', '/shop-v2', '/products', '/create', '/halloween', '/pets', '/pets/keepsakes', '/pets/gift', '/pets/privacy'].forEach(path => add(path, path ? 0.8 : 1));
   getApprovedMerchProducts().forEach(product => add(`/products/${encodeURIComponent(product.id)}`, 0.7));
   const catalog = getDesignCatalogService();
   const [designs, collections, drops] = await Promise.all([catalog.listPublished(), catalog.listCollections(), catalog.listDrops()]);

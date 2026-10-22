@@ -37,10 +37,12 @@ export class OpenAIImageProvider implements ImageProvider {
   async generateDesign(options: ImageProviderOptions): Promise<ImageProviderResult> {
     if (!this.apiKey) throw new ImageProviderError('Image generation is temporarily unavailable.', 'PROVIDER_UNAVAILABLE', 503);
     const workflow = options.workflow ?? 'photo-edit';
+    const images = options.imageUrls ?? (options.imageUrl ? [options.imageUrl] : []);
     if (workflow === 'photo-edit') {
-      if (!options.imageUrl) throw new ImageProviderError('Upload a photo first.', 'IMAGE_REQUIRED', 400);
-      validateImageInput(options.imageUrl);
-    } else if (options.imageUrl) {
+      if (!images.length) throw new ImageProviderError('Upload a photo first.', 'IMAGE_REQUIRED', 400);
+      if (images.length > 4 || (options.imageUrls && options.imageUrl)) throw new ImageProviderError('Choose up to four reference photos.', 'INVALID_IMAGE', 400);
+      images.forEach(validateImageInput);
+    } else if (images.length) {
       throw new ImageProviderError('Use photo editing for an image input.', 'INVALID_WORKFLOW', 400);
     }
     if (!options.promptTemplate.trim() || options.promptTemplate.length > 4000) {
@@ -56,7 +58,7 @@ export class OpenAIImageProvider implements ImageProvider {
       options.imageContext, options.negativePrompt ? `Avoid: ${options.negativePrompt}` : null].filter(Boolean).join('\n\n');
     const body = { model, prompt, n: 1, size: '1024x1536', quality: 'high', output_format: 'png',
       background: options.background ?? 'transparent',
-      ...(workflow === 'photo-edit' ? { images: [{ image_url: options.imageUrl }] } : {}) };
+      ...(workflow === 'photo-edit' ? { images: images.map(image_url => ({ image_url })) } : {}) };
     const endpoint = workflow === 'photo-edit' ? 'edits' : 'generations';
     const started = Date.now();
     // Retry only explicit rate-limit responses. Timeouts/network errors and 5xx

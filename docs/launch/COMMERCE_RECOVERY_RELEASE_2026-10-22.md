@@ -1,6 +1,6 @@
 # Paid commerce recovery: evidence and release procedure
 
-**Decision: NO-GO for customer payments.** Engineering changes are proposed in this PR; migration 015 has not been applied to any hosted database. Checkout remains disabled. No cards charged, provider orders created, settings changed, merges performed or deployments requested.
+**Decision: NO-GO for customer payments.** On the owner's subsequent explicit release instruction, PR #29 was merged as `ff5a39a884f7660207a3983f47df7659809c0427`; Vercel production deployment `dpl_7Gzks6BngRcumCBGLngTbh4jDFvC` is READY on that SHA. The production checkout flag was re-read as **false**. Migrations 015/016 remain unapplied. No cards were charged, provider orders created or production settings changed. The original inspection and paid-launch procedure below remain evidence; the dated follow-up at the end explains the safe code release before migration.
 
 ## Base and read-only evidence
 
@@ -13,7 +13,7 @@
 
 ## Dependency checklist
 
-Status describes the evidence available now. “Fixed in PR” does not mean released.
+“Fixed in PR” identifies merged application code or a prepared migration. It does not mean an unapplied database protection or an unconfigured service is active.
 
 | ID | Classification | Dependency / result | Depends on / remaining action |
 |---|---|---|---|
@@ -30,7 +30,7 @@ Status describes the evidence available now. “Fixed in PR” does not mean rel
 | D8 | DEFECT — fixed in PR | Checkout kill switch blocked paid receipts/confirmation lookup; DB lookup failure could crash confirmation. | Signed matching-mode receipts and persisted status remain available with checkout off; DB failure displays pending. |
 | D9 | DEFECT — fixed in PR | Preflight declared integrations ready after checking only some variable names. | Requires email/ops/webhook config and key-mode agreement; explicitly distinguishes configuration from service proof. |
 | D10 | DEFECT — fixed in PR | Critical framework advisories and High production transitive dependencies. | Next/eslint config 16.4.2; compatible nanoid/source-map-js patches; production audit is zero. |
-| B1 | BLOCKED | Hosted migration 015, deployment and actual authenticated API/RPC proof. | Backup, review, staging PostgreSQL rehearsal and explicit release approval. |
+| B1 | BLOCKED | Hosted migrations 015/016 and actual authenticated API/RPC proof. Compatible application code is deployed with checkout off. | Backup, review, staging PostgreSQL rehearsal and separate migration approval. |
 | B2 | BLOCKED / OWNER ACTION | Stripe test checkout, tax, provider shipping rates, test webhook proof and account public details. | Owner confirms correct test account/keys and isolated preview; no live charge as a substitute. |
 | B3 | BLOCKED / OWNER ACTION | Resend sender/DNS, operations secret + allowlist, Printify webhook secret and delivery proof. | Configure only after owner approval; repeat preflight in target environment. |
 | B4 | OWNER ACTION | Add refund/dispute subscriptions and pin webhook API version. | Application + 015 must be ready before event replay; use `2026-04-22.dahlia` or separately verify a new version. |

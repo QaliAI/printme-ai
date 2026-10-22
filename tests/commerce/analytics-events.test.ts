@@ -7,7 +7,9 @@ import {
 
 describe('commerce analytics contract', () => {
   it('exposes the complete Sprint 3 event vocabulary', () => {
-    expect(commerceAnalyticsEvents).toHaveLength(21);
+    expect(commerceAnalyticsEvents).toHaveLength(28);
+    expect(commerceAnalyticsEvents).toContain('pets_style_selected');
+    expect(commerceAnalyticsEvents).toContain('pets_generation_completed');
     expect(commerceAnalyticsEvents).toContain('upsell_added');
     expect(commerceAnalyticsEvents).toContain('fulfillment_failed');
   });
@@ -35,5 +37,9 @@ describe('commerce analytics contract', () => {
     expect(hasDirectIdentifier({ accessToken: 'not-for-analytics' })).toBe(
       true,
     );
+    expect(hasDirectIdentifier({ caption: 'Forever our Maple' })).toBe(true);
+    expect(hasDirectIdentifier({ giftMessage: 'For Alex' })).toBe(true);
+    expect(hasDirectIdentifier({ reference: 'private-photo' })).toBe(true);
+    expect(hasDirectIdentifier({ style_id: 'fuzz-club', subject_count: 2 })).toBe(false);
   });
 });

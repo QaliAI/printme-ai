@@ -2,6 +2,8 @@
 
 export interface ImageProviderOptions {
   imageUrl?: string;
+  /** Ordered reference photos for a single edit. Existing one-photo callers are unchanged. */
+  imageUrls?: string[];
   workflow?: 'photo-edit' | 'text-generation';
   background?: 'transparent' | 'opaque';
   promptTemplate: string;
