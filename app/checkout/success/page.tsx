@@ -19,17 +19,19 @@ export default async function CheckoutSuccessPage({
     <main className="min-h-screen bg-amber-50 px-6 py-20 text-stone-950">
       <div className="mx-auto max-w-xl border border-stone-300 bg-white p-8">
         <p className="mb-4 text-xs font-bold uppercase tracking-widest text-orange-700">
-          Test checkout preview — no production charge
+          {process.env.STRIPE_MODE === 'live' ? 'Order status' : 'Test checkout preview — no production charge'}
         </p>
         <h1 className="mb-4 text-4xl font-semibold">
           {confirmation?.verified
             ? 'Payment verified'
-            : 'Payment verification pending'}
+            : confirmation && ['refunded', 'partially_refunded', 'refund_pending', 'disputed'].includes(confirmation.paymentStatus)
+              ? 'Order needs review'
+              : 'Payment verification pending'}
         </h1>
         <p className="mb-8 text-stone-600">
           {confirmation?.verified
-            ? 'Stripe’s signed webhook verified this test payment. Your order is now recorded as paid.'
-            : 'Returning from Stripe does not prove payment. This page will not confirm the order until a signed webhook updates it.'}
+            ? 'Your payment is verified and your order is recorded.'
+            : 'We are checking the current order status. If you already paid, do not place another order. Refresh this page, or contact support with your checkout reference if the status does not update.'}
         </p>
         {confirmation?.verified && (
           <p className="mb-8 font-mono text-sm">

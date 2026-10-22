@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import {
   printifyWebhookEventSchema,
   type PrintifyWebhookStore,
@@ -17,20 +18,20 @@ const transitionResultSchema = z.object({
 export class SupabasePrintifyWebhookStore
   implements PrintifyWebhookStore
 {
-  private get client() {
+  private async recoveryClient() {
     if (
-      process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true' ||
-      process.env.COMMERCE_CHECKOUT_ENABLED !== 'true'
+      process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
     ) {
       throw new Error('Printify webhook persistence is disabled.');
     }
+    await assertCommerceRecoverySchema();
     return getSupabaseAdminClient();
   }
 
   async beginEvent(
     event: Parameters<PrintifyWebhookStore['beginEvent']>[0],
   ) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'begin_commerce_webhook_event',
       {
         p_source: 'printify',
@@ -44,7 +45,7 @@ export class SupabasePrintifyWebhookStore
   }
 
   async claimFailedEvent(eventId: string) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'claim_failed_commerce_webhook_event',
       {
         p_source: 'printify',
@@ -75,7 +76,7 @@ export class SupabasePrintifyWebhookStore
     code: string | null,
     message: string,
   ) {
-    const { error } = await this.client.rpc(
+    const { error } = await (await this.recoveryClient()).rpc(
       'finish_commerce_webhook_event',
       {
         p_source: 'printify',
@@ -91,7 +92,7 @@ export class SupabasePrintifyWebhookStore
   async applyTransition(
     input: Parameters<PrintifyWebhookStore['applyTransition']>[0],
   ) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'apply_printify_order_transition',
       {
         p_event_id: input.eventId,

@@ -12,6 +12,7 @@ import { commerceCartErrorResponse } from '@/lib/commerce/cart-api';
 import { SupabaseCheckoutStore } from '@/lib/commerce/checkout/supabase-store';
 import { StripeTestCheckoutGateway } from '@/lib/commerce/checkout/stripe-gateway';
 import { getCuratedCatalogService } from '@/lib/commerce/catalog/catalog-service';
+import { CommerceSchemaNotReadyError } from '@/lib/commerce/schema-readiness';
 import {
   createE2ECheckout,
   getCommerceE2ESession,
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest) {
       identity,
     );
   } catch (error) {
+    if (error instanceof CommerceSchemaNotReadyError) {
+      return NextResponse.json({ error: 'Checkout is unavailable until commerce database setup is verified.', code: error.code }, { status: 503 });
+    }
     if (error instanceof CheckoutValidationError) {
       return NextResponse.json(
         { error: 'Checkout validation failed.', code: error.code },

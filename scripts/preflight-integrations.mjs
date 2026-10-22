@@ -67,8 +67,17 @@ function checkEnv(name, { required = true, isClient = false, validator = null } 
 }
 
 // 1. Stripe Checks
-checkEnv('STRIPE_SECRET_KEY', { required: true });
 checkEnv('STRIPE_WEBHOOK_SECRET', { required: true });
+const stripeMode = process.env.STRIPE_MODE || 'test';
+checkEnv('STRIPE_SECRET_KEY', { validator: value => {
+  if (!['test', 'live'].includes(stripeMode)) return 'STRIPE_MODE must be test or live';
+  return value.startsWith(stripeMode === 'live' ? 'sk_live_' : 'sk_test_')
+    ? null : 'Secret key prefix must match STRIPE_MODE';
+} });
+for (const name of ['RESEND_API_KEY', 'TRANSACTIONAL_FROM_EMAIL', 'SUPPORT_EMAIL',
+  'COMMERCE_OPERATIONS_SECRET', 'ADMIN_EMAILS', 'PRINTIFY_WEBHOOK_SECRET']) {
+  checkEnv(name);
+}
 
 // 2. Supabase Checks
 checkEnv('NEXT_PUBLIC_SUPABASE_URL', {
@@ -140,7 +149,8 @@ checks.forEach(c => {
 
 console.log('============================================================');
 if (allPassed) {
-  console.log('PREFLIGHT SUCCESS: All required P0 integrations are ready!');
+  console.log('CONFIGURATION CHECK PASSED: required variable names and key mode are present.');
+  console.log('LIVE SERVICE PROOF BLOCKED: this command does not verify database migrations, account ownership, webhook delivery, tax, shipping rates, email delivery or provider connectivity.');
   process.exit(0);
 } else {
   console.error('PREFLIGHT WARNING: Some required integrations are missing/invalid.');

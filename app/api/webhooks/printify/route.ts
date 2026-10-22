@@ -11,6 +11,7 @@ import {
   isCommerceE2ERequest,
 } from '@/lib/commerce/testing/e2e-harness';
 import { getTransactionalEmailService } from '@/lib/notifications/email-service';
+import { CommerceSchemaNotReadyError } from '@/lib/commerce/schema-readiness';
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-pfy-signature');
@@ -150,7 +151,10 @@ export async function POST(request: NextRequest) {
       duplicate: result.duplicate,
       outcome: result.outcome,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof CommerceSchemaNotReadyError) {
+      return NextResponse.json({ error: 'Commerce database recovery is not ready. Retry this receipt.', code: error.code }, { status: 503 });
+    }
     return NextResponse.json(
       { error: 'Printify event processing failed.' },
       { status: 500 },

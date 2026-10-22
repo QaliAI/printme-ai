@@ -1,6 +1,7 @@
 import 'server-only';
 
 import Stripe from 'stripe';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import type {
   CheckoutGateway,
 } from './service';
@@ -59,6 +60,7 @@ export class StripeTestCheckoutGateway implements CheckoutGateway {
     input: Parameters<CheckoutGateway['createSession']>[0],
   ) {
     assertCheckoutEnabled();
+    await assertCommerceRecoverySchema();
     const stripe = new Stripe(getStripeTestSecret(), {
       apiVersion: '2026-04-22.dahlia',
     });

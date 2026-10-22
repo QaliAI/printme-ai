@@ -50,3 +50,5 @@ also supplies `orders.order_number`, which is absent on the restored project.
 The old `003_add_orders_stripe_session_id_unique.sql` names a different column
 from the restored `stripe_checkout_session_id`; do not apply it blindly.
 This list describes source files, not a certified production execution plan.
+
+15. `015_commerce_payment_recovery.sql` — sticky refund/dispute holds, crashed receipt recovery, atomic notification enqueue, fulfillment admission and profile privilege guard. Not applied by this PR. On a database verified through 014, apply only 015 after backup/review; see `docs/launch/COMMERCE_RECOVERY_RELEASE_2026-10-22.md`.

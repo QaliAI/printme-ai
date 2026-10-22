@@ -2,6 +2,7 @@ import 'server-only';
 
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '@/lib/supabase/admin';
+import { assertCommerceRecoverySchema } from '@/lib/commerce/schema-readiness';
 import { cartConfigurationSnapshotSchema } from '../snapshot';
 import { fulfillmentOrderSchema } from './payload';
 import type {
@@ -33,24 +34,24 @@ function toJob(value: unknown): FulfillmentJob {
 
 function assertFulfillmentPersistence() {
   if (
-    process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true' ||
-    process.env.COMMERCE_CHECKOUT_ENABLED !== 'true'
+    process.env.COMMERCE_PERSISTENCE_ENABLED !== 'true'
   ) {
     throw new Error('Fulfillment persistence is disabled.');
   }
 }
 
 export class SupabaseFulfillmentStore implements FulfillmentStore {
-  private get client() {
+  private async recoveryClient() {
     assertFulfillmentPersistence();
+    await assertCommerceRecoverySchema();
     return getSupabaseAdminClient();
   }
 
   async loadPaidOrder(orderId: string) {
-    const { data, error } = await this.client
+    const { data, error } = await (await this.recoveryClient())
       .from('orders')
       .select(
-        'id,payment_status,customer_email,shipping_address,printify_order_id,production_submitted_at,order_items(configuration_snapshot)',
+        'id,status,fulfillment_status,commerce_hold_reason,payment_status,customer_email,shipping_address,printify_order_id,production_submitted_at,order_items(configuration_snapshot)',
       )
       .eq('id', orderId)
       .maybeSingle();
@@ -60,6 +61,9 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       .object({
         id: z.string().uuid(),
         payment_status: z.string(),
+        status: z.string(),
+        fulfillment_status: z.string(),
+        commerce_hold_reason: z.string().nullable(),
         customer_email: z.string().nullable(),
         shipping_address: z.unknown(),
         printify_order_id: z.string().nullable(),
@@ -69,7 +73,8 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
         ),
       })
       .parse(data);
-    if (row.payment_status !== 'paid' || !row.customer_email) return null;
+    if (row.payment_status !== 'paid' || row.commerce_hold_reason || row.status === 'cancelled' ||
+      ['cancelled', 'refunded'].includes(row.fulfillment_status) || !row.customer_email) return null;
     return fulfillmentOrderSchema.parse({
       id: row.id,
       paymentStatus: row.payment_status,
@@ -84,7 +89,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async findJob(orderId: string) {
-    const { data, error } = await this.client
+    const { data, error } = await (await this.recoveryClient())
       .from('fulfillment_jobs')
       .select(
         'id,order_id,state,mode,printify_order_id,production_submitted_at',
@@ -96,7 +101,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async lockJob(input: Parameters<FulfillmentStore['lockJob']>[0]) {
-    const { data, error } = await this.client.rpc(
+    const { data, error } = await (await this.recoveryClient()).rpc(
       'lock_fulfillment_job',
       {
         p_order_id: input.orderId,
@@ -173,7 +178,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       jobUpdate.printify_order_id = input.printifyOrderId;
     }
 
-    const { error: jobError } = await this.client
+    const { error: jobError } = await (await this.recoveryClient())
       .from('fulfillment_jobs')
       .update(jobUpdate)
       .eq('id', input.jobId)
@@ -187,7 +192,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       orderUpdate.printify_order_id = input.printifyOrderId;
     }
 
-    const { error: orderError } = await this.client
+    const { error: orderError } = await (await this.recoveryClient())
       .from('orders')
       .update(orderUpdate)
       .eq('id', input.orderId);
@@ -195,7 +200,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async markFailed(input: Parameters<FulfillmentStore['markFailed']>[0]) {
-    const { error: jobError } = await this.client
+    const { error: jobError } = await (await this.recoveryClient())
       .from('fulfillment_jobs')
       .update({
         state: 'fulfillment_failed',
@@ -213,7 +218,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       input.retryClassification ===
       'manual_review_uncertain_submission'
     ) {
-      const { error: attemptError } = await this.client
+      const { error: attemptError } = await (await this.recoveryClient())
         .from('fulfillment_attempts')
         .update({
           outcome: 'uncertain',
@@ -224,7 +229,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
         .eq('outcome', 'started');
       if (attemptError) throw attemptError;
     }
-    const { error: orderError } = await this.client
+    const { error: orderError } = await (await this.recoveryClient())
       .from('orders')
       .update({ fulfillment_status: 'fulfillment_failed' })
       .eq('id', input.orderId);
@@ -232,36 +237,15 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async markSubmitting(jobId: string, externalRequestId: string) {
-    const { data, error } = await this.client
-      .from('fulfillment_jobs')
-      .update({
-        state: 'fulfillment_submitting',
-        external_request_id: externalRequestId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', jobId)
-      .eq('state', 'fulfillment_ready')
-      .select('attempt_count')
-      .single();
+    const { error } = await (await this.recoveryClient()).rpc('begin_commerce_production_submission', {
+      p_job_id: jobId, p_request_id: externalRequestId,
+    });
     if (error) throw error;
-    const attempt = z
-      .object({ attempt_count: z.number().int().positive() })
-      .parse(data);
-    const { error: attemptError } = await this.client
-      .from('fulfillment_attempts')
-      .insert({
-        fulfillment_job_id: jobId,
-        attempt_number: attempt.attempt_count,
-        action: 'send_to_production',
-        external_request_id: externalRequestId,
-        outcome: 'started',
-      });
-    if (attemptError) throw attemptError;
   }
 
   async markSubmitted(jobId: string, orderId: string) {
     const submittedAt = new Date().toISOString();
-    const { error: jobError } = await this.client
+    const { error: jobError } = await (await this.recoveryClient())
       .from('fulfillment_jobs')
       .update({
         state: 'submitted',
@@ -271,14 +255,14 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
       .eq('id', jobId)
       .eq('state', 'fulfillment_submitting');
     if (jobError) throw jobError;
-    const { error: attemptError } = await this.client
+    const { error: attemptError } = await (await this.recoveryClient())
       .from('fulfillment_attempts')
       .update({ outcome: 'succeeded' })
       .eq('fulfillment_job_id', jobId)
       .eq('action', 'send_to_production')
       .eq('outcome', 'started');
     if (attemptError) throw attemptError;
-    const { error: orderError } = await this.client
+    const { error: orderError } = await (await this.recoveryClient())
       .from('orders')
       .update({
         fulfillment_status: 'submitted',
@@ -289,7 +273,7 @@ export class SupabaseFulfillmentStore implements FulfillmentStore {
   }
 
   async listOperationalJobs(states?: string[]) {
-    let query = this.client
+    let query = (await this.recoveryClient())
       .from('fulfillment_jobs')
       .select(
         'id,order_id,state,mode,attempt_count,retry_classification,error_code,updated_at',
