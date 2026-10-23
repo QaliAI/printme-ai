@@ -1,5 +1,6 @@
 import 'server-only';
 import { getNotificationOutbox } from './outbox';
+import { renderPrintMeEmail } from './email-branding';
 
 export type NotificationType =
   | 'order_confirmed'
@@ -173,7 +174,7 @@ export class FakeEmailTransport implements EmailTransport {
  */
 export class HttpEmailTransport implements EmailTransport {
   constructor(
-    private apiKey: string = process.env.RESEND_API_KEY || '',
+    private apiKey: string = process.env.RESEND_API_KEY || process.env.resend_api_key || '',
     private defaultFrom: string = process.env.TRANSACTIONAL_FROM_EMAIL || 'PrintMe Orders <orders@printme.ai>',
     private defaultReplyTo: string = process.env.SUPPORT_EMAIL || 'support@printme.ai',
   ) {}
@@ -316,7 +317,10 @@ export class TransactionalEmailService {
       success: false, error: 'Notification already claimed; inspect durable outbox.',
       idempotencyKey: message.idempotencyKey, timestamp: new Date().toISOString(),
     };
-    const result = await this.transport.send(message);
+    const result = await this.transport.send({
+      ...message,
+      html: renderPrintMeEmail(message.html, type, message.subject),
+    });
 
     if (result.success) {
       await outbox.recordSuccess(message.idempotencyKey, result.messageId);
@@ -683,7 +687,7 @@ Questions? Contact support@printme.ai
  * if credentials are missing.
  */
 export function getDefaultEmailTransport(): EmailTransport {
-  if (process.env.NODE_ENV === 'test' || process.env.EMAIL_TRANSPORT === 'fake') {
+  if (process.env.NODE_ENV === 'test' || (process.env.NODE_ENV !== 'production' && process.env.EMAIL_TRANSPORT === 'fake')) {
     return new FakeEmailTransport();
   }
   return new HttpEmailTransport();
