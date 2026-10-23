@@ -74,6 +74,11 @@ checkEnv('STRIPE_SECRET_KEY', { validator: value => {
   return value.startsWith(stripeMode === 'live' ? 'sk_live_' : 'sk_test_')
     ? null : 'Secret key prefix must match STRIPE_MODE';
 } });
+if (!process.env.RESEND_API_KEY && process.env.resend_api_key) {
+  // Existing Vercel installation used lowercase spelling. Support it without printing secrets.
+  process.env.RESEND_API_KEY = process.env.resend_api_key;
+  console.log('INFO: legacy lowercase resend_api_key detected; prefer RESEND_API_KEY for new setups.');
+}
 for (const name of ['RESEND_API_KEY', 'TRANSACTIONAL_FROM_EMAIL', 'SUPPORT_EMAIL',
   'COMMERCE_OPERATIONS_SECRET', 'ADMIN_EMAILS', 'PRINTIFY_WEBHOOK_SECRET']) {
   checkEnv(name);
