@@ -1,0 +1,50 @@
+name: PrintMe live page-by-page audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/production-visual-qa.yml
+      - tests/e2e/live-readonly-smoke.spec.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: printme-live-visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-readonly:
+    name: Screenshot live site at 3 viewport sizes
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      PLAYWRIGHT_BASE_URL: https://www.printme.ai
+      PLAYWRIGHT_PRODUCTION_READONLY: "true"
+    steps:
+      - name: Checkout reviewed source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture site screenshots, pages and diagnostics
+        run: npx playwright test tests/e2e/live-readonly-smoke.spec.ts --workers=3
+      - name: Upload screenshots and per-page JSON observations
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: printme-live-page-audit
+          path: |
+            output/playwright/live-readonly/
+            output/playwright/report/
+            output/playwright/test-results/
+          retention-days: 14
